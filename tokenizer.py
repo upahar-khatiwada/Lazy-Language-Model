@@ -1,7 +1,7 @@
 import re
 
+UNK = "<unk>"
 PRE_TOKEN_RE = re.compile(r"\w+|\s|[^\w\s]")
-
 
 def count_words(text):
     counts = {}
@@ -47,6 +47,9 @@ def train_bpe(word_freqs, max_merges=1000):
                 best_count = pair_freq[pair]
                 best_pair = pair
 
+        if best_pair is None:
+            break
+
         a, b = best_pair
         merged = a + b
 
@@ -83,8 +86,7 @@ class Tokenizer:
     def encode(self, text):
         ids = []
         for token in apply_merges(text, self.merges):
-            if token in self.stoi:
-                ids.append(self.stoi[token])
+            ids.append(self.stoi.get(token, self.stoi[UNK]))
         return ids
 
     def decode(self, ids):
@@ -97,14 +99,19 @@ class Tokenizer:
 def build_tokenizer(text, max_merges=1000):
     merges = train_bpe_on_text(text, max_merges)
 
-    tokens = apply_merges(text, merges)
-    itos = []
-    seen = set()
-    for t in tokens:
-        if t not in seen:
-            seen.add(t)
-            itos.append(t)
+    itos = [UNK]
+    seen = {UNK}
 
+    for ch in text:
+        if ch not in seen:
+            seen.add(ch)
+            itos.append(ch)
+
+    for m in merges:
+        if m["merged"] not in seen:
+            seen.add(m["merged"])
+            itos.append(m["merged"])
+    
     stoi = {}
     for i in range(len(itos)):
         stoi[itos[i]] = i
