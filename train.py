@@ -2,6 +2,7 @@ import math
 import numpy as np
 import config
 from data import load_corpus, encode_corpus, split_ids, make_windows, iterate_batches
+from checkpoint import save_checkpoint
 from generate import generate
 from ops import cross_entropy_forward, perplexity
 from optim import Adam, clip_grad_norm, lr_schedule
@@ -32,7 +33,7 @@ def validation_loss(params, cfg, inputs, targets):
 
     return float(np.mean(losses))
 
-def main():
+def main(prefix="checkpoints/model"):
     rng = np.random.default_rng(config.seed)
 
     # 1. text -> ids -> train/val windows (split BEFORE windowing)
@@ -72,6 +73,10 @@ def main():
         out = generate(params, cfg, seed_ids, 30, config.seq_len,
                        config.temperature, config.top_k, config.top_p, rng)
         print("  sample:", repr(tok.decode(out)))
+
+    # 4. keep the trained model so talk.py can load it later
+    save_checkpoint(prefix, params, cfg, tok)
+    print(f"saved checkpoint to {prefix}.*")
 
     return params, cfg, tok
 
