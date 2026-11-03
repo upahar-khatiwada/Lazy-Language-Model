@@ -8,8 +8,6 @@ from optim import Adam, clip_grad_norm, lr_schedule
 from tokenizer import build_tokenizer
 from transformer import ModelConfig, init_params, forward, loss_and_grads
 
-CORPUS_PATH, COLUMN, MAX_ROWS = "data/corpus.csv", "text", 2000
-
 def batch_loss_and_grads(params, xb, yb, cfg: ModelConfig):
     B = len(xb)
     grads = {k: np.zeros_like(v) for k, v in params.items()}
@@ -38,7 +36,7 @@ def main():
     rng = np.random.default_rng(config.seed)
 
     # 1. text -> ids -> train/val windows (split BEFORE windowing)
-    text = load_corpus(CORPUS_PATH, COLUMN, MAX_ROWS)
+    text = load_corpus(config.corpus_path, config.corpus_column, config.max_rows)
     tok = build_tokenizer(text, config.num_merges)
     ids = encode_corpus(text, tok)
     train_ids, val_ids = split_ids(ids, config.val_fraction)
