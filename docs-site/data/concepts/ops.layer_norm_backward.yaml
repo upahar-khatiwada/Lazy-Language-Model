@@ -1,0 +1,105 @@
+id: ops.layer_norm_backward
+title: LayerNorm, backward
+category: basic-operations
+inventory: [M26]
+status: implemented
+summary: >-
+  Given dY, the gradient on LayerNorm's output, and the cache from the forward pass, this computes
+  three gradients. They are dX for the input, dgamma for the scale and dbeta for the shift.
+why: >-
+  dgamma and dbeta are what the optimizer needs to update this layer. dX carries the gradient back
+  through the normalisation to whatever produced the input.
+equations:
+  - id: ln.dxhat
+    latex: d\hat{X}_{ti} = dY_{ti}\, \gamma_i
+    role: backward
+    label: Gradient on the normalised row
+  - id: ln.dx
+    latex: >-
+      dX_{tj} = s_t \left( d\hat{X}_{tj} - \operatorname{mean}_i\!\left(d\hat{X}_{ti}\right) -
+      \hat{X}_{tj}\, \operatorname{mean}_i\!\left(d\hat{X}_{ti} \hat{X}_{ti}\right) \right)
+    role: backward
+    label: Gradient on the input
+  - id: ln.dgamma
+    latex: d\gamma_i = \sum_{t} dY_{ti}\, \hat{X}_{ti}
+    role: backward
+    label: Gradient on the scale, summed over rows
+  - id: ln.dbeta
+    latex: d\beta_i = \sum_{t} dY_{ti}
+    role: backward
+    label: Gradient on the shift, summed over rows
+symbols:
+  - symbol: dY
+    meaning: Gradient of the loss on the output Y. The caller supplies it
+    codeName: dY
+    shape: (T, d)
+  - symbol: \hat{X},\, s
+    meaning: The cache from the forward pass
+    codeName: Xhat, s
+    shape: (T, d) and (T, 1)
+  - symbol: \gamma
+    meaning: The scale parameter
+    codeName: gamma
+    shape: (d,)
+  - symbol: d\hat{X}
+    meaning: Gradient on the normalised row
+    codeName: dXhat
+    shape: (T, d)
+  - symbol: dX
+    meaning: Gradient on the input, passed to the previous layer
+    codeName: dX
+    shape: (T, d)
+  - symbol: d\gamma
+    meaning: Gradient on the scale
+    codeName: dgamma
+    shape: (d,)
+  - symbol: d\beta
+    meaning: Gradient on the shift
+    codeName: dbeta
+    shape: (d,)
+  - symbol: \operatorname{mean}_i
+    meaning: Mean over the last axis, row by row
+    codeName: .mean(axis=-1, keepdims=True)
+    shape: (T, 1)
+example: null
+shapes:
+  - id: ln-backward-final
+    label: The final LayerNorm
+    stages:
+      - name: dXf
+        dims: [T, d]
+      - name: dX
+        dims: [T, d]
+      - name: dg
+        dims: [d]
+      - name: db
+        dims: [d]
+    target:
+      file: transformer.py
+      symbol: transformer.loss_and_grads
+      match: dX, dg, db = layer_norm_backward(dXf, cache["lnf"], params["lnf_g"])
+  - id: ln-backward-block
+    label: LayerNorm before attention, inside a block
+    stages:
+      - name: dXn
+        dims: [T, d]
+      - name: dX_branch
+        dims: [T, d]
+      - name: dg
+        dims: [d]
+      - name: db
+        dims: [d]
+    target:
+      file: transformer.py
+      symbol: transformer.block_backward
+      match: dX_branch, dg, db = layer_norm_backward(dXn, c["ln1"], params[p + "ln1_g"])
+source:
+  - file: ops.py
+    symbol: ops.layer_norm_backward
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["32", "34"]
+  page: 7
+notes:
+  - The function does not take epsilon. It stays inside the cached s.

@@ -1,47 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { linearForward } from "@/lib/math/ops";
+import { linearBackward, linearForward } from "@/lib/math/ops";
 import { matmul, type Matrix, type Vector } from "@/lib/math/tensor";
 import { formatShape, shapeOf } from "@/lib/viz/shape";
 import styles from "./Examples.module.css";
 import { MatrixInput } from "./MatrixInput";
+import { ResultMatrix, showNumber } from "./ResultMatrix";
 import { VizFigure } from "./VizFigure";
 
 const COLUMN_CHOICES = [2, 3];
 
-const showNumber = (value: number) => String(Number(value.toFixed(4)));
-
-function Result({ label, testId, values }: { label: string; testId: string; values: Matrix }) {
-  return (
-    <table className={styles.compact} data-testid={testId}>
-      <caption>
-        {label}, shape {formatShape(shapeOf(values))}
-      </caption>
-      <tbody>
-        {values.map((row, t) => (
-          <tr key={t}>
-            {row.map((value, c) => (
-              <td key={c}>{showNumber(value)}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-// X and W are editable, and W can have two or three columns. Every result comes from lib/math.
-export function MatrixPlayground({ X, W, b }: { X: Matrix; W: Matrix; b: Vector }) {
+// X and W are editable, and W can have two or three columns. With `dY`, the backward results for
+// that dY are shown too. Every result comes from lib/math.
+export function MatrixPlayground({
+  X,
+  W,
+  b,
+  dY,
+  startColumns = COLUMN_CHOICES[0]!,
+}: {
+  X: Matrix;
+  W: Matrix;
+  b: Vector;
+  dY?: Matrix;
+  startColumns?: number;
+}) {
   const [x, setX] = useState(X);
   const [w, setW] = useState(W);
   const [bias, setBias] = useState(b);
-  const [columns, setColumns] = useState(COLUMN_CHOICES[0]!);
+  const [gradient, setGradient] = useState(dY);
+  const [columns, setColumns] = useState(startColumns);
 
   const shownW = w.map((row) => row.slice(0, columns));
   const shownB = bias.slice(0, columns);
+  const shownDY = gradient?.map((row) => row.slice(0, columns));
   const product = matmul(x, shownW);
   const output = linearForward(x, shownW, shownB);
+  const backward = shownDY ? linearBackward(x, shownW, shownDY) : null;
   const rowLabel = (i: number) => `t${i}`;
   const features = x[0]!.map((_, i) => `k${i}`);
   const outputs = shownW[0]!.map((_, i) => `j${i}`);
@@ -49,7 +45,7 @@ export function MatrixPlayground({ X, W, b }: { X: Matrix; W: Matrix; b: Vector 
 
   return (
     <VizFigure
-      title="X @ W and X @ W + b"
+      title={backward ? "X @ W + b, and its backward" : "X @ W and X @ W + b"}
       kind="illustrative"
       caption="Hand-picked numbers that you can edit. These are not learned weights. Results come from the math engine, and tests compare it with the real Python on the starting values."
     >
@@ -89,6 +85,17 @@ export function MatrixPlayground({ X, W, b }: { X: Matrix; W: Matrix; b: Vector 
           value={[shownB]}
           onChange={(next) => setBias([...next[0]!, ...bias.slice(next[0]!.length)])}
         />
+        {gradient && shownDY ? (
+          <MatrixInput
+            label="dY"
+            rowLabels={x.map((_, i) => rowLabel(i))}
+            colLabels={outputs}
+            value={shownDY}
+            onChange={(next) =>
+              setGradient(gradient.map((row, r) => [...next[r]!, ...row.slice(next[r]!.length)]))
+            }
+          />
+        ) : null}
       </div>
       <p data-testid="matmul-rule">
         <code>
@@ -104,8 +111,15 @@ export function MatrixPlayground({ X, W, b }: { X: Matrix; W: Matrix; b: Vector 
         </code>
       </p>
       <div className={styles.matrices}>
-        <Result label="X @ W" testId="matmul-product" values={product} />
-        <Result label="X @ W + b" testId="matmul-output" values={output} />
+        <ResultMatrix label="X @ W" testId="matmul-product" values={product} />
+        <ResultMatrix label="X @ W + b" testId="matmul-output" values={output} />
+        {backward ? (
+          <>
+            <ResultMatrix label="dW = X.T @ dY" testId="linear-dw" values={backward.dW} />
+            <ResultMatrix label="db = dY.sum(axis=0)" testId="linear-db" values={[backward.db]} />
+            <ResultMatrix label="dX = dY @ W.T" testId="linear-dx" values={backward.dX} />
+          </>
+        ) : null}
       </div>
     </VizFigure>
   );

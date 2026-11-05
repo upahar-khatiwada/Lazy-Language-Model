@@ -1,0 +1,97 @@
+id: ops.layer_norm_derivation
+title: Deriving the backward formula
+category: basic-operations
+inventory: [M26]
+status: derived
+summary: >-
+  The steps that lead from the forward definition to the coded dX. The code holds only the result, in
+  ops.layer_norm_backward. These steps are worked out here from ops.layer_norm_forward.
+why: >-
+  The model does not run these steps. They show why the formula has its three terms, and that the
+  result is exact, not an approximation, even with epsilon inside s.
+equations:
+  - id: ln.derive.chain-start
+    latex: \frac{\partial L}{\partial \hat{X}_{ti}} = \frac{\partial L}{\partial Y_{ti}}\, \frac{\partial Y_{ti}}{\partial \hat{X}_{ti}} = dY_{ti}\, \gamma_i = d\hat{X}_{ti}
+    role: backward
+    label: "Step 1: from the output to the normalised row"
+  - id: ln.derive.mean
+    latex: \frac{\partial \mu_t}{\partial X_{tj}} = \frac{1}{d}
+    role: backward
+    label: "Step 2: the derivative of the mean"
+  - id: ln.derive.var
+    latex: >-
+      \frac{\partial \sigma_t^2}{\partial X_{tj}} =
+      \frac{2}{d} \sum_{i} \left(X_{ti} - \mu_t\right)\left(\delta_{ij} - \frac{1}{d}\right) =
+      \frac{2}{d}\left(X_{tj} - \mu_t\right)
+    role: backward
+    label: "Step 3: the derivative of the variance, where the mu term cancels"
+  - id: ln.derive.s
+    latex: >-
+      \frac{\partial s_t}{\partial X_{tj}} =
+      -\frac{1}{2}\left(\sigma_t^2 + \epsilon\right)^{-3/2} \frac{2}{d}\left(X_{tj} - \mu_t\right) =
+      -\frac{1}{d}\, s_t^3 \left(X_{tj} - \mu_t\right)
+    role: backward
+    label: "Step 4: the derivative of s, with epsilon absorbed into s"
+  - id: ln.derive.xhat
+    latex: >-
+      \frac{\partial \hat{X}_{ti}}{\partial X_{tj}} =
+      s_t\left(\delta_{ij} - \frac{1}{d}\right) + \left(X_{ti} - \mu_t\right)\frac{\partial s_t}{\partial X_{tj}} =
+      s_t\left(\delta_{ij} - \frac{1}{d} - \frac{1}{d}\,\hat{X}_{ti}\hat{X}_{tj}\right)
+    role: backward
+    label: "Step 5: the product rule on the normalised row"
+  - id: ln.derive.result
+    latex: >-
+      dX_{tj} = \sum_{i} d\hat{X}_{ti}\, \frac{\partial \hat{X}_{ti}}{\partial X_{tj}} =
+      s_t \left( d\hat{X}_{tj} - \frac{1}{d}\sum_{i} d\hat{X}_{ti} -
+      \hat{X}_{tj}\, \frac{1}{d}\sum_{i} d\hat{X}_{ti}\hat{X}_{ti} \right)
+    role: backward
+    label: "Step 6: the chain rule over all features of the row"
+  - id: ln.derive.parameters
+    latex: \frac{\partial Y_{ti}}{\partial \gamma_i} = \hat{X}_{ti},\quad \frac{\partial Y_{ti}}{\partial \beta_i} = 1
+    role: backward
+    label: "The parameters, each of which is shared by every row"
+symbols:
+  - symbol: L
+    meaning: The scalar loss
+    codeName: loss
+    shape: scalar
+  - symbol: \delta_{ij}
+    meaning: 1 when i equals j, otherwise 0. It records that X_ti depends only on itself
+    codeName: null
+    shape: scalar
+  - symbol: i,\, j
+    meaning: Feature indexes within one row. The rows do not affect each other
+    codeName: null
+    shape: scalar
+  - symbol: d\hat{X}
+    meaning: Gradient on the normalised row, from step 1
+    codeName: dXhat
+    shape: (T, d)
+  - symbol: s
+    meaning: Inverse standard deviation, with epsilon inside it
+    codeName: s
+    shape: (T, 1)
+example: null
+shapes:
+  - id: ln-derivation-matrix
+    label: Each row has its own matrix of derivatives. The code never builds it
+    stages:
+      - name: dXhat row
+        dims: [d]
+      - name: dX/dXhat matrix
+        dims: [d, d]
+      - name: dX row
+        dims: [d]
+    target:
+      file: ops.py
+      symbol: ops.layer_norm_backward
+      match: dX = s * (dXhat - dXhat.mean(axis=-1, keepdims=True)
+source:
+  - file: ops.py
+    symbol: ops.layer_norm_forward
+  - file: ops.py
+    symbol: ops.layer_norm_backward
+usedBy: []
+pdfRef: null
+notes:
+  - The PDF states the result as Eq. 34. contract/PDF_VS_CODE.md lists every equation in the PDF, and these steps are not among them.

@@ -29,6 +29,9 @@ const PAGES = [
   "mathematics/notation-and-shapes",
   "mathematics/tokenization",
   "mathematics/data-pipeline",
+  "mathematics/linear-relu-initialisation",
+  "mathematics/softmax-cross-entropy",
+  "mathematics/layernorm",
 ];
 
 // The h2 sections of a page that show a concept, with the steps in the order they are written.

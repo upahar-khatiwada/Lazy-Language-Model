@@ -1,0 +1,46 @@
+links:
+  - equationId: ln.derive.chain-start
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dXhat = dY * gamma
+    role: implements
+  - equationId: ln.derive.mean
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: mu = X.mean(axis=-1, keepdims=True)
+    role: implements
+  - equationId: ln.derive.var
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: var = ((X - mu) ** 2).mean(axis=-1, keepdims=True)
+    role: implements
+  - equationId: ln.derive.s
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: s = 1.0 / np.sqrt(var + epsilon)
+    role: implements
+  - equationId: ln.derive.xhat
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: Xhat = (X - mu) * s
+    role: implements
+  - equationId: ln.derive.result
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dX = s * (dXhat - dXhat.mean(axis=-1, keepdims=True)
+    role: implements
+  - equationId: ln.derive.result
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: "- Xhat * (dXhat * Xhat).mean(axis=-1, keepdims=True))"
+    role: implements
+  - equationId: ln.derive.parameters
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dgamma = (dY * Xhat).sum(axis=0)
+    role: implements
+  - equationId: ln.derive.parameters
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dbeta = dY.sum(axis=0)
+    role: implements

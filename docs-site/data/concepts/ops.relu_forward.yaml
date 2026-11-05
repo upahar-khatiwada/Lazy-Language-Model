@@ -1,0 +1,48 @@
+id: ops.relu_forward
+title: ReLU
+category: basic-operations
+inventory: [M19]
+status: implemented
+summary: >-
+  ReLU replaces every negative number with 0 and keeps the others. It works element by element, so
+  the shape does not change.
+why: >-
+  It is the only nonlinear step in the feed-forward layer. In general, two linear layers with nothing
+  between them multiply out to a single linear layer.
+equations:
+  - id: relu.forward
+    latex: A_{ti} = \max(0,\, Z_{ti})
+    role: forward
+    label: ReLU, on each entry
+symbols:
+  - symbol: Z
+    meaning: Input. relu_forward calls it X, and ffn_forward passes its Z
+    codeName: X in relu_forward, Z in ffn_forward
+    shape: (T, F)
+  - symbol: A
+    meaning: Output. ffn_forward calls it A. It is not attention weights here
+    codeName: A in ffn_forward
+    shape: (T, F)
+example: null
+shapes:
+  - id: relu-in-feed-forward
+    label: Inside the feed-forward layer
+    stages:
+      - name: Z
+        dims: [T, F]
+      - name: A
+        dims: [T, F]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_forward
+      match: A = relu_forward(Z)
+source:
+  - file: ops.py
+    symbol: ops.relu_forward
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["29"]
+  page: 7
+notes:
+  - The PDF names the argument Z. The code names it X.

@@ -9,6 +9,11 @@ links:
     symbol: ops.softmax_forward
     match: return e / e.sum(axis=-1, keepdims=True)
     role: implements
+  - equationId: softmax.safe
+    file: ops.py
+    symbol: ops.softmax_forward
+    match: e = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    role: implements
   - equationId: softmax.normalize
     file: transformer.py
     symbol: transformer.attention_forward

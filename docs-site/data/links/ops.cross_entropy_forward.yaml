@@ -1,0 +1,36 @@
+links:
+  - equationId: ce.shift
+    file: ops.py
+    symbol: ops.cross_entropy_forward
+    match: z = logits - logits.max(axis=-1, keepdims=True)
+    role: implements
+  - equationId: ce.logp
+    file: ops.py
+    symbol: ops.cross_entropy_forward
+    match: logp = z - np.log(np.exp(z).sum(axis=-1, keepdims=True))
+    role: implements
+  - equationId: ce.loss
+    file: ops.py
+    symbol: ops.cross_entropy_forward
+    match: loss = -logp[np.arange(T), targets].mean()
+    role: implements
+  - equationId: ce.probs
+    file: ops.py
+    symbol: ops.cross_entropy_forward
+    match: return float(loss), np.exp(logp)
+    role: implements
+  - equationId: ce.loss
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: loss, probs = cross_entropy_forward(logits, targets)
+    role: call
+  - equationId: ce.loss
+    file: train.py
+    symbol: train.validation_loss
+    match: loss, _ = cross_entropy_forward(logits, y)
+    role: call
+  - equationId: ce.loss
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_cross_entropy_worked_example
+    match: loss, probs = cross_entropy_forward(logits, targets)
+    role: test

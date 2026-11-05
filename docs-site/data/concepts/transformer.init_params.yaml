@@ -1,0 +1,56 @@
+id: transformer.init_params
+title: Starting values of the parameters
+category: initialization
+inventory: [M14]
+status: implemented
+summary: >-
+  init_params creates every parameter. Each matrix starts from Xavier uniform. Each bias starts at
+  zeros. Each LayerNorm starts with gamma at ones and beta at zeros.
+why: >-
+  Training has to start from somewhere. Zero biases add nothing at first. With gamma at ones and beta
+  at zeros, LayerNorm's output starts out equal to the normalised input.
+equations:
+  - id: init.values
+    latex: W \sim \text{Xavier uniform},\quad b = \mathbf{0},\quad \gamma = \mathbf{1},\quad \beta = \mathbf{0}
+    role: none
+    label: Starting values, by kind of parameter
+symbols:
+  - symbol: W
+    meaning: Any matrix, including both embedding tables and the head
+    codeName: tok_emb, pos_emb, w{q,k,v,o}, ff1_w, ff2_w, head_w
+    shape: two axes
+  - symbol: b
+    meaning: Any bias of a linear layer
+    codeName: b{q,k,v,o}, ff1_b, ff2_b, head_b
+    shape: one axis
+  - symbol: \gamma
+    meaning: LayerNorm scale
+    codeName: ln1_g, ln2_g, lnf_g
+    shape: (d,)
+  - symbol: \beta
+    meaning: LayerNorm shift
+    codeName: ln1_b, ln2_b, lnf_b
+    shape: (d,)
+example: null
+shapes:
+  - id: init-head
+    label: The head's weights and bias
+    stages:
+      - name: head_w
+        dims: [d, V]
+      - name: head_b
+        dims: [V]
+    target:
+      file: transformer.py
+      symbol: transformer.init_params
+      match: p["head_w"], p["head_b"] = xavier_uniform(d, V, rng), np.zeros(V)
+source:
+  - file: transformer.py
+    symbol: transformer.init_params
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: []
+  page: 9
+notes:
+  - All draws come from one generator in order, so a parameter's values depend on what was created before it.

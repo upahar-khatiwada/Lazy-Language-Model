@@ -30,6 +30,7 @@ test("the engine has the expected files", () => {
     "attention.ts",
     "bpe.ts",
     "data.ts",
+    "gradcheck.ts",
     "ops.ts",
     "optim.ts",
     "params.ts",

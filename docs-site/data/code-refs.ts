@@ -7,6 +7,12 @@ import type { CodeTarget } from "@/lib/code-targets";
 const MAIN = { file: "train.py", symbol: "train.main" };
 const TALK = { file: "talk.py", symbol: "talk.main" };
 const FORWARD = { file: "transformer.py", symbol: "transformer.forward" };
+const ATTENTION = { file: "transformer.py", symbol: "transformer.attention_forward" };
+const ATTENTION_BACKWARD = { file: "transformer.py", symbol: "transformer.attention_backward" };
+const FFN = { file: "transformer.py", symbol: "transformer.ffn_forward" };
+const FFN_BACKWARD = { file: "transformer.py", symbol: "transformer.ffn_backward" };
+const BLOCK = { file: "transformer.py", symbol: "transformer.block_forward" };
+const INIT = { file: "transformer.py", symbol: "transformer.init_params" };
 
 export const CODE_REFS: Record<string, CodeTarget> = {
   "train.seed": { ...MAIN, match: "rng = np.random.default_rng(config.seed)" },
@@ -107,6 +113,98 @@ export const CODE_REFS: Record<string, CodeTarget> = {
     symbol: "train.batch_loss_and_grads",
     match: "for x, y in zip(xb, yb):",
   },
+
+  "linear.q": { ...ATTENTION, match: 'Q = Xn @ params[p+"wq"] + params[p+"bq"]' },
+  "linear.k": { ...ATTENTION, match: 'K = Xn @ params[p+"wk"] + params[p+"bk"]' },
+  "linear.v": { ...ATTENTION, match: 'V = Xn @ params[p+"wv"] + params[p+"bv"]' },
+  "linear.out": { ...ATTENTION, match: 'out = O @ params[p + "wo"] + params[p + "bo"]' },
+  "linear.ff1": { ...FFN, match: 'Z = Xn @ params[p + "ff1_w"] + params[p + "ff1_b"]' },
+  "linear.ff2": { ...FFN, match: 'return A @ params[p + "ff2_w"] + params[p + "ff2_b"]' },
+  "linear.head": { ...FORWARD, match: 'logits = Xf @ params["head_w"] + params["head_b"]' },
+  "linear.back-head": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: 'dXf, dW, db = linear_backward(cache["Xf"], params["head_w"], dZ)',
+  },
+  "linear.back-ff2": {
+    ...FFN_BACKWARD,
+    match: 'dA, dW2, db2 = linear_backward(c["A"], params[p + "ff2_w"], dOut)',
+  },
+  "linear.back-ff1": {
+    ...FFN_BACKWARD,
+    match: 'dXn, dW1, db1 = linear_backward(c["Xn"], params[p + "ff1_w"], dZ)',
+  },
+  "linear.back-out": {
+    ...ATTENTION_BACKWARD,
+    match: 'grads\\[p \\+ "wo"\\][\\s\\S]*?params\\[p \\+ "wo"\\]\\.T, H\\)',
+    regex: true,
+  },
+  "linear.back-qkv": {
+    ...ATTENTION_BACKWARD,
+    match: 'grads\\[p \\+ "w" \\+ n\\][\\s\\S]*?params\\[p \\+ "w" \\+ n\\]\\.T',
+    regex: true,
+  },
+  "update.head": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: 'grads["head_w"] += dW',
+  },
+  "update.ff": { ...FFN_BACKWARD, match: 'grads[p + "ff1_w"] += dW1' },
+  "update.lnf": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: 'grads["lnf_g"] += dg',
+  },
+  "update.ce-start": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: "dZ = cross_entropy_backward(probs, targets)",
+  },
+  "update.ff-relu": { ...FFN_BACKWARD, match: 'dZ = relu_backward(c["Z"], dA)' },
+  "update.attention-softmax": { ...ATTENTION_BACKWARD, match: 'dS = softmax_backward(c["A"], dA)' },
+  "update.attention-q": {
+    ...ATTENTION_BACKWARD,
+    match: 'dQh = dS @ c["Kh"] / np.sqrt(dh)',
+  },
+
+  "xavier.tok": { ...INIT, match: '"tok_emb": xavier_uniform(V, d, rng)' },
+  "xavier.head": {
+    ...INIT,
+    match: 'p["head_w"], p["head_b"] = xavier_uniform(d, V, rng), np.zeros(V)',
+  },
+
+  "update.ln2": {
+    file: "transformer.py",
+    symbol: "transformer.block_backward",
+    match: 'grads[p + "ln2_g"] += dg',
+  },
+  "update.residual": {
+    file: "transformer.py",
+    symbol: "transformer.block_backward",
+    match: "return dX1 + dX_branch",
+  },
+
+  "ln.block-first": {
+    ...BLOCK,
+    match:
+      'Xn, c_ln1 = layer_norm_forward(X, params[p + "ln1_g"], params[p + "ln1_b"], cfg.ln_eps)',
+  },
+  "ln.block-second": {
+    ...BLOCK,
+    match:
+      'Xn2, c_ln2 = layer_norm_forward(X1, params[p + "ln2_g"], params[p + "ln2_b"], cfg.ln_eps)',
+  },
+  "ln.final": {
+    ...FORWARD,
+    match: 'Xf, c_lnf = layer_norm_forward(X, params["lnf_g"], params["lnf_b"], cfg.ln_eps)',
+  },
+  "ln.eps-field": {
+    file: "transformer.py",
+    symbol: "transformer.ModelConfig",
+    match: "ln_eps: float = 1e-5",
+  },
+  "ln.eps-default": { file: "ops.py", symbol: "ops.layer_norm_forward", match: "epsilon = 1e-5" },
+  "ln.eps-config": { file: "config.py", symbol: "config.ln_eps", match: "ln_eps      = 1e-5" },
 
   "forward.assert": { ...FORWARD, match: "assert len(ids) <= cfg.context_len" },
   "forward.return": { ...FORWARD, match: "return logits, dict(" },

@@ -3,7 +3,9 @@ title: Softmax
 category: basic-operations
 inventory: [M21]
 status: implemented
-summary: Turns a vector of scores into probabilities along the last axis.
+summary: >-
+  Turns a vector of scores into probabilities along the last axis. The code subtracts the largest
+  score first, so the exponentials cannot overflow.
 why: >-
   Attention uses it to turn scores into weights, and sampling uses it to turn logits into a
   distribution over tokens.
@@ -16,11 +18,19 @@ equations:
     latex: p_i = \frac{e_i}{\sum_k e_k}
     role: forward
     label: Normalize
+  - id: softmax.safe
+    latex: \frac{e^{x_i - c}}{\sum_k e^{x_k - c}} = \frac{e^{-c}\, e^{x_i}}{e^{-c} \sum_k e^{x_k}} = \frac{e^{x_i}}{\sum_k e^{x_k}}
+    role: forward
+    label: Why the shift is safe. The factor from any constant c cancels
 symbols:
   - symbol: x
     meaning: Input scores
     codeName: x
     shape: any; the last axis holds the scores
+  - symbol: c
+    meaning: The constant subtracted. The code uses the largest score
+    codeName: np.max(x, axis=-1, keepdims=True)
+    shape: same as x, with 1 on the last axis
   - symbol: e
     meaning: Shifted exponentials
     codeName: e

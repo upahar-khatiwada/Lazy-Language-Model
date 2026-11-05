@@ -239,10 +239,19 @@ test("a link record cannot store a line number", () => {
 
 describe("real links against the pinned commit", () => {
   const { sha } = loadRepoMeta();
-  const lineAt = (file: string, line: number) =>
-    execFileSync("git", ["show", `${sha}:${file}`], { encoding: "utf-8", maxBuffer: 1 << 24 })
-      .split(/\r?\n/)
-      [line - 1]!.trim();
+  // One git process per file: there are too many links to start one per link.
+  const lines = new Map<string, string[]>();
+  const linesOf = (file: string) => {
+    const known = lines.get(file);
+    if (known) return known;
+    const read = execFileSync("git", ["show", `${sha}:${file}`], {
+      encoding: "utf-8",
+      maxBuffer: 1 << 24,
+    }).split(/\r?\n/);
+    lines.set(file, read);
+    return read;
+  };
+  const lineAt = (file: string, line: number) => linesOf(file)[line - 1]!.trim();
 
   test("every resolved link points at a line holding its match", () => {
     for (const entry of loadLinks()) {
@@ -266,9 +275,13 @@ describe("real links against the pinned commit", () => {
     expect(only.map((line) => lineAt("ops.py", line))).toEqual([
       "e = np.exp(x - np.max(x, axis=-1, keepdims=True))",
     ]);
-    const inline = [...highlightedLines("ops.cross_entropy_forward")];
+    const inline = [...highlightedLines("ops.cross_entropy_forward", "ce.shift")];
     expect(inline.map((line) => lineAt("ops.py", line))).toEqual([
       "z = logits - logits.max(axis=-1, keepdims=True)",
     ]);
+    const declared = [...highlightedLines("ops.cross_entropy_forward")];
+    expect(declared.map((line) => lineAt("ops.py", line))).toContain(
+      "z = logits - logits.max(axis=-1, keepdims=True)",
+    );
   });
 });

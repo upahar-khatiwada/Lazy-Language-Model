@@ -1,0 +1,82 @@
+links:
+  - equationId: linear.partials
+    file: ops.py
+    symbol: ops.linear_backward
+    match: dW = X.T @ dY
+    role: implements
+  - equationId: linear.partials
+    file: ops.py
+    symbol: ops.linear_backward
+    match: db = dY.sum(axis=0)
+    role: implements
+  - equationId: linear.partials
+    file: ops.py
+    symbol: ops.linear_backward
+    match: dX = dY @ W.T
+    role: implements
+  - equationId: linear.dW
+    file: ops.py
+    symbol: ops.linear_backward
+    match: dW = X.T @ dY
+    role: implements
+  - equationId: linear.db
+    file: ops.py
+    symbol: ops.linear_backward
+    match: db = dY.sum(axis=0)
+    role: implements
+  - equationId: linear.dX
+    file: ops.py
+    symbol: ops.linear_backward
+    match: dX = dY @ W.T
+    role: implements
+  - equationId: linear.dW
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "wo"] += c["O"].T @ dOut
+    role: inline
+  - equationId: linear.db
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "bo"] += dOut.sum(axis=0)
+    role: inline
+  - equationId: linear.dX
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dOh = split_heads(dOut @ params[p + "wo"].T, H)
+    role: inline
+  - equationId: linear.dW
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "w" + n] += c["Xn"].T @ dM
+    role: inline
+  - equationId: linear.db
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "b" + n] += dM.sum(axis=0)
+    role: inline
+  - equationId: linear.dX
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dXn += dM @ params[p + "w" + n].T
+    role: inline
+  - equationId: linear.dW
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dA, dW2, db2 = linear_backward(c["A"], params[p + "ff2_w"], dOut)
+    role: call
+  - equationId: linear.dW
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dXn, dW1, db1 = linear_backward(c["Xn"], params[p + "ff1_w"], dZ)
+    role: call
+  - equationId: linear.dW
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: dXf, dW, db = linear_backward(cache["Xf"], params["head_w"], dZ)
+    role: call
+  - equationId: linear.dW
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_linear_worked_example
+    match: linear_backward
+    occurrence: 0
+    role: test

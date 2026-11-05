@@ -1,0 +1,61 @@
+id: ops.softmax_backward
+title: Softmax, backward
+category: basic-operations
+inventory: [M22]
+status: implemented
+summary: >-
+  Given dY, the gradient on softmax's output y, this computes the gradient on its input scores. It is
+  one line, along the last axis.
+why: >-
+  Attention weights come from softmax, so the backward pass must cross it to reach the scores, and
+  from there the query and key parameters.
+equations:
+  - id: softmax.jacobian
+    latex: \frac{\partial y_i}{\partial x_j} = y_i\left(\delta_{ij} - y_j\right)
+    role: backward
+    label: The derivative of softmax. The code never builds this matrix
+  - id: softmax.backward
+    latex: dx_j = y_j\left(dY_j - \sum_i y_i\, dY_i\right)
+    role: backward
+    label: The backward line, which multiplies dY by that derivative
+symbols:
+  - symbol: y
+    meaning: Softmax output from the forward pass
+    codeName: y
+    shape: same as x; the last axis holds the probabilities
+  - symbol: dY
+    meaning: Gradient of the loss on y
+    codeName: dY
+    shape: same as y
+  - symbol: dx
+    meaning: Gradient on the input scores. The function returns it without naming it
+    codeName: dS in attention_backward
+    shape: same as y
+  - symbol: \delta_{ij}
+    meaning: 1 when i equals j, otherwise 0
+    codeName: null
+    shape: scalar
+example: null
+shapes:
+  - id: softmax-backward-attention
+    label: Attention
+    stages:
+      - name: dA
+        dims: [H, T, T]
+      - name: dS
+        dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_backward
+      match: dS = softmax_backward(c["A"], dA)
+source:
+  - file: ops.py
+    symbol: ops.softmax_backward
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["24", "25"]
+  page: 7
+notes:
+  - The PDF names the arguments p and dp. The code names them y and dY.
+  - The loss does not use this function. cross_entropy_backward has its own form.

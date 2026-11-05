@@ -1,0 +1,16 @@
+links:
+  - equationId: relu.forward
+    file: ops.py
+    symbol: ops.relu_forward
+    match: return np.maximum(0.0, X)
+    role: implements
+  - equationId: relu.forward
+    file: transformer.py
+    symbol: transformer.ffn_forward
+    match: A = relu_forward(Z)
+    role: call
+  - equationId: relu.forward
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_relu
+    match: relu_forward(Z)
+    role: test

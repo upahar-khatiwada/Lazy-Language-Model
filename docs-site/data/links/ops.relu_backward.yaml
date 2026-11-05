@@ -1,0 +1,21 @@
+links:
+  - equationId: relu.derivative
+    file: ops.py
+    symbol: ops.relu_backward
+    match: return dA * (Z > 0)
+    role: implements
+  - equationId: relu.backward
+    file: ops.py
+    symbol: ops.relu_backward
+    match: return dA * (Z > 0)
+    role: implements
+  - equationId: relu.backward
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dZ = relu_backward(c["Z"], dA)
+    role: call
+  - equationId: relu.backward
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_relu
+    match: relu_backward(Z, np.ones(4))
+    role: test

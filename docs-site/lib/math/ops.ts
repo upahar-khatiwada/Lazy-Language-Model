@@ -9,6 +9,11 @@ function sumRows(m: Matrix): Vector {
   return Array.from({ length: cols }, (_, c) => sum(m.map((row) => row[c]!)));
 }
 
+// Mirrors ops.xavier_uniform. Only the limit a: the draws themselves come from NumPy's generator.
+export function xavierLimit(fanIn: number, fanOut: number): number {
+  return Math.sqrt(6 / (fanIn + fanOut));
+}
+
 // Mirrors ops.linear_forward. Y = X @ W + b
 export function linearForward(X: Matrix, W: Matrix, b: Vector): Matrix {
   return matmul(X, W).map((row) => row.map((value, c) => value + b[c]!));
@@ -58,15 +63,18 @@ export function softmaxBackwardRows(y: Matrix, dY: Matrix): Matrix {
   return y.map((row, r) => softmaxBackward(row, dY[r]!));
 }
 
+// Mirrors the first two lines of ops.cross_entropy_forward, on one row.
+export function logSoftmax(row: Vector): { z: Vector; logp: Vector } {
+  const top = maximum(row);
+  const z = row.map((value) => value - top);
+  const logTotal = Math.log(sum(z.map(Math.exp)));
+  return { z, logp: z.map((value) => value - logTotal) };
+}
+
 // Mirrors ops.cross_entropy_forward. z = logits - max, logp = z - log(sum exp z),
 // loss = -mean of logp at each target, probs = exp(logp).
 export function crossEntropy(logits: Matrix, targets: number[]) {
-  const logp = logits.map((row) => {
-    const top = maximum(row);
-    const z = row.map((value) => value - top);
-    const logTotal = Math.log(sum(z.map(Math.exp)));
-    return z.map((value) => value - logTotal);
-  });
+  const logp = logits.map((row) => logSoftmax(row).logp);
   const picked = targets.map((target, t) => {
     const value = logp[t]?.[target];
     if (value === undefined) throw new Error(`crossEntropy: no logit at (${t}, ${target})`);
@@ -83,16 +91,21 @@ export function crossEntropyBackward(probs: Matrix, targets: number[]): Matrix {
 
 export type LayerNormCache = { Xhat: Matrix; s: Matrix };
 
-// Mirrors ops.layer_norm_forward. Statistics are per row, across d. s has shape (T, 1), as in Python.
+// Mirrors the first three lines of ops.layer_norm_forward. Each has shape (T, 1), as in Python.
+export function layerNormStats(X: Matrix, epsilon = 1e-5) {
+  const mu = X.map((row) => mean(row));
+  const variance = X.map((row, t) => mean(row.map((value) => (value - mu[t]!) ** 2)));
+  return {
+    mu: mu.map((value) => [value]),
+    var: variance.map((value) => [value]),
+    s: variance.map((value) => [1 / Math.sqrt(value + epsilon)]),
+  };
+}
+
+// Mirrors ops.layer_norm_forward. Statistics are per row, across d.
 export function layerNormForward(X: Matrix, gamma: Vector, beta: Vector, epsilon = 1e-5) {
-  const s: Matrix = [];
-  const Xhat = X.map((row) => {
-    const mu = mean(row);
-    const variance = mean(row.map((value) => (value - mu) ** 2));
-    const scale = 1 / Math.sqrt(variance + epsilon);
-    s.push([scale]);
-    return row.map((value) => (value - mu) * scale);
-  });
+  const { mu, s } = layerNormStats(X, epsilon);
+  const Xhat = X.map((row, t) => row.map((value) => (value - mu[t]![0]!) * s[t]![0]!));
   const Y = Xhat.map((row) => row.map((value, i) => gamma[i]! * value + beta[i]!));
   return { Y, cache: { Xhat, s } satisfies LayerNormCache };
 }
@@ -112,4 +125,19 @@ export function layerNormBackward(dY: Matrix, cache: LayerNormCache, gamma: Vect
     dgamma: sumRows(dY.map((row, t) => row.map((value, i) => value * Xhat[t]![i]!))),
     dbeta: sumRows(dY),
   };
+}
+
+// Mirrors the expression in ops.layer_norm_backward as a matrix: entry (i, j) is the derivative of
+// Xhat[i] with respect to x[j], for one row. The code never builds this matrix; the page's
+// derivation does, and its product with dXhat is the coded dX.
+export function layerNormJacobian(xhat: Vector, s: number): Matrix {
+  const d = xhat.length;
+  return xhat.map((left, i) =>
+    xhat.map((right, j) => s * ((i === j ? 1 : 0) - 1 / d - (left * right) / d)),
+  );
+}
+
+// Mirrors ops.perplexity. exp(loss)
+export function perplexity(loss: number): number {
+  return Math.exp(loss);
 }

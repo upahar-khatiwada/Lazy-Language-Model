@@ -1,0 +1,64 @@
+id: ops.cross_entropy_backward
+title: Cross-entropy, backward
+category: loss
+inventory: [M24]
+status: implemented
+summary: >-
+  Computes dZ, the gradient of the loss on the logits. It copies the probabilities, subtracts 1 at
+  each position's correct token, and divides by T.
+why: >-
+  This is where every gradient starts. dZ goes straight into the backward pass of the head, and the
+  rest of the backward pass follows from there.
+equations:
+  - id: ce.derivative
+    latex: \frac{\partial \ell_t}{\partial \text{logits}_{tv}} = P_{tv} - \mathbf{1}[v = y_t]
+    role: backward
+    label: The derivative of the loss at one position
+  - id: ce.backward
+    latex: dZ = \frac{P - E_y}{T}
+    role: backward
+    label: The combined backward, where E_y is one-hot at each correct token
+symbols:
+  - symbol: P
+    meaning: The probabilities cross_entropy_forward returned
+    codeName: probs
+    shape: (T, V)
+  - symbol: E_y
+    meaning: One-hot rows, with 1 at each position's correct token. The code subtracts in place and never builds this array
+    codeName: null
+    shape: (T, V)
+  - symbol: \ell_t
+    meaning: The loss at one position, before the mean
+    codeName: null
+    shape: scalar
+  - symbol: dZ
+    meaning: Gradient of the loss on the logits
+    codeName: dZ
+    shape: (T, V)
+  - symbol: T
+    meaning: Positions in this sequence
+    codeName: T
+    shape: scalar
+example: null
+shapes:
+  - id: cross-entropy-backward
+    label: The start of the backward pass
+    stages:
+      - name: probs
+        dims: [T, V]
+      - name: dZ
+        dims: [T, V]
+    target:
+      file: transformer.py
+      symbol: transformer.loss_and_grads
+      match: dZ = cross_entropy_backward(probs, targets)
+source:
+  - file: ops.py
+    symbol: ops.cross_entropy_backward
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["27", "28"]
+  page: 7
+notes:
+  - The PDF also shows the same gradient reached through softmax backward. The code does not take that route.

@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { NAV } from "../../data/nav";
@@ -10,6 +10,15 @@ const TOKENIZATION = "/mathematics/tokenization/";
 const WRITTEN = readdirSync("content", { recursive: true, encoding: "utf-8" }).filter(
   (path) => path.endsWith(".mdx") && !path.startsWith("_"),
 ).length;
+
+const isWritten = (slug: string) => existsSync(`content/${slug}.mdx`);
+const NAV_PAGES = NAV.flatMap((group) => group.pages);
+const NAV_FIRST_UNWRITTEN = NAV_PAGES.find(({ slug }) => !isWritten(slug))!.title;
+const LAST_WRITTEN_MATHEMATICS = `/${
+  NAV.find(({ title }) => title === "Mathematics")!
+    .pages.filter(({ slug }) => isWritten(slug))
+    .at(-1)!.slug
+}/`;
 
 const repoMeta = JSON.parse(readFileSync("data/generated/repo-meta.json", "utf-8")) as {
   sha: string;
@@ -95,7 +104,7 @@ test.describe("desktop, 1280px", () => {
     // Only written pages are links; all the others are disabled.
     await expect(nav.getByRole("link")).toHaveCount(WRITTEN);
     const disabled = nav.locator('[aria-disabled="true"]');
-    await expect(disabled.first()).toContainText("Linear / ReLU / Initialisation");
+    await expect(disabled.first()).toContainText(NAV_FIRST_UNWRITTEN);
     await expect(nav.getByText("gradcheck.py")).toBeVisible();
     await expect(nav.getByRole("link", { name: /design/i })).toHaveCount(0);
     expect(await disabled.count()).toBe(NAV.flatMap((group) => group.pages).length - WRITTEN);
@@ -124,10 +133,10 @@ test.describe("desktop, 1280px", () => {
     await pager.getByRole("link", { name: /Notation & Shapes/ }).click();
     await expect(page).toHaveURL(/\/mathematics\/notation-and-shapes\/$/);
 
-    // Linear / ReLU / Initialisation comes next after Data Pipeline, but it is not written, so the
-    // pager skips every unwritten page up to the next written one.
-    await page.goto("/mathematics/data-pipeline/");
-    await expect(pager.getByRole("link", { name: /Linear/ })).toHaveCount(0);
+    // The next page in the navigation may not be written. The pager skips every unwritten page up
+    // to the next written one.
+    await page.goto(LAST_WRITTEN_MATHEMATICS);
+    await expect(pager.getByRole("link", { name: new RegExp(NAV_FIRST_UNWRITTEN) })).toHaveCount(0);
     await pager.getByRole("link", { name: /Mathematics Reference/ }).click();
     await expect(page).toHaveURL(/\/reference\/mathematics\/$/);
   });

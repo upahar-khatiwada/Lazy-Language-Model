@@ -1,0 +1,21 @@
+links:
+  - equationId: xavier.limit
+    file: ops.py
+    symbol: ops.xavier_uniform
+    match: a = np.sqrt(6.0 / (fan_in + fan_out))
+    role: implements
+  - equationId: xavier.sample
+    file: ops.py
+    symbol: ops.xavier_uniform
+    match: return rng.uniform(-a, a, size=(fan_in, fan_out))
+    role: implements
+  - equationId: xavier.variance
+    file: ops.py
+    symbol: ops.xavier_uniform
+    match: a = np.sqrt(6.0 / (fan_in + fan_out))
+    role: implements
+  - equationId: xavier.limit
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_xavier_bound
+    match: assert np.abs(W).max() <= np.sqrt(6 / 64)
+    role: test

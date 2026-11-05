@@ -1,0 +1,80 @@
+id: ops.xavier_uniform
+title: Xavier uniform initialisation
+category: initialization
+inventory: [M13]
+status: implemented
+summary: >-
+  Fills a new weight matrix with random numbers drawn evenly between -a and a, where a depends on the
+  matrix's two sizes.
+why: >-
+  In general, weights need random starting values, or every unit in a layer would compute the same
+  thing, and a limit like this one aims to keep signals at a similar size as they pass through a
+  layer. This repository does not measure that.
+equations:
+  - id: xavier.limit
+    latex: a = \sqrt{\frac{6}{\text{fan\_in} + \text{fan\_out}}}
+    role: none
+    label: The limit
+  - id: xavier.sample
+    latex: W_{ij} \sim U[-a,\, a]
+    role: none
+    label: Each entry is drawn evenly between -a and a
+  - id: xavier.variance
+    latex: \operatorname{Var}(W_{ij}) = \frac{a^2}{3} = \frac{2}{\text{fan\_in} + \text{fan\_out}}
+    role: none
+    label: The variance this gives. The code sets a and never computes this
+symbols:
+  - symbol: \text{fan\_in}
+    meaning: Rows of the matrix
+    codeName: fan_in
+    shape: scalar
+  - symbol: \text{fan\_out}
+    meaning: Columns of the matrix
+    codeName: fan_out
+    shape: scalar
+  - symbol: a
+    meaning: The limit
+    codeName: a
+    shape: scalar
+  - symbol: W
+    meaning: The new matrix. The function returns it without naming it
+    codeName: null
+    shape: (fan_in, fan_out)
+  - symbol: U
+    meaning: The uniform distribution, drawn by the generator passed in
+    codeName: rng.uniform
+    shape: (fan_in, fan_out)
+example: null
+shapes:
+  - id: xavier-attention
+    label: A query, key, value or output matrix
+    stages:
+      - name: fan_in, fan_out
+        dims: [d, d]
+      - name: w{q,k,v,o}
+        dims: [d, d]
+    target:
+      file: transformer.py
+      symbol: transformer.init_params
+      match: p[b + "w" + n] = xavier_uniform(d, d, rng)
+  - id: xavier-feed-forward
+    label: The first feed-forward matrix
+    stages:
+      - name: fan_in, fan_out
+        dims: [d, F]
+      - name: ff1_w
+        dims: [d, F]
+    target:
+      file: transformer.py
+      symbol: transformer.init_params
+      match: p[b + "ff1_w"], p[b + "ff1_b"] = xavier_uniform(d, F, rng), np.zeros(F)
+source:
+  - file: ops.py
+    symbol: ops.xavier_uniform
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["35", "36"]
+  page: 7
+notes:
+  - The embedding tables use it too. The PDF contrasts this with another project's scheme, which this code does not use.

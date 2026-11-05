@@ -86,6 +86,10 @@
   white-space: pre;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
 .status {
   font-size: var(--fs-sm);
   min-height: 1.5em;

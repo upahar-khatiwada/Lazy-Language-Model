@@ -27,6 +27,7 @@ import pandas as pd  # noqa: E402
 import config  # noqa: E402
 import data  # noqa: E402
 import generate  # noqa: E402
+import gradcheck  # noqa: E402
 import ops  # noqa: E402
 import optim  # noqa: E402
 import tokenizer  # noqa: E402
@@ -140,6 +141,18 @@ LN_G = arr([1.0, 0.5, 2.0, -1.0])
 LN_B = arr([0.0, 0.25, -0.5, 1.0])
 LN_DY = arr([[0.1, -0.2, 0.3, 0.4], [1.0, 0.5, -0.5, 0.0], [0.2, 0.2, -0.1, 0.3]])
 
+# tests/test_ops.py uses these values. They start the examples on the operations pages.
+TEST_X = arr([[1.0, 2.0], [0.0, 1.0]])
+TEST_W = arr([[1.0, 0.0, 2.0], [-1.0, 1.0, 0.0]])
+TEST_B = arr([0.0, 1.0, -1.0])
+TEST_DY = arr([[1.0, 0.0, 1.0], [0.0, 2.0, -1.0]])
+TEST_Z = arr([[-1.0, 2.0, 0.0, 3.0]])
+TEST_LOGITS = arr([[2.0, 1.0, 0.0]])
+TEST_LN_X = arr([[1.0, 2.0, 3.0, 6.0]])
+TEST_LN_G = arr([1.0, 1.0, 2.0, 2.0])
+TEST_LN_B = arr([0.0, 0.0, 0.0, 1.0])
+TEST_LN_DY = arr([[1.0, 0.0, 0.0, 1.0]])
+
 
 def softmax_case(case_id, x):
     x = arr(x)
@@ -148,13 +161,13 @@ def softmax_case(case_id, x):
 
 def cross_entropy_cases(case_id, logits, targets):
     targets = np.array(targets)
-    loss, probs = ops.cross_entropy_forward(logits, targets)
+    (loss, probs), history = traced(ops.cross_entropy_forward, ["z", "logp"], logits, targets)
     return [
         case(
             case_id,
             "ops.cross_entropy_forward",
             {"logits": logits, "targets": targets},
-            {"loss": loss, "probs": probs},
+            {"loss": loss, "probs": probs, "z": history["z"][-1], "logp": history["logp"][-1]},
         ),
         case(
             f"{case_id}.backward",
@@ -165,19 +178,24 @@ def cross_entropy_cases(case_id, logits, targets):
     ]
 
 
-def layer_norm_cases(case_id, epsilon):
+def layer_norm_cases(case_id, epsilon=None, X=LN_X, gamma=LN_G, beta=LN_B, dY=LN_DY):
     keyword = {} if epsilon is None else {"epsilon": epsilon}
-    Y, (Xhat, s) = ops.layer_norm_forward(LN_X, LN_G, LN_B, **keyword)
-    dX, dgamma, dbeta = ops.layer_norm_backward(LN_DY, (Xhat, s), LN_G)
-    inputs = {"X": LN_X, "gamma": LN_G, "beta": LN_B}
+    (Y, (Xhat, s)), history = traced(ops.layer_norm_forward, ["mu", "var"], X, gamma, beta, **keyword)
+    dX, dgamma, dbeta = ops.layer_norm_backward(dY, (Xhat, s), gamma)
+    inputs = {"X": X, "gamma": gamma, "beta": beta}
     if epsilon is not None:
         inputs["epsilon"] = epsilon
     return [
-        case(case_id, "ops.layer_norm_forward", inputs, {"Y": Y, "Xhat": Xhat, "s": s}),
+        case(
+            case_id,
+            "ops.layer_norm_forward",
+            inputs,
+            {"Y": Y, "Xhat": Xhat, "s": s, "mu": history["mu"][-1], "var": history["var"][-1]},
+        ),
         case(
             f"{case_id}.backward",
             "ops.layer_norm_backward",
-            {"dY": LN_DY, "Xhat": Xhat, "s": s, "gamma": LN_G},
+            {"dY": dY, "Xhat": Xhat, "s": s, "gamma": gamma},
             {"dX": dX, "dgamma": dgamma, "dbeta": dbeta},
         ),
     ]
@@ -196,6 +214,113 @@ def matmul_cases(case_id, X, W, b):
     ]
 
 
+def linear_cases(case_id, X, W, b, dY):
+    """Everything the playground shows: X @ W, Y and the backward results for one dY."""
+    dX, dW, db = ops.linear_backward(X, W, dY)
+    return [
+        *matmul_cases(case_id, X, W, b),
+        case(f"{case_id}.backward", "ops.linear_backward", {"X": X, "W": W, "dY": dY}, {"dX": dX, "dW": dW, "db": db}),
+    ]
+
+
+def perplexity_case(case_id, loss):
+    return case(case_id, "ops.perplexity", {"loss": loss}, {"perplexity": ops.perplexity(loss)})
+
+
+def xavier_case(case_id, fan_in, fan_out, keep_sample=False):
+    W, history = traced(ops.xavier_uniform, ["a"], fan_in, fan_out, np.random.default_rng(config.seed))
+    a = history["a"][-1]
+    outputs = {
+        "a": a,
+        "shape": list(W.shape),
+        "low": W.min(),
+        "high": W.max(),
+        "within": bool(np.abs(W).max() <= a),
+    }
+    if keep_sample:
+        outputs["sample"] = W
+    return case(
+        case_id,
+        "ops.xavier_uniform",
+        {"fan_in": fan_in, "fan_out": fan_out, "seed": config.seed},
+        outputs,
+    )
+
+
+def init_params_case(case_id, V, Tmax, d, H, F, L):
+    cfg = transformer.ModelConfig(V, Tmax, d, H, F, L)
+    params = transformer.init_params(cfg, np.random.default_rng(config.seed))
+    return case(
+        case_id,
+        "transformer.init_params",
+        {"V": V, "Tmax": Tmax, "d": d, "H": H, "F": F, "L": L, "seed": config.seed},
+        {
+            "rows": [
+                {"name": name, "shape": list(value.shape), "low": value.min(), "high": value.max()}
+                for name, value in params.items()
+            ]
+        },
+    )
+
+
+def numeric(f, x):
+    """The real numerical_grad, which works in place on x, on a copy."""
+    return gradcheck.numerical_grad(f, np.array(x, dtype=float))
+
+
+def gradcheck_cases(linear, cross_entropy, layer_norm):
+    """Central differences from the real gradcheck.numerical_grad, on the real forward functions.
+
+    A backward function takes dY, the gradient on its output, and no loss. So the scalar here is
+    (Y * dY).sum(), whose gradient on Y is exactly dY.
+    """
+    X, W, b, dY = linear
+    logits, targets = cross_entropy
+    Xn, gamma, beta, dYn = layer_norm
+    targets = np.array(targets)
+    row = Xn[0]
+    d = len(row)
+    unit_gamma, zero_beta = np.ones(d), np.zeros(d)
+
+    def xhat(v, i):
+        return ops.layer_norm_forward(v, unit_gamma, zero_beta)[1][0][i]
+
+    return [
+        case(
+            "gradcheck.linear",
+            "gradcheck.numerical_grad",
+            {"problem": "linear", "X": X, "W": W, "b": b, "dY": dY},
+            {
+                "dX": numeric(lambda v: float((ops.linear_forward(v, W, b) * dY).sum()), X),
+                "dW": numeric(lambda v: float((ops.linear_forward(X, v, b) * dY).sum()), W),
+                "db": numeric(lambda v: float((ops.linear_forward(X, W, v) * dY).sum()), b),
+            },
+        ),
+        case(
+            "gradcheck.cross_entropy",
+            "gradcheck.numerical_grad",
+            {"problem": "cross_entropy", "logits": logits, "targets": targets},
+            {"dZ": numeric(lambda v: ops.cross_entropy_forward(v, targets)[0], logits)},
+        ),
+        case(
+            "gradcheck.layer_norm",
+            "gradcheck.numerical_grad",
+            {"problem": "layer_norm", "X": Xn, "gamma": gamma, "beta": beta, "dY": dYn},
+            {
+                "dX": numeric(lambda v: float((ops.layer_norm_forward(v, gamma, beta)[0] * dYn).sum()), Xn),
+                "dgamma": numeric(lambda v: float((ops.layer_norm_forward(Xn, v, beta)[0] * dYn).sum()), gamma),
+                "dbeta": numeric(lambda v: float((ops.layer_norm_forward(Xn, gamma, v)[0] * dYn).sum()), beta),
+            },
+        ),
+        case(
+            "gradcheck.layer_norm_jacobian",
+            "gradcheck.numerical_grad",
+            {"problem": "layer_norm_jacobian", "x": row},
+            {"J": [numeric(lambda v: float(xhat(v, i)), row) for i in range(d)]},
+        ),
+    ]
+
+
 def ops_cases():
     edited_x = MATMUL_X.copy()
     edited_x[0, 0] = 2.0
@@ -207,6 +332,13 @@ def ops_cases():
     y_rows = ops.softmax_forward(LOGITS)
     dY_vec = arr([0.5, -1.0, 2.0])
     dY_rows = arr([[0.5, -1.0, 2.0], [1.0, 1.0, -3.0]])
+    test_dp = arr([[1.0, 0.0, 0.0], [0.0, 2.0, -1.0]])
+    test_y = ops.softmax_forward(arr([[2.0, 1.0, 0.0], [0.0, 3.0, 1.0]]))
+    edited_lin_x = TEST_X.copy()
+    edited_lin_x[0, 0] = 3.0
+    edited_lin_dy = TEST_DY.copy()
+    edited_lin_dy[1, 2] = 2.0
+    d, F = config.emb_dim, config.ff_dim
     return [
         case(
             "linear_forward.basic",
@@ -257,6 +389,65 @@ def ops_cases():
         *matmul_cases("matmul.two_columns", MATMUL_X, MATMUL_W[:, :2], MATMUL_B[:2]),
         *matmul_cases("matmul.three_columns", MATMUL_X, MATMUL_W, MATMUL_B),
         *matmul_cases("matmul.edited_cell", edited_x, MATMUL_W[:, :2], MATMUL_B[:2]),
+        # The playground on the Linear page: its start, an edit, and the two-column choice.
+        *linear_cases("linear.test_file", TEST_X, TEST_W, TEST_B, TEST_DY),
+        *linear_cases("linear.edited", edited_lin_x, TEST_W, TEST_B, edited_lin_dy),
+        *linear_cases("linear.two_columns", TEST_X, TEST_W[:, :2], TEST_B[:2], TEST_DY[:, :2]),
+        case("relu_forward.test_file", "ops.relu_forward", {"X": TEST_Z}, {"Y": ops.relu_forward(TEST_Z)}),
+        case(
+            "relu_backward.test_file",
+            "ops.relu_backward",
+            {"Z": TEST_Z, "dA": np.ones_like(TEST_Z)},
+            {"dZ": ops.relu_backward(TEST_Z, np.ones_like(TEST_Z))},
+        ),
+        # Sizes from config.py. V depends on the corpus, so tok_emb and the head have no row here.
+        xavier_case("xavier.tiny", 2, 3, keep_sample=True),
+        xavier_case("xavier.attention", d, d),
+        xavier_case("xavier.feed_forward_in", d, F),
+        xavier_case("xavier.feed_forward_out", F, d),
+        xavier_case("xavier.position_table", config.context_len, d),
+        init_params_case("init_params.tiny", 5, 3, 4, 2, 6, 1),
+        # Equal gaps give equal probabilities, wherever the numbers sit.
+        softmax_case("softmax_forward.basic_moved", [-3.0, -4.0, -5.0]),
+        softmax_case("softmax_forward.small_same_gaps", [0.0, 1.0, 2.0]),
+        case(
+            "softmax_backward.test_file",
+            "ops.softmax_backward",
+            {"y": test_y, "dY": test_dp},
+            {"dx": ops.softmax_backward(test_y, test_dp)},
+        ),
+        *cross_entropy_cases("cross_entropy.test_file", TEST_LOGITS, [0]),
+        *cross_entropy_cases("cross_entropy.lab_target_1", TEST_LOGITS, [1]),
+        *cross_entropy_cases("cross_entropy.lab_target_2", TEST_LOGITS, [2]),
+        *cross_entropy_cases("cross_entropy.lab_edited", arr([[3.0, 1.0, 0.0]]), [1]),
+        *cross_entropy_cases("cross_entropy.mean_over_positions", np.zeros((4, 5)), [0, 1, 2, 3]),
+        *cross_entropy_cases("cross_entropy.extreme", arr([[1000.0, 0.0, -1000.0]]), [2]),
+        perplexity_case("perplexity.test_file", float(np.log(300))),
+        perplexity_case("perplexity.uniform_five", float(np.log(5))),
+        perplexity_case("perplexity.basic_loss", ops.cross_entropy_forward(LOGITS, np.array([0, 2]))[0]),
+        *layer_norm_cases("layer_norm.test_file", None, TEST_LN_X, TEST_LN_G, TEST_LN_B, TEST_LN_DY),
+        *layer_norm_cases(
+            "layer_norm.edited",
+            None,
+            arr([[2.0, 2.0, 3.0, 6.0]]),
+            arr([1.0, 1.0, 1.0, 2.0]),
+            arr([0.0, 1.0, 0.0, 1.0]),
+            TEST_LN_DY,
+        ),
+        # With no spread in the row, var is 0 and only epsilon keeps s finite.
+        *layer_norm_cases(
+            "layer_norm.constant_row",
+            None,
+            arr([[4.0, 4.0, 4.0, 4.0]]),
+            TEST_LN_G,
+            TEST_LN_B,
+            TEST_LN_DY,
+        ),
+        *gradcheck_cases(
+            (TEST_X, TEST_W, TEST_B, TEST_DY),
+            (LOGITS, [0, 2]),
+            (TEST_LN_X, TEST_LN_G, TEST_LN_B, TEST_LN_DY),
+        ),
     ]
 
 

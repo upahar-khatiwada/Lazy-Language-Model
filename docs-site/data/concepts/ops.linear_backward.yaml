@@ -1,0 +1,138 @@
+id: ops.linear_backward
+title: Linear layer, backward
+category: basic-operations
+inventory: [M18]
+status: implemented
+summary: >-
+  Given dY, the gradient of the loss on a linear layer's output, this computes three gradients. They
+  are dW for the weights, db for the bias and dX for the input.
+why: >-
+  dW and db are what the optimizer needs to update this layer's parameters. dX is what the layer
+  before this one receives as its own dY, so the backward pass can continue.
+equations:
+  - id: linear.partials
+    latex: >-
+      \frac{\partial Y_{tj}}{\partial W_{kj}} = X_{tk},\quad
+      \frac{\partial Y_{tj}}{\partial b_{j}} = 1,\quad
+      \frac{\partial Y_{tj}}{\partial X_{tk}} = W_{kj}
+    role: backward
+    label: The derivatives of one output entry
+    derived: true
+  - id: linear.dW
+    latex: dW = X^{\top} dY
+    role: backward
+    label: Gradient on the weights
+  - id: linear.db
+    latex: db = \sum_{t} dY_{t}
+    role: backward
+    label: Gradient on the bias, the sum of dY over rows
+  - id: linear.dX
+    latex: dX = dY\, W^{\top}
+    role: backward
+    label: Gradient on the input
+symbols:
+  - symbol: dY
+    meaning: Gradient of the loss on the output Y. The caller supplies it
+    codeName: dY
+    shape: (T, c)
+  - symbol: X
+    meaning: The input from the forward pass, kept in a cache
+    codeName: X
+    shape: (T, a)
+  - symbol: W
+    meaning: The weight matrix
+    codeName: W
+    shape: (a, c)
+  - symbol: dW
+    meaning: Gradient on the weights
+    codeName: dW
+    shape: (a, c)
+  - symbol: db
+    meaning: Gradient on the bias
+    codeName: db
+    shape: (c,)
+  - symbol: dX
+    meaning: Gradient on the input, passed to the previous layer
+    codeName: dX
+    shape: (T, a)
+example: null
+shapes:
+  - id: backward-head
+    label: Linear head
+    stages:
+      - name: dZ
+        dims: [T, V]
+      - name: dW
+        dims: [d, V]
+      - name: db
+        dims: [V]
+      - name: dXf
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.loss_and_grads
+      match: dXf, dW, db = linear_backward(cache["Xf"], params["head_w"], dZ)
+  - id: backward-second-feed-forward
+    label: Second feed-forward layer
+    stages:
+      - name: dOut
+        dims: [T, d]
+      - name: dW2
+        dims: [F, d]
+      - name: db2
+        dims: [d]
+      - name: dA
+        dims: [T, F]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_backward
+      match: dA, dW2, db2 = linear_backward(c["A"], params[p + "ff2_w"], dOut)
+  - id: backward-first-feed-forward
+    label: First feed-forward layer
+    stages:
+      - name: dZ
+        dims: [T, F]
+      - name: dW1
+        dims: [d, F]
+      - name: db1
+        dims: [F]
+      - name: dXn
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_backward
+      match: dXn, dW1, db1 = linear_backward(c["Xn"], params[p + "ff1_w"], dZ)
+source:
+  - file: ops.py
+    symbol: ops.linear_backward
+usedBy:
+  - file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "wo"] += c["O"].T @ dOut
+    note: dW for the attention output.
+  - file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "bo"] += dOut.sum(axis=0)
+    note: db for the attention output.
+  - file: transformer.py
+    symbol: transformer.attention_backward
+    match: dOh = split_heads(dOut @ params[p + "wo"].T, H)
+    note: dX for the attention output, before it is split into heads.
+  - file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "w" + n] += c["Xn"].T @ dM
+    note: dW for query, key and value, in a loop.
+  - file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "b" + n] += dM.sum(axis=0)
+    note: db for query, key and value.
+  - file: transformer.py
+    symbol: transformer.attention_backward
+    match: dXn += dM @ params[p + "w" + n].T
+    note: dX for query, key and value, added together.
+pdfRef:
+  section: "4.3"
+  equations: ["20", "21", "22"]
+  page: 6
+notes:
+  - The function returns dX, dW, db in that order. The callers name them to suit the layer.

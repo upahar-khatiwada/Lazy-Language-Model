@@ -1,0 +1,16 @@
+links:
+  - equationId: perplexity.value
+    file: ops.py
+    symbol: ops.perplexity
+    match: return float(np.exp(loss))
+    role: implements
+  - equationId: perplexity.value
+    file: train.py
+    symbol: train.main
+    match: perplexity(v)
+    role: call
+  - equationId: perplexity.value
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_perplexity_of_uniform_is_vocab_size
+    match: perplexity(np.log(300))
+    role: test

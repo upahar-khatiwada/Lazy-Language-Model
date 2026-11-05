@@ -1,0 +1,21 @@
+links:
+  - equationId: softmax.jacobian
+    file: ops.py
+    symbol: ops.softmax_backward
+    match: return y * (dY - np.sum(y * dY, axis=-1, keepdims=True))
+    role: implements
+  - equationId: softmax.backward
+    file: ops.py
+    symbol: ops.softmax_backward
+    match: return y * (dY - np.sum(y * dY, axis=-1, keepdims=True))
+    role: implements
+  - equationId: softmax.backward
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dS = softmax_backward(c["A"], dA)
+    role: call
+  - equationId: softmax.backward
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_softmax_backward_rows_sum_to_zero
+    match: dz = softmax_backward(p, dp)
+    role: test

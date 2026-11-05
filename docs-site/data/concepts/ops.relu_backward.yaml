@@ -1,0 +1,63 @@
+id: ops.relu_backward
+title: ReLU, backward
+category: basic-operations
+inventory: [M20]
+status: implemented
+summary: >-
+  Given dA, the gradient on ReLU's output, this computes dZ, the gradient on its input. It keeps dA
+  where the input was positive and sets every other entry to 0.
+why: >-
+  The backward pass has to cross ReLU to reach the first feed-forward layer. Where the input is
+  negative, a small change to it does not change the output, so no gradient passes back.
+equations:
+  - id: relu.derivative
+    latex: >-
+      \frac{\partial A_{ti}}{\partial Z_{ti}} =
+      \begin{cases} 1 & Z_{ti} > 0 \\ 0 & Z_{ti} \le 0 \end{cases}
+    role: backward
+    label: The derivative as the code uses it, with 0 at exactly Z = 0
+    derived: true
+  - id: relu.backward
+    latex: dZ = dA \odot \mathbf{1}[Z > 0]
+    role: backward
+    label: The mask-based backward
+symbols:
+  - symbol: dA
+    meaning: Gradient of the loss on ReLU's output
+    codeName: dA
+    shape: (T, F)
+  - symbol: Z
+    meaning: ReLU's input from the forward pass, kept in the cache
+    codeName: Z
+    shape: (T, F)
+  - symbol: \mathbf{1}[Z > 0]
+    meaning: The mask. NumPy multiplies its True and False as 1 and 0
+    codeName: (Z > 0)
+    shape: (T, F)
+  - symbol: dZ
+    meaning: Gradient on ReLU's input. The function returns it without naming it
+    codeName: dZ in ffn_backward
+    shape: (T, F)
+example: null
+shapes:
+  - id: relu-backward-in-feed-forward
+    label: Inside the feed-forward backward
+    stages:
+      - name: dA
+        dims: [T, F]
+      - name: dZ
+        dims: [T, F]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_backward
+      match: dZ = relu_backward(c["Z"], dA)
+source:
+  - file: ops.py
+    symbol: ops.relu_backward
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["29"]
+  page: 7
+notes:
+  - ReLU has no derivative at exactly 0. The strict > in the code gives it 0, and test_relu asserts this.

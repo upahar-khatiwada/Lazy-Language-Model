@@ -1,0 +1,34 @@
+id: ops.perplexity
+title: Perplexity
+category: loss
+inventory: [M27]
+status: implemented
+summary: >-
+  The exponential of the loss. train.py prints it once per epoch, next to the validation loss, and
+  nothing else reads it.
+why: >-
+  The model does not need it: it is not part of the loss or the update. It is a printed number that is
+  easier to read than a log value. In general, it can be read as the number of equally likely tokens
+  that would give the same loss.
+equations:
+  - id: perplexity.value
+    latex: \text{perplexity} = e^{L}
+    role: none
+    label: Perplexity
+symbols:
+  - symbol: L
+    meaning: A loss. train.main passes the validation loss
+    codeName: loss in perplexity, v in train.main
+    shape: scalar
+example: null
+shapes: []
+source:
+  - file: ops.py
+    symbol: ops.perplexity
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: []
+  page: 7
+notes:
+  - The per-step log in train.main prints the training loss with no perplexity.

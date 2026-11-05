@@ -40,6 +40,8 @@ const EquationSchema = z.strictObject({
   // "none" is for operations outside differentiation: MATH_INVENTORY.md marks those "n/a".
   role: z.enum(["forward", "backward", "none"]),
   label: text,
+  // A step the code implies and the PDF does not state, inside a concept that is otherwise Implemented.
+  derived: z.literal(true).optional(),
 });
 
 const SymbolSchema = z.strictObject({

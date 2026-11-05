@@ -26,15 +26,24 @@ import {
   crossEntropyBackward,
   layerNormBackward,
   layerNormForward,
+  layerNormStats,
   linearBackward,
   linearForward,
+  logSoftmax,
+  perplexity,
   relu,
   reluBackward,
   softmax,
   softmaxBackward,
   softmaxBackwardRows,
   softmaxRows,
+  xavierLimit,
 } from "@/lib/math/ops";
+import {
+  numericalGrad,
+  numericalGradVector as row,
+  outputDot as dotted,
+} from "@/lib/math/gradcheck";
 import {
   adamStep,
   clipGradNorm,
@@ -186,7 +195,13 @@ const RUNNERS: Record<string, Runner> = {
     check(item, { dx });
   },
   "ops.cross_entropy_forward": (item) => {
-    check(item, crossEntropy(item.inputs.logits as Matrix, item.inputs.targets as number[]));
+    const logits = item.inputs.logits as Matrix;
+    const steps = logits.map(logSoftmax);
+    check(item, {
+      ...crossEntropy(logits, item.inputs.targets as number[]),
+      z: steps.map(({ z }) => z),
+      logp: steps.map(({ logp }) => logp),
+    });
   },
   "ops.cross_entropy_backward": (item) => {
     check(item, {
@@ -201,7 +216,8 @@ const RUNNERS: Record<string, Runner> = {
       epsilon?: number;
     };
     const { Y, cache } = layerNormForward(X, gamma, beta, epsilon);
-    check(item, { Y, Xhat: cache.Xhat, s: cache.s });
+    const { mu, var: variance } = layerNormStats(X, epsilon);
+    check(item, { Y, Xhat: cache.Xhat, s: cache.s, mu, var: variance });
   },
   "ops.layer_norm_backward": (item) => {
     const { dY, Xhat, s, gamma } = item.inputs as {
@@ -211,6 +227,76 @@ const RUNNERS: Record<string, Runner> = {
       gamma: Vector;
     };
     check(item, layerNormBackward(dY, { Xhat, s }, gamma));
+  },
+  "ops.perplexity": (item) => {
+    check(item, { perplexity: perplexity(item.inputs.loss as number) });
+  },
+  // The draws come from NumPy's generator and have no mirror. The limit and the bound are checked.
+  "ops.xavier_uniform": (item) => {
+    const { fan_in, fan_out } = item.inputs as { fan_in: number; fan_out: number };
+    const { a, low, high, shape, within } = item.outputs as {
+      a: number;
+      low: number;
+      high: number;
+      shape: number[];
+      within: boolean;
+    };
+    expectClose(xavierLimit(fan_in, fan_out), a, `${item.id}.a`);
+    expect(shape).toEqual([fan_in, fan_out]);
+    expect(within).toBe(true);
+    expect(Math.max(Math.abs(low), Math.abs(high))).toBeLessThanOrEqual(a);
+  },
+  "transformer.init_params": (item) => {
+    const rows = item.outputs.rows as {
+      name: string;
+      shape: number[];
+      low: number;
+      high: number;
+    }[];
+    expect(rows.length).toBeGreaterThan(0);
+    for (const { name, shape, low, high } of rows) {
+      if (shape.length === 2) {
+        const limit = xavierLimit(shape[0]!, shape[1]!);
+        expect(Math.max(Math.abs(low), Math.abs(high)), name).toBeLessThanOrEqual(limit);
+        expect(high, name).toBeGreaterThan(low);
+      } else {
+        expect(low, name).toBe(high);
+        expect(low, name).toBe(/_g$/.test(name) ? 1 : 0);
+      }
+    }
+  },
+  "gradcheck.numerical_grad": (item) => {
+    const inputs = item.inputs as Record<string, unknown>;
+    if (inputs.problem === "linear") {
+      const { X, W, b, dY } = inputs as { X: Matrix; W: Matrix; b: Vector; dY: Matrix };
+      check(item, {
+        dX: numericalGrad((v) => dotted(linearForward(v, W, b), dY), X),
+        dW: numericalGrad((v) => dotted(linearForward(X, v, b), dY), W),
+        db: row((v) => dotted(linearForward(X, W, v), dY), b),
+      });
+    } else if (inputs.problem === "cross_entropy") {
+      const { logits, targets } = inputs as { logits: Matrix; targets: number[] };
+      check(item, { dZ: numericalGrad((v) => crossEntropy(v, targets).loss, logits) });
+    } else if (inputs.problem === "layer_norm") {
+      const { X, gamma, beta, dY } = inputs as {
+        X: Matrix;
+        gamma: Vector;
+        beta: Vector;
+        dY: Matrix;
+      };
+      check(item, {
+        dX: numericalGrad((v) => dotted(layerNormForward(v, gamma, beta).Y, dY), X),
+        dgamma: row((v) => dotted(layerNormForward(X, v, beta).Y, dY), gamma),
+        dbeta: row((v) => dotted(layerNormForward(X, gamma, v).Y, dY), beta),
+      });
+    } else {
+      const { x } = inputs as { x: Vector };
+      const ones = x.map(() => 1);
+      const zeros = x.map(() => 0);
+      check(item, {
+        J: x.map((_, i) => row((v) => layerNormForward([v], ones, zeros).cache.Xhat[0]![i]!, x)),
+      });
+    }
   },
   "transformer.split_heads": (item) => {
     check(item, { Mh: splitHeads(item.inputs.M as Matrix, item.inputs.H as number) });
@@ -409,6 +495,10 @@ const REQUIRED = [
   "ops.cross_entropy_backward",
   "ops.layer_norm_forward",
   "ops.layer_norm_backward",
+  "ops.perplexity",
+  "ops.xavier_uniform",
+  "transformer.init_params",
+  "gradcheck.numerical_grad",
   "transformer.split_heads",
   "transformer.merge_heads",
   "transformer.attention_forward",

@@ -23,7 +23,7 @@ describe("rows", () => {
     expect(row.title).toBe("Softmax");
     expect(row.filter).toBe("operations");
     expect(row.directions).toEqual(["forward"]);
-    expect(row.equationIds).toEqual(["softmax.shift", "softmax.normalize"]);
+    expect(row.equationIds).toEqual(["softmax.shift", "softmax.normalize", "softmax.safe"]);
     expect(row.sources[0]).toMatchObject({ file: "ops.py", name: "softmax_forward" });
     expect(row.shapes.map((shape) => shape.id)).toEqual(["attention", "sampling"]);
     expect(row.shapes[0]?.stages[0]).toEqual({

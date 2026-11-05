@@ -1,0 +1,222 @@
+---
+title: LayerNorm
+description: Layer normalisation as ops.py writes it, forward and backward, with a derivation of the backward formula, a numerical check against the code, and where the model applies it.
+sourceFile: ops.py
+status: published
+---
+
+LayerNorm has two learned vectors and a hand-written backward pass. This page covers both directions, then derives the backward formula from the forward definition.
+
+## LayerNorm forward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.layer_norm_forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.layer_norm_forward" />
+
+<Callout kind="note">
+
+In general, normalising inputs keeps their scale steady, so later layers receive numbers in a similar range whatever earlier layers produce, which tends to make training more stable. This is a general explanation. Nothing in this repository measures that effect.
+
+</Callout>
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Each row is handled on its own, over its last axis.
+
+<MathBlock id="ln.mean" />
+
+The mean of the squares divides by `d`, not by `d - 1`, so this is the biased variance.
+
+<MathBlock id="ln.var" />
+
+<MathBlock id="ln.s" />
+
+<MathBlock id="ln.xhat" />
+
+<MathBlock id="ln.output" />
+
+The function returns the output and a cache, `(Xhat, s)`. The backward pass needs those two arrays, and nothing else from the forward pass.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.layer_norm_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Edit the row, `gamma` or `beta`. Setting all four values of `X` to the same number shows what epsilon is for.
+
+<LayerNormLabExample concept="ops.layer_norm_forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+The shape does not change. `gamma` and `beta` have shape `(d,)` and broadcast over the rows.
+
+<TensorShape concept="ops.layer_norm_forward" shape="ln-before-attention" />
+
+<TensorShape concept="ops.layer_norm_forward" shape="ln-before-feed-forward" />
+
+<TensorShape concept="ops.layer_norm_forward" shape="ln-final" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.layer_norm_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.layer_norm_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="ops.layer_norm_forward" />
+
+## LayerNorm backward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.layer_norm_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.layer_norm_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="ln.dxhat" />
+
+<MathBlock id="ln.dx" />
+
+<MathBlock id="ln.dgamma" />
+
+<MathBlock id="ln.dbeta" />
+
+The next section derives these, one step at a time.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.layer_norm_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<LayerNormBackwardExample concept="ops.layer_norm_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`dX` has the shape of `X`. `dgamma` and `dbeta` have the shape of `gamma` and `beta`, because the sum over rows removes the first axis.
+
+<TensorShape concept="ops.layer_norm_backward" shape="ln-backward-final" />
+
+<TensorShape concept="ops.layer_norm_backward" shape="ln-backward-block" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.layer_norm_backward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.layer_norm_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`tests/test_gradcheck.py` also reaches these gradients through the whole model: `test_every_tensor_passes` compares every parameter except the key biases with central differences, which includes `gamma` and `beta`.
+
+<Trace concept="ops.layer_norm_backward" />
+
+**How this reaches a parameter update.** The caller adds `dgamma` and `dbeta` to `grads`, as at <CodeLine id="update.lnf" /> and <CodeLine id="update.ln2" />. `batch_loss_and_grads` averages them over the batch (<CodeLine id="train.gradient" />). `clip_grad_norm` may scale them (<CodeLine id="train.clip" />), and `opt.step` uses them (<CodeLine id="train.adamw" />). Both are one-dimensional, so they get no weight decay. `dX` is not stored. It goes on to the earlier layers, through the residual connections in `block_backward` (<CodeLine id="update.residual" />).
+
+## Deriving the backward formula
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.layer_norm_derivation" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.layer_norm_derivation" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Start from the loss and go back one step. `Y` depends on the normalised row through `gamma`.
+
+<MathBlock id="ln.derive.chain-start" />
+
+Next, work out how the normalised row depends on the input. It depends on `mu` and `s`, and `s` depends on the variance. Every entry of the row changes the mean by the same amount.
+
+<MathBlock id="ln.derive.mean" />
+
+The sum of `X - mu` over a row is 0, so the term from the mean drops out.
+
+<MathBlock id="ln.derive.var" />
+
+Epsilon is a constant, so it stays inside the power. That power of `var + epsilon` is `s` cubed, exactly.
+
+<MathBlock id="ln.derive.s" />
+
+Apply the product rule to `(X - mu) * s`. In the second term, `(X - mu) * s` appears twice, and each is a `Xhat`.
+
+<MathBlock id="ln.derive.xhat" />
+
+Multiply by `dXhat` and sum over the features of the row. Each `1/d` and its sum is one of the two means in the code, which gives the formula above and its code lines.
+
+<MathBlock id="ln.derive.result" />
+
+`gamma` and `beta` enter directly. Each is shared by every row, which is why their gradients are sums over rows.
+
+<MathBlock id="ln.derive.parameters" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.layer_norm_derivation" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<LayerNormDerivationExample concept="ops.layer_norm_derivation" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="ops.layer_norm_derivation" shape="ln-derivation-matrix" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+The code has no function for these steps. Its result is `ops.layer_norm_backward`, shown in the previous section, and the forward lines it comes from are in `ops.layer_norm_forward`.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.layer_norm_derivation" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+Nowhere at run time. It explains a line that the pipeline uses.
+
+<Trace concept="ops.layer_norm_derivation" />
+
+## Parameters
+
+Each block has two LayerNorms, and the model has one more at the end. Each has its own pair of vectors, and `init_params` sets `gamma` to ones and `beta` to zeros. So at the start of training, the output of each LayerNorm is exactly `Xhat`.
+
+<ParameterTable
+  names={["b{l}.ln1_g", "b{l}.ln1_b", "b{l}.ln2_g", "b{l}.ln2_b", "lnf_g", "lnf_b"]}
+/>
+
+## Where LayerNorm is applied
+
+The blocks are pre-LN: each branch reads a normalised copy, and the residual adds its result to the value before normalisation. In `block_forward`, the first LayerNorm runs before attention:
+
+<CodeStep id="ln.block-first" />
+
+The second runs before the feed-forward layer:
+
+<CodeStep id="ln.block-second" />
+
+After the last block, `forward` applies the final LayerNorm, and the head reads its output:
+
+<CodeStep id="ln.final" />
+
+**Which epsilon is passed.** All three calls pass `cfg.ln_eps`. `train.main` builds `ModelConfig` without that argument (<CodeLine id="train.model" />), so the value comes from the dataclass default:
+
+<CodeStep id="ln.eps-field" />
+
+`config.py` also has an `ln_eps` (<CodeLine id="ln.eps-config" />), but nothing reads it, so editing it changes nothing. Today it has the same value, <ConfigValue name="ln_eps" />. The default on the function itself (<CodeLine id="ln.eps-default" />) applies only where a caller leaves the argument out, as `test_layer_norm_worked_example` does.

@@ -1,0 +1,46 @@
+links:
+  - equationId: ln.mean
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: mu = X.mean(axis=-1, keepdims=True)
+    role: implements
+  - equationId: ln.var
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: var = ((X - mu) ** 2).mean(axis=-1, keepdims=True)
+    role: implements
+  - equationId: ln.s
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: s = 1.0 / np.sqrt(var + epsilon)
+    role: implements
+  - equationId: ln.xhat
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: Xhat = (X - mu) * s
+    role: implements
+  - equationId: ln.output
+    file: ops.py
+    symbol: ops.layer_norm_forward
+    match: return gamma * Xhat + beta, (Xhat, s)
+    role: implements
+  - equationId: ln.output
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: Xn, c_ln1 = layer_norm_forward(X, params[p + "ln1_g"], params[p + "ln1_b"], cfg.ln_eps)
+    role: call
+  - equationId: ln.output
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: Xn2, c_ln2 = layer_norm_forward(X1, params[p + "ln2_g"], params[p + "ln2_b"], cfg.ln_eps)
+    role: call
+  - equationId: ln.output
+    file: transformer.py
+    symbol: transformer.forward
+    match: Xf, c_lnf = layer_norm_forward(X, params["lnf_g"], params["lnf_b"], cfg.ln_eps)
+    role: call
+  - equationId: ln.output
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_layer_norm_worked_example
+    match: y, cache = layer_norm_forward(x, gamma, beta)
+    role: test

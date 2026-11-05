@@ -387,3 +387,64 @@ Append one entry per finished task. Newest at the bottom.
 - Decisions needed from the human:
   - `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while this task labelled them Derived. Should the inventory change, or the two labels?
 - Status: Task 07 finished. Nothing was committed.
+
+### Task 08: Core Operations & LayerNorm Pages (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Pages: new `content/mathematics/linear-relu-initialisation.mdx`, `content/mathematics/softmax-cross-entropy.mdx`, `content/mathematics/layernorm.mdx`.
+  - Concepts and links, one file each in `data/concepts/` and `data/links/`: `ops.linear_forward`, `ops.linear_backward`, `ops.relu_forward`, `ops.relu_backward`, `ops.xavier_uniform`, `transformer.init_params`, `ops.softmax_backward`, `ops.cross_entropy_forward`, `ops.cross_entropy_backward`, `ops.perplexity`, `ops.layer_norm_forward`, `ops.layer_norm_backward`, `ops.layer_norm_derivation`. Changed: `ops.softmax_forward` (new equation `softmax.safe`).
+  - Engine: new `lib/math/gradcheck.ts`; `lib/math/ops.ts` gains `xavierLimit`, `logSoftmax`, `layerNormStats`, `layerNormJacobian`, `perplexity`.
+  - Golden: `scripts/make_golden.py` (imports `gradcheck.py`; forward cases also store `z`, `logp`, `mu`, `var`); regenerated `data/golden/`, now 166 cases.
+  - New components: `ResultMatrix`, `SoftmaxLab`, `OpsExamples`, `LayerNormLab`, `LayerNormExamples`. Changed: `MatrixPlayground` (optional `dY`, `startColumns`), `ArchitectureTables` (`ParameterTable names`, `InitialValues`), `MathBlock` (derived badge), `Examples.module.css`, `mdx.tsx`.
+  - Changed shared data and code: `data/code-refs.ts`, `lib/concepts.ts` (optional `derived: true` on an equation).
+  - Tests: new `tests/operations-pages.test.ts`, `tests/e2e/operations.spec.ts`. Changed: `tests/math.golden.test.ts`, `tests/math.mirrors.test.ts`, `tests/mathematics-pages.test.ts`, `tests/reference.test.ts`, `tests/links.test.ts` (one `git show` per file, because the old per-link call timed out), `tests/e2e/shell.spec.ts`, `tests/e2e/reference.spec.ts`, `tests/e2e/mathematics.spec.ts`. The e2e changes replace assumptions that these pages were unwritten.
+  - `contract/DISCREPANCIES.md` section 4: one new row. `contract/` is git-ignored, so this edit exists only on this machine.
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added.
+- Commands run and results (Node v26.13.0 prepended to PATH for each process, Bun 1.3.13; `.next`, `out` and `test-results` deleted before the final run; HEAD `d292a4e`, `sha` `66da45b`):
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 166 golden cases match a fresh run.`
+  - `bun run verify:links`: `OK: 168 links, 26 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `verify:content: not implemented yet`, exit 0. It is still the stub from Task 02, so this run checks nothing.
+  - `bun run lint`: `All matched files use Prettier code style!`, exit 0. `bun run typecheck`: exit 0.
+  - `bun run test`: `Tests 831 passed (831)`.
+  - `bun run build`: `Compiled successfully`, exit 0.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.98s`.
+  - **`bun run test:e2e`: NOT VERIFIED.** The full suite was started on the final build and stopped before it finished, at the human's request. It gave no result.
+    - Only earlier, partial browser results exist: `bunx playwright test tests/e2e/operations.spec.ts` gave `36 passed (2.0m)`, but that run was Part A only, before the LayerNorm tests existed and before later edits.
+    - So the LayerNorm browser tests, the LayerNorm axe and overflow checks, and the changed `shell`, `reference` and `mathematics` specs have never completed a run.
+    - "The interactive output equals the golden output" (Part B) is checked in the browser only by those unrun tests. The engine behind the lab is checked at 1e-9 by `bun run test`.
+  - Hand check, plain arithmetic in a scratchpad script, cross-entropy gradient for logits `[[2,1,0],[.5,.5,3]]`, targets `[0,2]`: `[[-0.16738, 0.122364, 0.045015], [0.035255, 0.035255, -0.070509]]`, largest gap to the real function `1.39e-17`.
+  - Gradient-check idea, same script, LayerNorm row of `test_layer_norm_worked_example`: derived matrix times `dXhat` against the real `layer_norm_backward`, gap `0.0`; derived matrix against central differences of the forward definition, largest gap `1.6e-11`.
+  - Acceptance, tamper: a scratchpad script applied 21 changes one at a time, ran the checks, restored and compared hashes. 20 were caught, including `derivation's last step drops a term: Tests 1 failed`, `cross-entropy gradient without /T: Tests 4 failed`, `helper note drops a forward site: Tests 1 failed`. The 21st, a golden edit, did not apply because its pattern was not found. Redone by parsing the file: `verify:golden` printed `stored -0.9690434404458735, computed -1.0690434404458735`, exit 1, and `bun run test -- tests/math.golden` printed `Tests 1 failed | 371 passed (372)`. Restored, hash equal.
+  - Screenshots reviewed by eye, all before the last CSS fix: playground, gradient check, softmax shift table and Step 5 matrix at 1280; derivation steps at 1280; worked table, lab and LayerNorm lab at 390 dark. Others were captured but not opened. The fix itself, `white-space: nowrap` on the gap values, was not viewed afterwards.
+  - `git status --short -- ':(exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. No state-changing git command was run.
+  - Failures seen on the way:
+    - A long Git Bash heredoc failed with `unexpected EOF`, before changing anything. Patches went through scratchpad scripts after that.
+    - `tests/links.test.ts` timed out at 5000ms once the link count grew. Fixed as listed above.
+    - `bun run typecheck` failed on a cast in the new test file. Fixed.
+    - A screenshot showed `3.8e-11` breaking across lines. No test caught it. Fixed.
+    - Re-reading my own text found two overstatements: linear layers as "the only way" to change width, and a sentence implying plain gradient descent. Both reworded.
+- Finding, logged in `contract/DISCREPANCIES.md` section 4: PDF E035 states `sum dx_j xhat_j = 0`. With `epsilon > 0` that is not exact. It equals `s * d * mean(dXhat * Xhat) * (1 - var * s^2)`, about `3.27e-6` on the test row. `sum dx_j = 0` is exact. The PDF was not reopened (D4); this relies on `contract/PDF_VS_CODE.md`.
+- Assumptions:
+  - The traceability block is per concept, using the `Trace` component from earlier tasks. An equation inside an Implemented concept that the PDF does not state carries its own `derived: true` badge. `Trace` prints "Not stated in the PDF" where the task's wording says "None".
+  - `ops.linear_forward` is a new concept in matrix form, separate from the entry-wise `notation.matmul`. Both name M16 and M17.
+  - The derivation is its own concept with `pdfRef: null`, because `contract/PDF_VS_CODE.md` lists the result (Eq. 34) but none of the steps.
+  - Each backward section's extra protocol items map to the nine steps, with a bold "How this reaches a parameter update." paragraph under "Where is it used?".
+  - The gradient check appears on the pipeline pages because this task asks for it. Decision D2 keeps test-only mathematics in a labelled section, so each check's caption says it is test-time and not part of the pipeline.
+  - Xavier draws and `init_params` values are stored results of the real functions, because NumPy's generator has no mirror. The caption says so.
+  - Illustrative Example is the label for all new examples. None is Actual Model Output.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the task's parts.
+- Open issues:
+  - The full e2e suite must be run: `bun run test:e2e`. See above.
+  - `verify:content` is still a stub.
+  - `/reference/sources` does not exist (the nav slug is `reference/sources-discrepancies`), so the new discrepancy is only in `contract/DISCREPANCIES.md`. The page's task must include it.
+  - At 390px the `gamma` and `beta` inputs of the LayerNorm lab reach the edge of their scrolling wrapper, so the last cell can be partly hidden until scrolled.
+  - The `ln.dx` backward equation links to two separate lines of code, because `tests/links.test.ts` requires each match to sit on one line.
+  - Links to unwritten pages (Attention, Sampling, How the Model Learns) show as disabled text until those pages exist.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 from Task 04 still appeared in server logs.
+  - GitHub links were not opened, because the working rules allow no requests to other sites.
+- LLM observations, reported only and nothing changed: no new issues. `config.ln_eps` is still never read (already in `contract/DISCREPANCIES.md` section 8), and the LayerNorm page states this.
+- Decisions needed from the human:
+  - Still open from Task 07: `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while that task labelled them Derived.
+- Status: Task 08 written, with browser verification outstanding. Nothing was committed.

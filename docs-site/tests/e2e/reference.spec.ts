@@ -34,9 +34,10 @@ test("the row shows its equation and links to a code range", async ({ page }) =>
     "href",
     /\/blob\/[0-9a-f]{40}\/ops\.py#L\d+-L\d+$/,
   );
-  // No page explains this concept yet, so no link pretends one does.
-  await expect(row.getByRole("link", { name: "Explanation" })).toHaveCount(0);
-  await expect(row.getByText("Explanation not written")).toBeVisible();
+  await expect(row.getByRole("link", { name: "Explanation" })).toHaveAttribute(
+    "href",
+    /\/mathematics\/softmax-cross-entropy\/#concept-ops-softmax-forward$/,
+  );
 });
 
 test("filters show and hide rows", async ({ page }) => {

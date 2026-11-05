@@ -30,9 +30,15 @@ function realValues() {
   return { d: value("d"), F: value("F"), Tmax: value("Tmax") };
 }
 
-export function ParameterTable() {
+// `names` limits the table to those parameters, for a page about one operation.
+export function ParameterTable({ names }: { names?: string[] } = {}) {
   const values = realValues();
   const roles: Record<string, { role: string; target: CodeTarget }> = PARAMETER_ROLES;
+  const { parameters } = loadInitParams();
+  const shown = names ? parameters.filter(({ name }) => names.includes(name)) : parameters;
+  if (names && shown.length !== names.length) {
+    throw new Error(`ParameterTable: a name is not a parameter: ${names.join(", ")}`);
+  }
   return (
     <DataTable
       label="Parameters from init_params"
@@ -49,7 +55,7 @@ export function ParameterTable() {
         </tr>
       </thead>
       <tbody>
-        {loadInitParams().parameters.map(({ name, dims, init, perBlock }) => {
+        {shown.map(({ name, dims, init, perBlock }) => {
           const entry = roles[name];
           if (!entry) throw new Error(`data/parameters.ts has no role for ${name}`);
           const target = requireTarget(entry.target);
@@ -83,6 +89,45 @@ export function ParameterTable() {
             </tr>
           );
         })}
+      </tbody>
+    </DataTable>
+  );
+}
+
+// Every parameter, grouped by how init_params sets it. The grouping comes from running init_params.
+export function InitialValues() {
+  const { parameters } = loadInitParams();
+  const roles: Record<string, { target: CodeTarget }> = PARAMETER_ROLES;
+  return (
+    <DataTable label="Starting value of every parameter" data-testid="initial-values">
+      <thead>
+        <tr>
+          <th scope="col">Starts as</th>
+          <th scope="col">Parameters</th>
+        </tr>
+      </thead>
+      <tbody>
+        {(Object.keys(INIT_LABEL) as (keyof typeof INIT_LABEL)[]).map((init) => (
+          <tr key={init} data-init={init}>
+            <td>{INIT_LABEL[init]}</td>
+            <td>
+              {parameters
+                .filter((parameter) => parameter.init === init)
+                .map(({ name }, index) => {
+                  const entry = roles[name];
+                  if (!entry) throw new Error(`data/parameters.ts has no role for ${name}`);
+                  return (
+                    <span key={name}>
+                      {index > 0 ? ", " : null}
+                      <a href={requireTarget(entry.target).permalink}>
+                        <code>{name}</code>
+                      </a>
+                    </span>
+                  );
+                })}
+            </td>
+          </tr>
+        ))}
       </tbody>
     </DataTable>
   );

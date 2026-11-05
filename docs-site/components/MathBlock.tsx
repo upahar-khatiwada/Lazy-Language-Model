@@ -1,4 +1,5 @@
 import { equationAnchor, getEquation } from "@/lib/concepts";
+import { Badge } from "./Badge";
 import { CopyButton } from "./CopyButton";
 import styles from "./MathBlock.module.css";
 import { TexDisplay } from "./TexDisplay";
@@ -10,7 +11,9 @@ export function MathBlock({ id }: { id: string }) {
   return (
     <figure className={styles.block} id={anchor} data-equation={id}>
       <figcaption className={styles.chrome}>
-        <span>{equation.label}</span>
+        <span>
+          {equation.label} {equation.derived ? <Badge kind="derived" /> : null}
+        </span>
         <span className={styles.actions}>
           <a className={styles.anchor} href={`#${anchor}`}>
             #<span className="visually-hidden">Link to equation: {equation.label}</span>

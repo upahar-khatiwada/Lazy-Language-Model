@@ -1,0 +1,115 @@
+id: ops.layer_norm_forward
+title: LayerNorm
+category: basic-operations
+inventory: [M25]
+status: implemented
+summary: >-
+  Normalises each row of its input on its own, so that the row has a mean near 0 and a variance near
+  1 across its d features. It then scales and shifts each feature with two learned vectors.
+why: >-
+  Each block gives attention and the feed-forward layer a normalised copy of its input, and the head
+  reads a normalised copy too. The statistics are computed per row, so the code needs no batch axis
+  and keeps no running averages.
+equations:
+  - id: ln.mean
+    latex: \mu_t = \frac{1}{d} \sum_{i} X_{ti}
+    role: forward
+    label: Mean of one row, over the last axis
+  - id: ln.var
+    latex: \sigma_t^2 = \frac{1}{d} \sum_{i} \left(X_{ti} - \mu_t\right)^2
+    role: forward
+    label: Biased variance of one row. It divides by d
+  - id: ln.s
+    latex: s_t = \frac{1}{\sqrt{\sigma_t^2 + \epsilon}}
+    role: forward
+    label: Inverse standard deviation
+  - id: ln.xhat
+    latex: \hat{X}_{ti} = \left(X_{ti} - \mu_t\right) s_t
+    role: forward
+    label: The normalised row
+  - id: ln.output
+    latex: Y_{ti} = \gamma_i \hat{X}_{ti} + \beta_i
+    role: forward
+    label: Scale and shift, one pair per feature
+symbols:
+  - symbol: X
+    meaning: Input, one row per token
+    codeName: X
+    shape: (T, d)
+  - symbol: \gamma
+    meaning: Learned scale for each feature. A parameter
+    codeName: gamma
+    shape: (d,)
+  - symbol: \beta
+    meaning: Learned shift for each feature. A parameter
+    codeName: beta
+    shape: (d,)
+  - symbol: \epsilon
+    meaning: Small number that keeps s finite when a row has no spread
+    codeName: epsilon
+    shape: scalar
+  - symbol: \mu
+    meaning: Mean of each row. keepdims keeps it broadcastable
+    codeName: mu
+    shape: (T, 1)
+  - symbol: \sigma^2
+    meaning: Variance of each row
+    codeName: var
+    shape: (T, 1)
+  - symbol: s
+    meaning: Inverse standard deviation of each row. Kept in the cache
+    codeName: s
+    shape: (T, 1)
+  - symbol: \hat{X}
+    meaning: Normalised input. Kept in the cache
+    codeName: Xhat
+    shape: (T, d)
+  - symbol: Y
+    meaning: Output. The function returns it without naming it
+    codeName: null
+    shape: (T, d)
+example: null
+shapes:
+  - id: ln-before-attention
+    label: Before attention
+    stages:
+      - name: X
+        dims: [T, d]
+      - name: Xn
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.block_forward
+      match: Xn, c_ln1 = layer_norm_forward(X, params[p + "ln1_g"], params[p + "ln1_b"], cfg.ln_eps)
+  - id: ln-before-feed-forward
+    label: Before the feed-forward layer
+    stages:
+      - name: X1
+        dims: [T, d]
+      - name: Xn2
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.block_forward
+      match: Xn2, c_ln2 = layer_norm_forward(X1, params[p + "ln2_g"], params[p + "ln2_b"], cfg.ln_eps)
+  - id: ln-final
+    label: At the end of the model, before the head
+    stages:
+      - name: X
+        dims: [T, d]
+      - name: Xf
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.forward
+      match: Xf, c_lnf = layer_norm_forward(X, params["lnf_g"], params["lnf_b"], cfg.ln_eps)
+source:
+  - file: ops.py
+    symbol: ops.layer_norm_forward
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["30", "31"]
+  page: 7
+notes:
+  - The PDF names the last argument eps. The code names it epsilon.

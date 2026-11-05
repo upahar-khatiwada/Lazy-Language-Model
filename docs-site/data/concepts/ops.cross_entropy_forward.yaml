@@ -1,0 +1,85 @@
+id: ops.cross_entropy_forward
+title: Cross-entropy
+category: loss
+inventory: [M23]
+status: implemented
+summary: >-
+  The loss. For each position it takes the log-probability the model gave to the correct next token,
+  negates it, and averages over positions. It also returns the probabilities, which the backward pass
+  reuses.
+why: >-
+  Training needs one number to reduce. This loss falls when the model gives more probability to the
+  correct token. The code works in log-probabilities, so it never takes the log of a number that has
+  underflowed to 0.
+equations:
+  - id: ce.shift
+    latex: z_{tv} = \text{logits}_{tv} - \max_{k} \text{logits}_{tk}
+    role: forward
+    label: The same shift as softmax, written inline
+  - id: ce.logp
+    latex: \log p_{tv} = z_{tv} - \log \sum_{k} e^{z_{tk}}
+    role: forward
+    label: Log-softmax
+  - id: ce.loss
+    latex: L = -\frac{1}{T} \sum_{t} \log p_{t,\, y_t}
+    role: forward
+    label: Mean over positions
+  - id: ce.probs
+    latex: P_{tv} = e^{\log p_{tv}}
+    role: forward
+    label: The probabilities it returns
+symbols:
+  - symbol: \text{logits}
+    meaning: The head's output
+    codeName: logits
+    shape: (T, V)
+  - symbol: y_t
+    meaning: The correct next token id at position t
+    codeName: targets
+    shape: (T,)
+  - symbol: z
+    meaning: Logits with each row's largest value subtracted
+    codeName: z
+    shape: (T, V)
+  - symbol: \log p
+    meaning: Log-probabilities
+    codeName: logp
+    shape: (T, V)
+  - symbol: L
+    meaning: The loss
+    codeName: loss
+    shape: scalar
+  - symbol: P
+    meaning: Probabilities
+    codeName: probs in the caller
+    shape: (T, V)
+  - symbol: T
+    meaning: Positions in this sequence
+    codeName: T
+    shape: scalar
+example: null
+shapes:
+  - id: cross-entropy-forward
+    label: From logits to probabilities. The loss is a single number
+    stages:
+      - name: logits
+        dims: [T, V]
+      - name: logp
+        dims: [T, V]
+      - name: probs
+        dims: [T, V]
+    target:
+      file: transformer.py
+      symbol: transformer.loss_and_grads
+      match: loss, probs = cross_entropy_forward(logits, targets)
+source:
+  - file: ops.py
+    symbol: ops.cross_entropy_forward
+usedBy: []
+pdfRef:
+  section: "4.3"
+  equations: ["26", "28"]
+  page: 7
+notes:
+  - The PDF names this cross_entropy. The code is cross_entropy_forward.
+  - The code does not call softmax_forward here. No small constant is added inside the log.

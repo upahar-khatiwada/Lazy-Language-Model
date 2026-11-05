@@ -1,0 +1,248 @@
+---
+title: Softmax & Cross-Entropy
+description: Softmax with its maximum shift, the log-softmax loss, the combined gradient on the logits, and perplexity, as ops.py writes them.
+sourceFile: ops.py
+status: published
+---
+
+Softmax and the loss look like one operation, but in this code they are separate. `softmax_forward` serves attention and sampling. `cross_entropy_forward` computes its own log-probabilities from the logits, and `cross_entropy_backward` has its own gradient.
+
+## Softmax
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.softmax_forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.softmax_forward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="softmax.shift" />
+
+<MathBlock id="softmax.normalize" />
+
+Subtracting the maximum does not change the result, because the same factor appears above and below the line.
+
+<MathBlock id="softmax.safe" />
+
+So the code is free to choose `c`. It chooses the largest score, which makes the largest exponent exactly 0 and every other exponent negative. No exponential can then overflow.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.softmax_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<NumericExample concept="ops.softmax_forward" kind="illustrative" />
+
+<SoftmaxShiftTable />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="ops.softmax_forward" shape="attention" />
+
+<TensorShape concept="ops.softmax_forward" shape="sampling" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.softmax_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.softmax_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="ops.softmax_forward" />
+
+## Softmax backward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.softmax_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.softmax_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Each output depends on every input, so the derivative is a matrix.
+
+<MathBlock id="softmax.jacobian" />
+
+The code never forms that matrix. Multiplying `dY` by it, and writing the sum once, gives the single line that the function holds.
+
+<MathBlock id="softmax.backward" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.softmax_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<SoftmaxBackwardExample concept="ops.softmax_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="ops.softmax_backward" shape="softmax-backward-attention" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.softmax_backward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.softmax_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+Only attention calls it. The loss and sampling do not.
+
+<Trace concept="ops.softmax_backward" />
+
+**How this reaches a parameter update.** Softmax has no parameters, so nothing is stored here. `dS` (<CodeLine id="update.attention-softmax" />) goes on to `dQh` and `dKh` (<CodeLine id="update.attention-q" />), and from those to the gradients of the query and key weights (<CodeLine id="linear.back-qkv" />). `batch_loss_and_grads` averages them (<CodeLine id="train.gradient" />), `clip_grad_norm` may scale them (<CodeLine id="train.clip" />), and `opt.step` uses them (<CodeLine id="train.adamw" />). <PageLink page="mathematics/attention">Attention</PageLink> covers those steps.
+
+## Cross-entropy
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.cross_entropy_forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.cross_entropy_forward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="ce.shift" />
+
+<MathBlock id="ce.logp" />
+
+<MathBlock id="ce.loss" />
+
+<MathBlock id="ce.probs" />
+
+The mean is over the positions of one sequence. `batch_loss_and_grads` then averages over the windows of a batch (<CodeLine id="notation.batch-loop" />).
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.cross_entropy_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<CrossEntropyExample concept="ops.cross_entropy_forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`targets` has shape `(T,)`, and the loss is one number.
+
+<TensorShape concept="ops.cross_entropy_forward" shape="cross-entropy-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.cross_entropy_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.cross_entropy_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`loss_and_grads` keeps both results. `validation_loss` keeps only the loss.
+
+<Trace concept="ops.cross_entropy_forward" />
+
+## Cross-entropy backward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.cross_entropy_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.cross_entropy_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="ce.derivative" />
+
+The loss is the mean over `T` positions, and each position depends only on its own row of logits. So each row is divided by `T`.
+
+<MathBlock id="ce.backward" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.cross_entropy_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<CrossEntropyBackwardExample concept="ops.cross_entropy_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="ops.cross_entropy_backward" shape="cross-entropy-backward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.cross_entropy_backward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.cross_entropy_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="ops.cross_entropy_backward" />
+
+**How this reaches a parameter update.** The loss has no parameters, so nothing is stored here. `dZ` (<CodeLine id="update.ce-start" />) goes straight into `linear_backward` for the head (<CodeLine id="linear.back-head" />), whose results fill `head_w` and `head_b` (<CodeLine id="update.head" />). The rest of the backward pass follows from `dXf`. `batch_loss_and_grads` averages the gradients (<CodeLine id="train.gradient" />), `clip_grad_norm` may scale them (<CodeLine id="train.clip" />), and `opt.step` uses them (<CodeLine id="train.adamw" />).
+
+## Softmax lab
+
+Edit the logits, or choose another correct token. <PageLink page="generation/sampling">Sampling</PageLink> covers temperature, which this lab leaves out.
+
+<SoftmaxLabExample />
+
+## Perplexity
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.perplexity" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.perplexity" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="perplexity.value" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.perplexity" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<PerplexityExample concept="ops.perplexity" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+It takes one number and returns one number, so there are no tensors.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.perplexity" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.perplexity" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`train.main` computes the validation loss after each epoch, and prints it with its perplexity:
+
+<CodeStep id="train.validation" />
+
+<Trace concept="ops.perplexity" />

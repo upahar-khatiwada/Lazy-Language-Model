@@ -1,0 +1,31 @@
+links:
+  - equationId: ce.derivative
+    file: ops.py
+    symbol: ops.cross_entropy_backward
+    match: dZ[np.arange(T), targets] -= 1.0
+    role: implements
+  - equationId: ce.backward
+    file: ops.py
+    symbol: ops.cross_entropy_backward
+    match: dZ = probs.copy()
+    role: implements
+  - equationId: ce.backward
+    file: ops.py
+    symbol: ops.cross_entropy_backward
+    match: dZ[np.arange(T), targets] -= 1.0
+    role: implements
+  - equationId: ce.backward
+    file: ops.py
+    symbol: ops.cross_entropy_backward
+    match: return dZ / T
+    role: implements
+  - equationId: ce.backward
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: dZ = cross_entropy_backward(probs, targets)
+    role: call
+  - equationId: ce.backward
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_cross_entropy_is_mean_over_positions
+    match: dZ = cross_entropy_backward(probs, targets)
+    role: test

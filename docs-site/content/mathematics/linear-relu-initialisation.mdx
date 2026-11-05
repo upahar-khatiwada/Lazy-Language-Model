@@ -1,0 +1,302 @@
+---
+title: Linear / ReLU / Initialisation
+description: The linear layer and its backward pass, ReLU and its mask, Xavier uniform, and the starting value of every parameter, as ops.py and transformer.py write them.
+sourceFile: ops.py
+status: published
+---
+
+This page covers three building blocks from `ops.py`: the linear layer, ReLU and Xavier uniform. It also covers how `init_params` uses them. In the backward sections, `dM` always means the gradient of the scalar loss with respect to `M`.
+
+## Helper or inline?
+
+The linear layer is written in two ways, so reading only `ops.py` gives the wrong picture.
+
+- **Forward: always inline.** `transformer.py` does not import `linear_forward`, and only `test_linear_worked_example` calls it. The model writes `X @ W + b` directly at <CodeLine id="linear.q" /> (query), <CodeLine id="linear.k" /> (key), <CodeLine id="linear.v" /> (value), <CodeLine id="linear.out" /> (attention output), <CodeLine id="linear.ff1" /> and <CodeLine id="linear.ff2" /> (feed-forward), and <CodeLine id="linear.head" /> (head).
+- **Backward: both.** `linear_backward` is called at <CodeLine id="linear.back-ff2" /> and <CodeLine id="linear.back-ff1" /> (feed-forward), and <CodeLine id="linear.back-head" /> (head). `attention_backward` does not call it. It writes the same three formulas in place at <CodeLine id="linear.back-out" /> (attention output) and <CodeLine id="linear.back-qkv" /> (query, key and value).
+
+## Linear layer
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.linear_forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.linear_forward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="linear.forward" />
+
+<PageLink page="mathematics/notation-and-shapes" hash="matrix-multiplication">
+  Notation & Shapes
+</PageLink>
+shows how one entry of the product is computed.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.linear_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Edit any cell of `X`, `W`, `b` or `dY`. The results include the backward pass, which the next section explains.
+
+<LinearPlaygroundExample concept="ops.linear_forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="ops.linear_forward" shape="attention-output" />
+
+<TensorShape concept="ops.linear_forward" shape="first-feed-forward" />
+
+<TensorShape concept="ops.linear_forward" shape="second-feed-forward" />
+
+<TensorShape concept="ops.linear_forward" shape="linear-head" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.linear_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.linear_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+The call graph shows no pipeline caller. The inline sites below are the real uses.
+
+<Trace concept="ops.linear_forward" />
+
+## Linear backward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.linear_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.linear_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+`dY` holds the gradient of the loss on each output entry. The chain rule multiplies it by the derivative of that output entry, and adds over every entry that depends on the number in question.
+
+<MathBlock id="linear.partials" />
+
+Summing over `t` gives `dW` and `db`. Summing over `j` gives `dX`.
+
+<MathBlock id="linear.dW" />
+
+<MathBlock id="linear.db" />
+
+<MathBlock id="linear.dX" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.linear_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<LinearBackwardExample concept="ops.linear_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`dW` has the shape of `W`, `db` the shape of `b`, and `dX` the shape of `X`. So the three real calls give:
+
+<TensorShape concept="ops.linear_backward" shape="backward-head" />
+
+<TensorShape concept="ops.linear_backward" shape="backward-second-feed-forward" />
+
+<TensorShape concept="ops.linear_backward" shape="backward-first-feed-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.linear_backward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.linear_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="ops.linear_backward" />
+
+**How this reaches a parameter update.** The caller adds `dW` and `db` to `grads`, for example at <CodeLine id="update.head" /> and <CodeLine id="update.ff" />. `batch_loss_and_grads` averages `grads` over the batch (<CodeLine id="train.gradient" />). `clip_grad_norm` may scale it (<CodeLine id="train.clip" />), and `opt.step` uses it to change the parameter (<CodeLine id="train.adamw" />). `dX` is not stored. It goes to the previous layer as its `dY`. <PageLink page="training/how-the-model-learns">How the Model Learns</PageLink> follows the whole path.
+
+## ReLU
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.relu_forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.relu_forward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="relu.forward" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.relu_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<ReluExample concept="ops.relu_forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="ops.relu_forward" shape="relu-in-feed-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.relu_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.relu_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="ops.relu_forward" />
+
+## ReLU backward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.relu_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.relu_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="relu.derivative" />
+
+<MathBlock id="relu.backward" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.relu_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<ReluExample concept="ops.relu_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="ops.relu_backward" shape="relu-backward-in-feed-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.relu_backward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.relu_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="ops.relu_backward" />
+
+**How this reaches a parameter update.** ReLU has no parameters, so nothing is stored here. `dZ` (<CodeLine id="update.ff-relu" />) goes into `linear_backward` for the first feed-forward layer (<CodeLine id="linear.back-ff1" />), which produces the gradients of `ff1_w` and `ff1_b`. Those follow the path described under Linear backward.
+
+## Xavier uniform
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="ops.xavier_uniform" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="ops.xavier_uniform" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="xavier.limit" />
+
+<MathBlock id="xavier.sample" />
+
+<MathBlock id="xavier.variance" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="ops.xavier_uniform" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+`tok_emb` and `head_w` have no row here, because their size depends on `V`, and `V` depends on the corpus. Larger matrices get a smaller limit.
+
+<XavierExample concept="ops.xavier_uniform" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+The output has shape `(fan_in, fan_out)`, so these two arguments are the matrix's rows and columns.
+
+<TensorShape concept="ops.xavier_uniform" shape="xavier-attention" />
+
+<TensorShape concept="ops.xavier_uniform" shape="xavier-feed-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.xavier_uniform" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="ops.xavier_uniform" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+Only `init_params` calls it, and only `train.main` calls `init_params`, so it runs only at the start of training. `talk.py` loads its weights from a checkpoint instead.
+
+<Trace concept="ops.xavier_uniform" />
+
+## Starting values
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.init_params" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.init_params" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="init.values" />
+
+This table comes from running `init_params`. `b{l}` stands for each block.
+
+<InitialValues />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.init_params" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<InitExample concept="transformer.init_params" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<PageLink page="getting-started/architecture" hash="parameters">
+  Architecture
+</PageLink>
+lists the shape of every parameter. For example, the head has one column per vocabulary id, and it
+is a separate matrix from `tok_emb`:
+
+<TensorShape concept="transformer.init_params" shape="init-head" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.init_params" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.init_params" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="transformer.init_params" />

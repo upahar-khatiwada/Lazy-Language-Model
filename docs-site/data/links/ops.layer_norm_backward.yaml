@@ -1,0 +1,46 @@
+links:
+  - equationId: ln.dxhat
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dXhat = dY * gamma
+    role: implements
+  - equationId: ln.dx
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dX = s * (dXhat - dXhat.mean(axis=-1, keepdims=True)
+    role: implements
+  - equationId: ln.dx
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: "- Xhat * (dXhat * Xhat).mean(axis=-1, keepdims=True))"
+    role: implements
+  - equationId: ln.dgamma
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dgamma = (dY * Xhat).sum(axis=0)
+    role: implements
+  - equationId: ln.dbeta
+    file: ops.py
+    symbol: ops.layer_norm_backward
+    match: dbeta = dY.sum(axis=0)
+    role: implements
+  - equationId: ln.dx
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dX1_branch, dg, db = layer_norm_backward(dXn2, c["ln2"], params[p + "ln2_g"])
+    role: call
+  - equationId: ln.dx
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dX_branch, dg, db = layer_norm_backward(dXn, c["ln1"], params[p + "ln1_g"])
+    role: call
+  - equationId: ln.dx
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: dX, dg, db = layer_norm_backward(dXf, cache["lnf"], params["lnf_g"])
+    role: call
+  - equationId: ln.dx
+    file: tests/test_ops.py
+    symbol: tests.test_ops.test_layer_norm_worked_example
+    match: dx, dgamma, dbeta = layer_norm_backward(np.array([[1., 0., 0., 1.]]), cache, gamma)
+    role: test
