@@ -1,0 +1,51 @@
+links:
+  - equationId: block.back.dxn2
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dXn2 = ffn_backward(dY, c["ff"], params, p, grads)
+    role: implements
+  - equationId: block.back.branch2
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dX1_branch, dg, db = layer_norm_backward(dXn2, c["ln2"], params[p + "ln2_g"])
+    role: implements
+  - equationId: block.back.dx1
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dX1 = dY + dX1_branch
+    role: implements
+  - equationId: block.back.dxn
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dXn = attention_backward(dX1, c["att"], params, p, cfg, grads)
+    role: implements
+  - equationId: block.back.branch1
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dX_branch, dg, db = layer_norm_backward(dXn, c["ln1"], params[p + "ln1_g"])
+    role: implements
+  - equationId: block.back.dx
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: return dX1 + dX_branch
+    role: implements
+  - equationId: block.back.terms
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dXn2 = ffn_backward(dY, c["ff"], params, p, grads)
+    role: implements
+  - equationId: block.back.terms
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dXn = attention_backward(dX1, c["att"], params, p, cfg, grads)
+    role: implements
+  - equationId: block.back.identity
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dX1 = dY + dX1_branch
+    role: implements
+  - equationId: block.back.identity
+    file: tests/test_gradcheck.py
+    symbol: tests.test_gradcheck.test_every_tensor_passes
+    match: _, grads = loss_and_grads(params, ids, targets, cfg)
+    role: test

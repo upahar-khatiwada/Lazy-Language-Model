@@ -16,6 +16,17 @@ import {
   AttentionWeightedExample,
 } from "./AttentionExamples";
 import { Badge } from "./Badge";
+import {
+  BlockBackwardExample,
+  CacheTable,
+  FfnBackwardExample,
+  FfnForwardExample,
+  ForwardExample,
+  GradientFlowDiagram,
+  LossAndGradsExample,
+  ParameterKeys,
+  ResidualStreamExample,
+} from "./BlockExamples";
 import { BpeExample } from "./BpeExample";
 import { Callout } from "./Callout";
 import { CodeReference } from "./CodeReference";
@@ -102,7 +113,9 @@ export const mdxComponents: MDXComponents = {
   AttentionWeightedExample,
   Badge,
   BatchExample,
+  BlockBackwardExample,
   BpeExample,
+  CacheTable,
   Callout,
   CentralDifferenceExample,
   CheckParamsExample,
@@ -120,7 +133,11 @@ export const mdxComponents: MDXComponents = {
   EmbeddingLabExample,
   EncodeExample,
   EquationCode,
+  FfnBackwardExample,
+  FfnForwardExample,
+  ForwardExample,
   FullPipelineDiagram,
+  GradientFlowDiagram,
   InitExample,
   InitialValues,
   LayerNormBackwardExample,
@@ -128,6 +145,7 @@ export const mdxComponents: MDXComponents = {
   LayerNormLabExample,
   LinearBackwardExample,
   LinearPlaygroundExample,
+  LossAndGradsExample,
   MathBlock,
   MathCodeLink,
   MathReference,
@@ -139,6 +157,7 @@ export const mdxComponents: MDXComponents = {
   ParameterCount,
   ParameterDerivation,
   ParameterExample,
+  ParameterKeys,
   ParameterTable,
   PerplexityExample,
   PipelineDiagram,
@@ -147,6 +166,7 @@ export const mdxComponents: MDXComponents = {
   RelativeErrorExample,
   ReluExample,
   RepoMap,
+  ResidualStreamExample,
   SoftmaxBackwardExample,
   SoftmaxLabExample,
   SoftmaxShiftTable,

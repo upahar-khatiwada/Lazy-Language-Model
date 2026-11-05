@@ -61,9 +61,9 @@ test("the pipeline draws every node, and each links to real lines", async ({ pag
   // A written page is a link. A page that is not written yet is not.
   await expect(diagram.getByTestId("node-tokenizer").getByRole("link")).toHaveCount(2);
   await expect(diagram.getByTestId("node-attention").getByRole("link")).toHaveCount(2);
-  const residual = diagram.getByTestId("node-residual1");
-  await expect(residual.getByRole("link")).toHaveCount(1);
-  await expect(residual.locator('[aria-disabled="true"]')).toContainText("Residual add");
+  const clipping = diagram.getByTestId("node-clipping");
+  await expect(clipping.getByRole("link")).toHaveCount(1);
+  await expect(clipping.locator('[aria-disabled="true"]')).toContainText("Clipping");
 });
 
 test("questions link to their pages or show as disabled", async ({ page }) => {

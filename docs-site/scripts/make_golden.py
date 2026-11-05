@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the repository's real functions on fixed small inputs and store the results.
 
-  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings}.json
+  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings,block,model}.json
   bun run verify:golden   recomputes and fails if the stored numbers differ
 
 tests/math.golden.test.ts compares lib/math with these files. Inputs are hand-picked, so every case
@@ -1319,6 +1319,386 @@ def gradcheck_file_cases():
 # Writing and checking -----------------------------------------------------------------------------
 
 
+# transformer.py: feed-forward, block and whole model ----------------------------------------------
+
+# tests/test_transformer.py uses these values in test_ffn_worked_example. dOut is hand-picked.
+FFN_PARAMS = {
+    "b0.ff1_w": arr([[1.0, 0.0, -1.0], [0.0, 1.0, 1.0]]),
+    "b0.ff1_b": arr([0.0, 0.5, 1.0]),
+    "b0.ff2_w": arr([[1.0, 2.0], [0.0, 1.0], [1.0, -1.0]]),
+    "b0.ff2_b": arr([0.0, 0.0]),
+}
+FFN_XN = arr([[1.0, -1.0]])
+FFN_DOUT = arr([[1.0, 0.5]])
+
+# The tiny model of the Transformer Block and Full Model pages. Its parameters are random draws from
+# the real init_params, not learned values. X, dY, ids and targets are hand-picked.
+TINY_CFG = transformer.ModelConfig(vocab_size=5, context_len=4, emb_dim=4, num_heads=2, ff_dim=6, num_layers=2)
+TINY_X = arr([[0.5, -1.0, 1.5, 0.25], [1.0, 0.0, -0.5, 2.0], [-1.5, 0.75, 0.5, -0.25]])
+TINY_DY = arr([[0.1, -0.2, 0.3, 0.05], [-0.1, 0.25, 0.15, -0.3], [0.2, 0.1, -0.25, 0.15]])
+TINY_IDS = np.array([2, 0, 2])
+TINY_TARGETS = np.array([0, 2, 1])
+BLOCK_CHECKED = ["b0.ln1_g", "b0.wq", "b0.wo", "b0.ln2_b", "b0.ff1_w", "b0.ff2_w"]
+MODEL_CHECKED = ["tok_emb", "pos_emb", "b0.wk", "b0.ff1_w", "b1.ln2_g", "b1.wq", "lnf_g", "head_w", "head_b"]
+
+
+def tiny_params():
+    return transformer.init_params(TINY_CFG, np.random.default_rng(config.seed))
+
+
+def block_params(params, l):
+    return {name: value for name, value in params.items() if name.startswith(f"b{l}.")}
+
+
+def cfg_inputs(cfg):
+    return {
+        "vocab_size": cfg.vocab_size,
+        "context_len": cfg.context_len,
+        "emb_dim": cfg.emb_dim,
+        "num_heads": cfg.num_heads,
+        "ff_dim": cfg.ff_dim,
+        "num_layers": cfg.num_layers,
+        "ln_eps": cfg.ln_eps,
+    }
+
+
+def ffn_cases():
+    out, cache = transformer.ffn_forward(FFN_XN, FFN_PARAMS, "b0.")
+    grads = {name: np.zeros_like(value) for name, value in FFN_PARAMS.items()}
+    dXn, history = traced(transformer.ffn_backward, ["dA", "dZ"], FFN_DOUT, cache, FFN_PARAMS, "b0.", grads)
+    numeric = {}
+    for name in FFN_PARAMS:
+        trial = {key: value.copy() for key, value in FFN_PARAMS.items()}
+        numeric[name] = gradcheck.numerical_grad(
+            lambda v: float((transformer.ffn_forward(FFN_XN, {**trial, name: v}, "b0.")[0] * FFN_DOUT).sum()),
+            trial[name],
+        )
+    numeric["Xn"] = gradcheck.numerical_grad(
+        lambda v: float((transformer.ffn_forward(v, FFN_PARAMS, "b0.")[0] * FFN_DOUT).sum()),
+        FFN_XN.copy(),
+    )
+    inputs = {"Xn": FFN_XN, "params": FFN_PARAMS, "dOut": FFN_DOUT}
+    return [
+        case(
+            "ffn_forward.test_file",
+            "transformer.ffn_forward",
+            {"Xn": FFN_XN, "params": FFN_PARAMS},
+            {"out": out, "Z": cache["Z"], "A": cache["A"], "cache_keys": list(cache)},
+        ),
+        case(
+            "ffn_backward.test_file",
+            "transformer.ffn_backward",
+            inputs,
+            {"dA": history["dA"][-1], "dZ": history["dZ"][-1], "dXn": dXn, "grads": grads},
+        ),
+        case("ffn.numeric", "gradcheck.numerical_grad", {"problem": "ffn", **inputs}, {"numeric": numeric}),
+    ]
+
+
+def block_forward_case():
+    params = tiny_params()
+    (Y, cache), history = traced(
+        transformer.block_forward, ["Xn", "att", "X1", "Xn2", "ff"], TINY_X, params, 0, TINY_CFG
+    )
+    return case(
+        "block_forward.tiny",
+        "transformer.block_forward",
+        {"X": TINY_X, "params": block_params(params, 0), "l": 0, "cfg": cfg_inputs(TINY_CFG)},
+        {
+            **{name: history[name][-1] for name in history},
+            "Y": Y,
+            "cache_keys": {"block": list(cache), "att": list(cache["att"]), "ff": list(cache["ff"])},
+        },
+    )
+
+
+def block_backward_run(params, l=0):
+    _, cache = transformer.block_forward(TINY_X, params, l, TINY_CFG)
+    grads = {name: np.zeros_like(value) for name, value in params.items()}
+    names = ["dXn2", "dX1_branch", "dX1", "dXn", "dX_branch"]
+    dX, history = traced(transformer.block_backward, names, TINY_DY, cache, params, l, TINY_CFG, grads)
+    return {
+        **{name: history[name][-1] for name in names},
+        "dX": dX,
+        "grads": block_params(grads, l),
+    }
+
+
+def block_backward_cases():
+    params = tiny_params()
+    # With both LayerNorm scales at 0, each branch sends back exactly 0: only the identity path is left.
+    off = {**params, "b0.ln1_g": np.zeros(TINY_CFG.emb_dim), "b0.ln2_g": np.zeros(TINY_CFG.emb_dim)}
+    numeric = {}
+    for name in BLOCK_CHECKED:
+        trial = {key: value.copy() for key, value in params.items()}
+        numeric[name] = gradcheck.numerical_grad(
+            lambda v: float((transformer.block_forward(TINY_X, {**trial, name: v}, 0, TINY_CFG)[0] * TINY_DY).sum()),
+            trial[name],
+        )
+    numeric["X"] = gradcheck.numerical_grad(
+        lambda v: float((transformer.block_forward(v, params, 0, TINY_CFG)[0] * TINY_DY).sum()),
+        TINY_X.copy(),
+    )
+    inputs = {"X": TINY_X, "dY": TINY_DY, "l": 0, "cfg": cfg_inputs(TINY_CFG)}
+    return [
+        case(
+            "block_backward.tiny",
+            "transformer.block_backward",
+            {**inputs, "params": block_params(params, 0)},
+            block_backward_run(params),
+        ),
+        case(
+            "block_backward.branches_off",
+            "transformer.block_backward",
+            {**inputs, "params": block_params(off, 0)},
+            block_backward_run(off),
+        ),
+        case(
+            "block.numeric",
+            "gradcheck.numerical_grad",
+            {"problem": "block", **inputs, "params": block_params(params, 0)},
+            {"numeric": numeric},
+        ),
+    ]
+
+
+def block_config_shapes_case():
+    """The real block functions at the sizes in config.py. Only shapes are stored: the inputs are
+    random draws, and V is hand-picked because it has no config value."""
+    V = 7
+    rng = np.random.default_rng(config.seed)
+    T, d = config.seq_len, config.emb_dim
+    cfg = transformer.ModelConfig(V, config.context_len, d, config.num_heads, config.ff_dim, config.num_layers)
+    params = transformer.init_params(cfg, rng)
+    X, dY = rng.normal(size=(T, d)), rng.normal(size=(T, d))
+    (Y, cache), history = traced(transformer.block_forward, ["Xn", "att", "X1", "Xn2", "ff"], X, params, 0, cfg)
+    grads = {name: np.zeros_like(value) for name, value in params.items()}
+    names = ["dXn2", "dX1_branch", "dX1", "dXn", "dX_branch"]
+    dX, back = traced(transformer.block_backward, names, dY, cache, params, 0, cfg, grads)
+    ffn_names = ["dA", "dZ", "dW2", "db2", "dW1", "db1"]
+    spare = {name: np.zeros_like(value) for name, value in params.items()}
+    _, ffn_back = traced(transformer.ffn_backward, ffn_names, dY, cache["ff"], params, "b0.", spare)
+    size = lambda value: list(value.shape)  # noqa: E731
+    return case(
+        "block.config_shapes",
+        "transformer.block_forward",
+        {
+            "problem": "config_shapes",
+            "seq_len": T,
+            "emb_dim": d,
+            "num_heads": config.num_heads,
+            "ff_dim": config.ff_dim,
+        },
+        {
+            "forward": {
+                "X": size(X),
+                **{name: size(history[name][-1]) for name in history},
+                "Y": size(Y),
+                "Z": size(cache["ff"]["Z"]),
+                "A": size(cache["ff"]["A"]),
+            },
+            "backward": {
+                "dY": size(dY),
+                **{name: size(back[name][-1]) for name in names},
+                "dX": size(dX),
+                **{name: size(ffn_back[name][-1]) for name in ffn_names},
+            },
+        },
+    )
+
+
+def block_file_cases():
+    return [*ffn_cases(), block_forward_case(), *block_backward_cases(), block_config_shapes_case()]
+
+
+def forward_case():
+    params = tiny_params()
+    (logits, cache), history = traced(transformer.forward, ["X", "Xf"], params, TINY_IDS, TINY_CFG)
+    return case(
+        "forward.tiny",
+        "transformer.forward",
+        {"params": params, "ids": TINY_IDS, "cfg": cfg_inputs(TINY_CFG)},
+        {
+            "stages": history["X"],
+            "Xf": history["Xf"][-1],
+            "logits": logits,
+            "cache_keys": list(cache),
+            "block_caches": len(cache["blocks"]),
+        },
+    )
+
+
+def loss_and_grads_case():
+    params = tiny_params()
+    (loss, grads), history = traced(
+        transformer.loss_and_grads,
+        ["probs", "dZ", "dXf", "dX"],
+        params,
+        TINY_IDS,
+        TINY_TARGETS,
+        TINY_CFG,
+    )
+    return case(
+        "loss_and_grads.tiny",
+        "transformer.loss_and_grads",
+        {"params": params, "ids": TINY_IDS, "targets": TINY_TARGETS, "cfg": cfg_inputs(TINY_CFG)},
+        {
+            "loss": loss,
+            "probs": history["probs"][-1],
+            "dZ": history["dZ"][-1],
+            "dXf": history["dXf"][-1],
+            "dX": history["dX"],
+            "grads": grads,
+        },
+    )
+
+
+def call_log(function, *args):
+    """The functions of transformer.py and ops.py that run inside function, in the order they start,
+    with their depth. l is recorded for the block functions."""
+    log = []
+    depth = [0]
+    files = {"transformer.py", "ops.py"}
+
+    def profile(frame, event, _arg):
+        code = frame.f_code
+        if event not in ("call", "return") or Path(code.co_filename).name not in files:
+            return
+        if code.co_name.startswith("<"):
+            return
+        if event == "return":
+            depth[0] -= 1
+            return
+        entry = {"name": code.co_name, "depth": depth[0]}
+        if code.co_name in ("block_forward", "block_backward"):
+            entry["l"] = frame.f_locals["l"]
+        log.append(entry)
+        depth[0] += 1
+
+    sys.setprofile(profile)
+    try:
+        function(*args)
+    finally:
+        sys.setprofile(None)
+    return log
+
+
+def fill_log(params, ids, targets, cfg):
+    """Which line of loss_and_grads or block_backward first made each entry of grads non-zero. A call
+    into another function counts as the line that made it."""
+    watched = {transformer.loss_and_grads.__code__, transformer.block_backward.__code__}
+    filled = set()
+    log = []
+
+    def tracer(frame, _event, _arg):
+        if frame.f_code not in watched:
+            return None
+        state = {"line": frame.f_lineno}
+
+        def local(inner, _inner_event, _inner_arg):
+            grads = inner.f_locals.get("grads")
+            for key, value in (grads or {}).items():
+                if key not in filled and np.any(value != 0):
+                    filled.add(key)
+                    log.append({"key": key, "function": inner.f_code.co_name, "line": state["line"]})
+            state["line"] = inner.f_lineno
+            return local
+
+        return local
+
+    previous = sys.gettrace()
+    sys.settrace(tracer)
+    try:
+        transformer.loss_and_grads(params, ids, targets, cfg)
+    finally:
+        sys.settrace(previous)
+    return log
+
+
+def loss_and_grads_order_case():
+    params = tiny_params()
+    return case(
+        "loss_and_grads.order",
+        "transformer.loss_and_grads",
+        {"problem": "order", "ids": TINY_IDS, "targets": TINY_TARGETS, "cfg": cfg_inputs(TINY_CFG)},
+        {
+            "calls": call_log(transformer.loss_and_grads, params, TINY_IDS, TINY_TARGETS, TINY_CFG),
+            "fills": fill_log(params, TINY_IDS, TINY_TARGETS, TINY_CFG),
+        },
+    )
+
+
+def model_numeric_case():
+    params = tiny_params()
+    numeric = {}
+    for name in MODEL_CHECKED:
+        trial = {key: value.copy() for key, value in params.items()}
+        numeric[name] = gradcheck.numerical_grad(
+            lambda v: transformer.loss_and_grads({**trial, name: v}, TINY_IDS, TINY_TARGETS, TINY_CFG)[0],
+            trial[name],
+        )
+    return case(
+        "model.numeric",
+        "gradcheck.numerical_grad",
+        {
+            "problem": "model",
+            "params": params,
+            "ids": TINY_IDS,
+            "targets": TINY_TARGETS,
+            "cfg": cfg_inputs(TINY_CFG),
+        },
+        {"numeric": numeric},
+    )
+
+
+def model_config_shapes_case():
+    """The real init_params, forward and loss_and_grads at the sizes in config.py. Only shapes are
+    stored. V has no config value, so it is hand-picked."""
+    V = 7
+    cfg = transformer.ModelConfig(
+        V, config.context_len, config.emb_dim, config.num_heads, config.ff_dim, config.num_layers
+    )
+    rng = np.random.default_rng(config.seed)
+    params = transformer.init_params(cfg, rng)
+    ids, targets = rng.integers(V, size=config.seq_len), rng.integers(V, size=config.seq_len)
+    (_, grads), history = traced(
+        transformer.loss_and_grads, ["logits", "probs", "dZ", "dXf", "dX"], params, ids, targets, cfg
+    )
+    size = lambda value: list(value.shape)  # noqa: E731
+    return case(
+        "model.config_shapes",
+        "transformer.loss_and_grads",
+        {
+            "problem": "config_shapes",
+            "V": V,
+            "seq_len": config.seq_len,
+            "context_len": config.context_len,
+            "emb_dim": config.emb_dim,
+            "ff_dim": config.ff_dim,
+            "num_layers": config.num_layers,
+        },
+        {
+            "params": {name: size(value) for name, value in params.items()},
+            "grads": {name: size(value) for name, value in grads.items()},
+            "logits": size(history["logits"][-1]),
+            "probs": size(history["probs"][-1]),
+            "dZ": size(history["dZ"][-1]),
+            "dXf": size(history["dXf"][-1]),
+            "dX": [size(value) for value in history["dX"]],
+        },
+    )
+
+
+def model_file_cases():
+    return [
+        forward_case(),
+        loss_and_grads_case(),
+        loss_and_grads_order_case(),
+        model_numeric_case(),
+        model_config_shapes_case(),
+    ]
+
+
 def build():
     return {
         "ops": ops_cases(),
@@ -1330,6 +1710,8 @@ def build():
         "data": data_cases(),
         "gradcheck": gradcheck_file_cases(),
         "embeddings": embedding_cases(),
+        "block": block_file_cases(),
+        "model": model_file_cases(),
     }
 
 
@@ -1348,6 +1730,11 @@ def comparable(case_data):
             name: 0 if value < 1e-4 else round(value, 4)
             for name, value in outputs["worst"].items()
             if not name.endswith(".bk")
+        }
+    # Central differences on a whole block or model carry round-off that depends on the machine.
+    if result["inputs"].get("problem") in ("ffn", "block", "model"):
+        outputs["numeric"] = {
+            name: np.round(np.array(value, dtype=float), 6).tolist() for name, value in outputs["numeric"].items()
         }
     if outputs.get("tie_split"):
         outputs["p"] = sorted(outputs["p"])

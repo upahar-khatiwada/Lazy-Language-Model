@@ -1,4 +1,6 @@
+import { BLOCK_CACHES, MODEL_CACHES, type CacheRow } from "@/data/caches";
 import { CODE_REFS } from "@/data/code-refs";
+import { BLOCK_FLOW, MODEL_FLOW, type FlowStep } from "@/data/gradient-flow";
 import { GLANCE, QUESTIONS } from "@/data/home";
 import { SYMBOL_COVERAGE } from "@/data/coverage";
 import { NOTATION } from "@/data/notation";
@@ -27,6 +29,9 @@ export type SiteDataInput = {
   repoMap?: Record<string, string>;
   concepts?: MathConcept[];
   inventoryIds?: string[];
+  modelFlow?: FlowStep[];
+  blockFlow?: FlowStep[];
+  caches?: CacheRow[];
 };
 
 // Returns every problem found. Runs in verify:links, so a problem stops the build.
@@ -44,6 +49,9 @@ export function verifySiteData(input: SiteDataInput): string[] {
     repoMap = REPO_MAP,
     concepts = [],
     inventoryIds = [],
+    modelFlow = MODEL_FLOW,
+    blockFlow = BLOCK_FLOW,
+    caches = [...BLOCK_CACHES, ...MODEL_CACHES],
   } = input;
   const problems: string[] = [];
 
@@ -155,6 +163,53 @@ export function verifySiteData(input: SiteDataInput): string[] {
     const target = resolve(where, row.target);
     if (target && !targetLines(target).includes(row.code)) {
       problems.push(`${where}: "${row.code}" is not in the resolved lines`);
+    }
+  }
+
+  // Gradient flow: every step is a real call or expression, in line order within its function.
+  for (const [name, flow] of [
+    ["model", modelFlow],
+    ["block", blockFlow],
+  ] as const) {
+    let last: ResolvedTarget | null = null;
+    for (const step of flow) {
+      const where = `${name} flow step ${step.id}`;
+      if (Boolean(step.call) === Boolean(step.inline)) {
+        problems.push(`${where}: a step needs exactly one of call and inline`);
+      }
+      const target = resolve(where, step.target);
+      for (const write of step.writeTargets ?? []) resolve(`${where}, a write`, write);
+      if (!target) continue;
+      if (step.call) checkCall(where, target, step.call);
+      if (step.inline && !targetLines(target).includes(step.inline)) {
+        problems.push(`${where}: "${step.inline}" is not in the resolved lines`);
+      }
+      if (last && last.startLine >= target.startLine) {
+        problems.push(`${where}: comes before the previous step`);
+      }
+      last = target;
+    }
+  }
+  sameSet(
+    "parameters filled by the gradient flows",
+    parameterNames,
+    [...modelFlow, ...blockFlow].flatMap((step) => step.writes ?? []),
+  );
+
+  for (const cache of caches) {
+    const where = `cache ${cache.name}`;
+    const built = resolve(where, cache.built);
+    const read = resolve(where, cache.read);
+    if (built) {
+      for (const { field } of cache.holds) {
+        if (!new RegExp(`\\b${field}\\b`).test(targetLines(built))) {
+          problems.push(`${where}: ${field} is not in the line that builds it`);
+        }
+      }
+    }
+    if (read) checkCall(where, read, cache.reader);
+    if (read && !targetLines(read).includes(cache.name)) {
+      problems.push(`${where}: the reader does not pass ${cache.name}`);
     }
   }
 

@@ -40,6 +40,27 @@ export function loadInitParams(): InitParams {
   return cached;
 }
 
+// Every key of the dictionary, in the order init_params inserts them, for this many blocks. The block
+// part of the list repeats once per block, as the loop in init_params does.
+export function expandBlockName(
+  parameters: InitParameter[],
+  L: number,
+): { key: string; dims: ParamDim[] }[] {
+  const start = parameters.findIndex((parameter) => parameter.perBlock);
+  const end = parameters.findLastIndex((parameter) => parameter.perBlock);
+  const once = ({ name, dims }: InitParameter) => ({ key: name, dims });
+  return [
+    ...parameters.slice(0, start).map(once),
+    ...Array.from({ length: L }, (_, l) =>
+      parameters.slice(start, end + 1).map(({ name, dims }) => ({
+        key: name.replace("{l}", String(l)),
+        dims,
+      })),
+    ).flat(),
+    ...parameters.slice(end + 1).map(once),
+  ];
+}
+
 export type DimValues = Record<ParamDim | "L", number>;
 
 // The display order of a product, and the spelling the task asks for.

@@ -64,7 +64,15 @@ import {
   windowCount,
   windowStarts,
 } from "@/lib/math/data";
+import {
+  blockBackward,
+  blockForward,
+  ffnBackward,
+  ffnForward,
+  type FlatParams,
+} from "@/lib/math/block";
 import { embedBackward, embedForward, overwritingBackward } from "@/lib/math/embeddings";
+import { forward, lossAndGrads, type ModelSizes } from "@/lib/math/model";
 import { blockParameterCount, parameterCount, type ParameterDims } from "@/lib/math/params";
 import { sampleNextDistribution, type SampleResult } from "@/lib/math/sampling";
 import { matmul, type Matrix, type Tensor3, type Vector } from "@/lib/math/tensor";
@@ -104,6 +112,29 @@ function expectClose(actual: unknown, expected: unknown, path: string): void {
 }
 
 type Runner = (item: GoldenCase) => void;
+
+const matrixZeros = (rows: number, cols: number): Matrix =>
+  Array.from({ length: rows }, () => new Array<number>(cols).fill(0));
+
+// One block's parameters, all zeros, at real sizes. Only shapes are compared.
+function blockZeros(d: number, F: number): FlatParams {
+  const vector = (size: number) => new Array<number>(size).fill(0);
+  const params: FlatParams = {
+    "b0.ln1_g": vector(d),
+    "b0.ln1_b": vector(d),
+    "b0.ln2_g": vector(d),
+    "b0.ln2_b": vector(d),
+    "b0.ff1_w": matrixZeros(d, F),
+    "b0.ff1_b": vector(F),
+    "b0.ff2_w": matrixZeros(F, d),
+    "b0.ff2_b": vector(d),
+  };
+  for (const n of "qkvo") {
+    params[`b0.w${n}`] = matrixZeros(d, d);
+    params[`b0.b${n}`] = vector(d);
+  }
+  return params;
+}
 
 const check = (item: GoldenCase, actual: Record<string, unknown>) => {
   expect(Object.keys(actual).sort(), item.id).toEqual(Object.keys(item.outputs).sort());
@@ -172,7 +203,153 @@ function checkSampling(item: GoldenCase): void {
   }
 }
 
+// Central differences for named entries of a parameter dictionary.
+function numericParams(params: FlatParams, names: string[], scalar: (next: FlatParams) => number) {
+  return Object.fromEntries(
+    names.map((name) => {
+      const value = params[name]!;
+      return [
+        name,
+        Array.isArray(value[0])
+          ? numericalGrad((v) => scalar({ ...params, [name]: v }), value as Matrix)
+          : row((v) => scalar({ ...params, [name]: v }), value as Vector),
+      ];
+    }),
+  );
+}
+
 const RUNNERS: Record<string, Runner> = {
+  "transformer.ffn_forward": (item) => {
+    const { Xn, params } = item.inputs as { Xn: Matrix; params: FlatParams };
+    const { out, cache } = ffnForward(Xn, params, "b0.");
+    check(item, { out, Z: cache.Z, A: cache.A, cache_keys: Object.keys(cache) });
+  },
+  "transformer.ffn_backward": (item) => {
+    const { Xn, params, dOut } = item.inputs as { Xn: Matrix; params: FlatParams; dOut: Matrix };
+    check(item, ffnBackward(dOut, ffnForward(Xn, params, "b0.").cache, params, "b0."));
+  },
+  "transformer.block_forward": (item) => {
+    if (item.inputs.problem === "config_shapes") {
+      // The engine, run at the sizes in config.py, has the shapes of the real functions.
+      const { seq_len, emb_dim, num_heads, ff_dim } = item.inputs as Record<string, number>;
+      const T = seq_len!;
+      const d = emb_dim!;
+      const F = ff_dim!;
+      const params = blockZeros(d, F);
+      const zeros = matrixZeros(T, d);
+      const block = blockForward(zeros, params, 0, num_heads!, 1e-5);
+      const back = blockBackward(zeros, block.cache, params, 0, num_heads!);
+      const ffn = ffnBackward(zeros, block.cache.ff, params, "b0.");
+      const sized = (values: Record<string, unknown>) =>
+        Object.fromEntries(Object.entries(values).map(([key, value]) => [key, shapeOf(value)]));
+      const { Xn, att, X1, Xn2, ff, Y } = block;
+      const { dXn2, dX1_branch, dX1, dXn, dX_branch, dX } = back;
+      check(item, {
+        forward: sized({
+          X: zeros,
+          Xn,
+          att,
+          X1,
+          Xn2,
+          ff,
+          Y,
+          Z: block.cache.ff.Z,
+          A: block.cache.ff.A,
+        }),
+        backward: sized({
+          dY: zeros,
+          dXn2,
+          dX1_branch,
+          dX1,
+          dXn,
+          dX_branch,
+          dX,
+          dA: ffn.dA,
+          dZ: ffn.dZ,
+          dW2: ffn.grads["b0.ff2_w"],
+          db2: ffn.grads["b0.ff2_b"],
+          dW1: ffn.grads["b0.ff1_w"],
+          db1: ffn.grads["b0.ff1_b"],
+        }),
+      });
+      return;
+    }
+    const { X, params, l, cfg } = item.inputs as {
+      X: Matrix;
+      params: FlatParams;
+      l: number;
+      cfg: ModelSizes;
+    };
+    const { cache, ...locals } = blockForward(X, params, l, cfg.num_heads, cfg.ln_eps);
+    check(item, {
+      ...locals,
+      cache_keys: {
+        block: Object.keys(cache),
+        att: Object.keys(cache.att),
+        ff: Object.keys(cache.ff),
+      },
+    });
+  },
+  "transformer.block_backward": (item) => {
+    const { X, dY, params, l, cfg } = item.inputs as {
+      X: Matrix;
+      dY: Matrix;
+      params: FlatParams;
+      l: number;
+      cfg: ModelSizes;
+    };
+    const { cache } = blockForward(X, params, l, cfg.num_heads, cfg.ln_eps);
+    check(item, blockBackward(dY, cache, params, l, cfg.num_heads));
+  },
+  "transformer.forward": (item) => {
+    const { params, ids, cfg } = item.inputs as {
+      params: FlatParams;
+      ids: number[];
+      cfg: ModelSizes;
+    };
+    const { logits, stages, cache } = forward(params, ids, cfg);
+    check(item, {
+      stages,
+      Xf: cache.Xf,
+      logits,
+      cache_keys: Object.keys(cache),
+      block_caches: cache.blocks.length,
+    });
+  },
+  "transformer.loss_and_grads": (item) => {
+    const inputs = item.inputs as Record<string, unknown>;
+    if (inputs.problem === "order") {
+      const { calls } = item.outputs as { calls: { name: string; depth: number; l?: number }[] };
+      const names = calls
+        .filter((call) => call.depth === 1)
+        .map((call) => (call.l === undefined ? call.name : `${call.name}(${call.l})`));
+      const params = (loadGolden("model").find((entry) => entry.id === "loss_and_grads.tiny")!
+        .inputs.params ?? {}) as FlatParams;
+      const { ids, targets, cfg } = inputs as {
+        ids: number[];
+        targets: number[];
+        cfg: ModelSizes;
+      };
+      expect(lossAndGrads(params, ids, targets, cfg).calls).toEqual(names);
+      return;
+    }
+    if (inputs.problem === "config_shapes") {
+      const { params, grads } = item.outputs as Record<string, Record<string, number[]>>;
+      expect(Object.keys(grads!)).toEqual(Object.keys(params!));
+      for (const [name, shape] of Object.entries(params!))
+        expect(grads![name], name).toEqual(shape);
+      return;
+    }
+    const { params, ids, targets, cfg } = inputs as {
+      params: FlatParams;
+      ids: number[];
+      targets: number[];
+      cfg: ModelSizes;
+    };
+    const { calls, ...result } = lossAndGrads(params, ids, targets, cfg);
+    expect(calls.length).toBeGreaterThan(0);
+    check(item, result);
+  },
   "ops.linear_forward": (item) => {
     const { X, W, b } = item.inputs as { X: Matrix; W: Matrix; b: Vector };
     check(item, { Y: linearForward(X, W, b) });
@@ -324,6 +501,44 @@ const RUNNERS: Record<string, Runner> = {
         dX: numericalGrad((v) => dotted(linearForward(v, W, b), dY), X),
         dW: numericalGrad((v) => dotted(linearForward(X, v, b), dY), W),
         db: row((v) => dotted(linearForward(X, W, v), dY), b),
+      });
+    } else if (inputs.problem === "ffn") {
+      const { Xn, params, dOut } = inputs as { Xn: Matrix; params: FlatParams; dOut: Matrix };
+      const scalar = (next: FlatParams, x = Xn) => dotted(ffnForward(x, next, "b0.").out, dOut);
+      check(item, {
+        numeric: {
+          ...numericParams(params, Object.keys(params), scalar),
+          Xn: numericalGrad((x) => scalar(params, x), Xn),
+        },
+      });
+    } else if (inputs.problem === "block") {
+      const { X, dY, params, l, cfg } = inputs as {
+        X: Matrix;
+        dY: Matrix;
+        params: FlatParams;
+        l: number;
+        cfg: ModelSizes;
+      };
+      const scalar = (next: FlatParams, x = X) =>
+        dotted(blockForward(x, next, l, cfg.num_heads, cfg.ln_eps).Y, dY);
+      const stored = item.outputs.numeric as Record<string, unknown>;
+      const names = Object.keys(stored).filter((name) => name !== "X");
+      check(item, {
+        numeric: {
+          ...numericParams(params, names, scalar),
+          X: numericalGrad((x) => scalar(params, x), X),
+        },
+      });
+    } else if (inputs.problem === "model") {
+      const { params, ids, targets, cfg } = inputs as {
+        params: FlatParams;
+        ids: number[];
+        targets: number[];
+        cfg: ModelSizes;
+      };
+      const names = Object.keys(item.outputs.numeric as Record<string, unknown>);
+      check(item, {
+        numeric: numericParams(params, names, (next) => lossAndGrads(next, ids, targets, cfg).loss),
       });
     } else if (inputs.problem === "embedding") {
       const { tok_emb, pos_emb, ids, dX0 } = inputs as {
@@ -648,6 +863,12 @@ const REQUIRED = [
   "transformer.count_params",
   "transformer.embed_forward",
   "transformer.embed_backward",
+  "transformer.ffn_forward",
+  "transformer.ffn_backward",
+  "transformer.block_forward",
+  "transformer.block_backward",
+  "transformer.forward",
+  "transformer.loss_and_grads",
 ];
 
 const allCases = GOLDEN_FILES.flatMap((file) => loadGolden(file).map((item) => ({ file, item })));

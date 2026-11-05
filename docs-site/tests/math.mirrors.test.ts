@@ -28,10 +28,12 @@ const files = readdirSync(DIR).filter((name) => name.endsWith(".ts"));
 test("the engine has the expected files", () => {
   expect(files.sort()).toEqual([
     "attention.ts",
+    "block.ts",
     "bpe.ts",
     "data.ts",
     "embeddings.ts",
     "gradcheck.ts",
+    "model.ts",
     "ops.ts",
     "optim.ts",
     "params.ts",

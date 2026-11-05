@@ -1,0 +1,183 @@
+---
+title: Full Model
+description: The complete forward pass and the complete backward pass, a gradient-flow diagram tied to real calls, the gradient dictionary, and every parameter key with its shape.
+sourceFile: transformer.py
+status: published
+---
+
+This page joins the earlier pages into one pass through the model, in each direction. It adds no new mathematics. Each step is one call to a function explained elsewhere, and the order of those calls is what this page documents.
+
+The numbers on this page are labelled Illustrative Example. They come from a tiny model whose parameters are random draws from the real `init_params`, so its logits and loss say nothing about the trained model.
+
+## Forward pass
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.forward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+`forward` first checks the length:
+
+<MathBlock id="model.length" />
+
+Next it computes the first `X`. <PageLink page="mathematics/embeddings">Embeddings</PageLink> has the equation. Then come the blocks, which <PageLink page="mathematics/transformer-block">Transformer Block</PageLink> explains:
+
+<MathBlock id="model.blocks" />
+
+<MathBlock id="model.final" />
+
+<MathBlock id="model.logits" />
+
+The last two together:
+
+<MathBlock id="model.whole" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<ForwardExample concept="transformer.forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`config.py` has no value for `V`, because it depends on the corpus, so `V` stays a symbol. `T` is at most <ConfigValue name="seq_len" /> in training and generation, and the assertion allows up to <ConfigValue name="context_len" />.
+
+<TensorShape concept="transformer.forward" shape="model-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.forward" />
+
+**What it returns.** `forward` returns the logits and a cache (<CodeLine id="forward.return" />). Logits are not probabilities, and `forward` applies no softmax to them. That happens outside, in one of two places:
+
+- **The loss.** `cross_entropy_forward` computes log probabilities from the logits, and returns their exponential as `probs`, in training (<CodeLine id="outside.loss" />) and in validation (<CodeLine id="outside.validation" />). It does not call `softmax_forward`, and computes the same result in log form.
+- **The sampler.** `sample_next` calls `softmax_forward` on the logits divided by the temperature (<CodeLine id="outside.sampling" />).
+
+The only `softmax_forward` call inside `forward` turns attention scores into attention weights (<CodeLine id="inside.attention-softmax" />). That is not applied to logits.
+
+Only `loss_and_grads` uses the cache. Validation (<CodeLine id="model.discard-cache-validation" />) and generation (<CodeLine id="model.discard-cache-generate" />) throw it away, though `forward` builds it each time.
+
+<CacheTable rows="model" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="transformer.forward" />
+
+## Backward pass
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.loss_and_grads" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.loss_and_grads" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Every derivative here was derived on an earlier page. The chain starts where the loss meets the logits, from <PageLink page="mathematics/softmax-cross-entropy">Softmax & Cross-Entropy</PageLink>:
+
+<MathBlock id="ce.backward" />
+
+The head is a linear layer, so the formulas from <PageLink page="mathematics/linear-relu-initialisation">Linear / ReLU / Initialisation</PageLink> apply, with `X = Xf`, `W = head_w` and `dY = dZ`:
+
+<MathBlock id="linear.dW" />
+
+<MathBlock id="linear.db" />
+
+<MathBlock id="linear.dX" />
+
+The next lines state only the order of the calls. They add no new derivative: the first is the three formulas above, and the others are derived on <PageLink page="mathematics/layernorm">LayerNorm</PageLink>, <PageLink page="mathematics/transformer-block">Transformer Block</PageLink> and <PageLink page="mathematics/embeddings">Embeddings</PageLink>.
+
+<MathBlock id="model.back.head" />
+
+<MathBlock id="model.back.final" />
+
+<MathBlock id="model.back.blocks" />
+
+<MathBlock id="model.back.embed" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.loss_and_grads" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<LossAndGradsExample concept="transformer.loss_and_grads" />
+
+Two rows of that table are worth a closer look. Each `.bk` entry is round-off around 0, because softmax ignores a constant added to a row, as <PageLink page="mathematics/attention">Attention</PageLink> explains. The tiny `pos_emb` has more rows than this sequence has tokens, so its last row has a gradient of exactly 0, as <PageLink page="mathematics/embeddings">Embeddings</PageLink> explains.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="transformer.loss_and_grads" shape="model-backward" />
+
+<TensorShape concept="transformer.loss_and_grads" shape="model-backward-head" />
+
+<TensorShape concept="transformer.loss_and_grads" shape="model-backward-tables" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.loss_and_grads" />
+
+The order is `forward`, `cross_entropy_forward`, `cross_entropy_backward`, `linear_backward` for the head, `layer_norm_backward` for the final LayerNorm, `block_backward` for each block with the last block first (<CodeLine id="model.reverse" />), and `embed_backward`.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.loss_and_grads" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`test_every_tensor_passes` compares its gradients with central differences, and `test_overfit_one_window` checks that its gradients can drive the loss down on one window (<CodeLine id="model.overfit-test" />).
+
+<Trace concept="transformer.loss_and_grads" />
+
+**How this reaches a parameter update.** `batch_loss_and_grads` calls this once per window and averages the dictionaries (<CodeLine id="model.batch-add" />). `train.main` then clips the average (<CodeLine id="train.clip" />) and passes it to `opt.step` (<CodeLine id="train.adamw" />). <PageLink page="training/adamw-learning-rate-clipping">AdamW / Learning Rate / Clipping</PageLink> covers those steps.
+
+## Gradient flow
+
+Each arrow below is one statement of `loss_and_grads`, with its text taken from the code at the line shown. Select a box to see the function that produced it, and the lines in `loss_and_grads`. <PageLink page="mathematics/transformer-block">Transformer Block</PageLink> has the same diagram for the inside of a block.
+
+<GradientFlowDiagram flow="model" />
+
+## The gradient dictionary
+
+`loss_and_grads` starts by making one array of zeros per parameter, under the same key and with the same shape:
+
+<CodeStep id="model.grads-zero" />
+
+Every backward step then adds to that dictionary. It adds in place, so `block_backward` and `embed_backward` return without handing `grads` back: their caller's dictionary already holds the result. The head and the final LayerNorm are added by `loss_and_grads` itself, and the gradient that goes on to the next step travels separately, as `dX`.
+
+Within one call each key is written at one place in the code. Only `tok_emb` can receive several additions there: `embed_backward` adds one row per position, so a repeated id accumulates.
+
+Because the keys match, `Adam.step` can look up the gradient of each parameter by name. A test checks that the keys and shapes match (<CodeLine id="model.grads-shape-test" />).
+
+## Parameter keys
+
+The dictionary is flat: one string key per array. The keys follow three rules:
+
+- **A suffix per array.** The feed-forward layers and the head end in `_w` for weights and `_b` for biases. A LayerNorm ends in `_g` for its scale and `_b` for its shift.
+- **Attention's four projections come from a loop** over `q`, `k`, `v` and `o`, so `"w" + n` gives `wq` and `"b" + n` gives `bq`, and so on (<CodeLine id="attention.params" />).
+- **Block entries start with a prefix** that holds the block index, counted from 0 (<CodeLine id="model.key" />). `block_forward` and `block_backward` build the same prefix (<CodeLine id="model.key-block" />), so `b0.wq` is the query weights of the first block. The PDF writes this prefix `bl.` (p. 9). This site follows the code.
+
+The table lists each name once, with `b{l}.` standing for every block. Names and shapes come from calling `init_params`. `head_w` is a separate matrix, not tied to `tok_emb`.
+
+<ParameterTable />
+
+`config.py` has `num_layers =` <ConfigValue name="num_layers" />, so the `b{l}.` rows appear once per block in the real dictionary:
+
+<ParameterKeys />
+
+The number of scalars, worked out from these shapes, with `V` left as a symbol:
+
+<ParameterCount />

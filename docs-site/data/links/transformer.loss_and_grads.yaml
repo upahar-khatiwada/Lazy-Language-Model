@@ -1,0 +1,31 @@
+links:
+  - equationId: model.back.head
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: dXf, dW, db = linear_backward(cache["Xf"], params["head_w"], dZ)
+    role: implements
+  - equationId: model.back.final
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: dX, dg, db = layer_norm_backward(dXf, cache["lnf"], params["lnf_g"])
+    role: implements
+  - equationId: model.back.blocks
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: "for l in reversed(range(cfg.num_layers)):"
+    role: implements
+  - equationId: model.back.blocks
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: dX = block_backward(dX, cache["blocks"][l], params, l, cfg, grads)
+    role: implements
+  - equationId: model.back.embed
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: embed_backward(dX, ids, grads)
+    role: implements
+  - equationId: model.back.embed
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_grads_have_the_shape_of_params
+    match: assert grads.keys() == params.keys()
+    role: test

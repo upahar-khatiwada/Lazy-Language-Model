@@ -1,0 +1,118 @@
+id: transformer.loss_and_grads
+title: Whole model, backward
+category: whole-model
+inventory: [M47, M48]
+status: implemented
+summary: >-
+  loss_and_grads runs forward and the cross-entropy loss on one sequence, then the whole backward
+  pass. It goes through the head, the final LayerNorm, the blocks last to first, and the embeddings.
+  It returns the loss and a dictionary with one gradient per parameter, under the parameter's own key.
+why: >-
+  The optimizer needs one gradient per parameter, and each backward function needs the gradient
+  produced by the step after it in the forward pass. This function calls them in that order and keeps
+  the results together.
+equations:
+  - id: model.back.head
+    latex: dX_f,\ dW_h,\ db_h = \operatorname{Head}^{\text{back}}(dZ)
+    role: backward
+    label: Order of calls, the head
+  - id: model.back.final
+    latex: dX^{(L)},\ d\gamma_f,\ d\beta_f = \operatorname{LN}_f^{\text{back}}(dX_f)
+    role: backward
+    label: Order of calls, the final LayerNorm
+  - id: model.back.blocks
+    latex: dX^{(l)} = \operatorname{Block}_l^{\text{back}}\!\big(dX^{(l+1)}\big), \qquad l = L - 1, \dots, 0
+    role: backward
+    label: Order of calls, the blocks in reverse
+  - id: model.back.embed
+    latex: d\,\mathrm{tok\_emb},\ d\,\mathrm{pos\_emb} = \operatorname{Embed}^{\text{back}}\!\big(dX^{(0)}\big)
+    role: backward
+    label: Order of calls, the embeddings
+symbols:
+  - symbol: dZ
+    meaning: Gradient of the loss on the logits
+    codeName: dZ
+    shape: (T, V)
+  - symbol: P, E_y
+    meaning: The probabilities, and one-hot rows of the targets
+    codeName: probs, and the -= 1.0 in cross_entropy_backward
+    shape: (T, V)
+  - symbol: dX_f
+    meaning: Gradient on the output of the final LayerNorm
+    codeName: dXf
+    shape: (T, d)
+  - symbol: dW_h, db_h
+    meaning: Gradients on the head
+    codeName: dW, db
+    shape: (d, V) and (V,)
+  - symbol: d\gamma_f, d\beta_f
+    meaning: Gradients on the final LayerNorm
+    codeName: dg, db
+    shape: (d,)
+  - symbol: dX^{(l)}
+    meaning: Gradient on the residual stream before block l. The code reuses the name dX
+    codeName: dX
+    shape: (T, d)
+  - symbol: \operatorname{Head}^{\text{back}}, \operatorname{LN}_f^{\text{back}}
+    meaning: linear_backward with the head, and layer_norm_backward with the final LayerNorm's cache
+    codeName: linear_backward, layer_norm_backward
+    shape: functions
+  - symbol: \operatorname{Block}_l^{\text{back}}, \operatorname{Embed}^{\text{back}}
+    meaning: block_backward for block l, and embed_backward
+    codeName: block_backward, embed_backward
+    shape: functions
+  - symbol: X, W, dY
+    meaning: The linear layer's names on the page that derives it. At the head they are Xf, head_w and dZ
+    codeName: X, W, dY
+    shape: (T, d), (d, V) and (T, V)
+  - symbol: d\,\mathrm{tok\_emb}, d\,\mathrm{pos\_emb}
+    meaning: Gradients on the two embedding tables
+    codeName: grads["tok_emb"], grads["pos_emb"]
+    shape: (V, d) and (T_max, d)
+example: null
+shapes:
+  - id: model-backward
+    label: The gradient from the logits to the first block's input
+    stages:
+      - name: dZ
+        dims: [T, V]
+      - name: dXf
+        dims: [T, d]
+      - name: dX
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.loss_and_grads
+      match: dX = block_backward(dX, cache["blocks"][l], params, l, cfg, grads)
+  - id: model-backward-head
+    label: Parameter gradients of the head
+    stages:
+      - name: head_w
+        dims: [d, V]
+      - name: head_b
+        dims: [V]
+    target:
+      file: transformer.py
+      symbol: transformer.loss_and_grads
+      match: dXf, dW, db = linear_backward(cache["Xf"], params["head_w"], dZ)
+  - id: model-backward-tables
+    label: Parameter gradients of the embedding tables
+    stages:
+      - name: tok_emb
+        dims: [V, d]
+      - name: pos_emb
+        dims: [Tmax, d]
+    target:
+      file: transformer.py
+      symbol: transformer.loss_and_grads
+      match: embed_backward(dX, ids, grads)
+source:
+  - file: transformer.py
+    symbol: transformer.loss_and_grads
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: []
+  page: 11
+notes:
+  - These equations state only the order of calls. The mathematics of each call is on its own page.

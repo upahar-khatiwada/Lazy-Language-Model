@@ -1,0 +1,41 @@
+links:
+  - equationId: block.xn
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: Xn, c_ln1 = layer_norm_forward(X, params[p + "ln1_g"], params[p + "ln1_b"], cfg.ln_eps)
+    role: implements
+  - equationId: block.att
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: att, c_att = attention_forward(Xn, params, p, cfg)
+    role: implements
+  - equationId: block.x1
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: X1 = X + att
+    role: implements
+  - equationId: block.xn2
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: Xn2, c_ln2 = layer_norm_forward(X1, params[p + "ln2_g"], params[p + "ln2_b"], cfg.ln_eps)
+    role: implements
+  - equationId: block.ff
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: ff, c_ff = ffn_forward(Xn2, params, p)
+    role: implements
+  - equationId: block.y
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: return X1 + ff
+    role: implements
+  - equationId: block.compact
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: X1 = X + att
+    role: implements
+  - equationId: block.compact
+    file: transformer.py
+    symbol: transformer.block_forward
+    match: return X1 + ff
+    role: implements

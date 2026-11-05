@@ -1,0 +1,89 @@
+id: transformer.ffn_forward
+title: Feed-forward network, forward
+category: feed-forward-and-block
+inventory: [M36]
+status: implemented
+summary: >-
+  ffn_forward widens each row with one linear layer, applies ReLU, and narrows the row back to its
+  original width with a second linear layer. It returns the output and a cache holding Xn, Z and A.
+why: >-
+  Attention builds each row from rows at that position and earlier ones, and its output projection is
+  linear. The feed-forward layer works on each row alone, and ReLU is the step in it that is not
+  linear.
+equations:
+  - id: ffn.z
+    latex: Z = X_n W_1 + \mathbf{1} b_1^\top
+    role: forward
+    label: Widen
+  - id: ffn.a
+    latex: A = \operatorname{ReLU}(Z)
+    role: forward
+    label: ReLU, element by element
+  - id: ffn.out
+    latex: \mathrm{Ff} = A W_2 + \mathbf{1} b_2^\top
+    role: forward
+    label: Narrow
+  - id: ffn.whole
+    latex: \operatorname{FFN}(x) = \operatorname{ReLU}(x W_1 + b_1)\, W_2 + b_2
+    role: forward
+    label: The same three steps for one row x
+symbols:
+  - symbol: X_n
+    meaning: The input, a normalised copy of the residual stream. Each block passes the output of its second LayerNorm
+    codeName: Xn
+    shape: (T, d)
+  - symbol: W_1, b_1
+    meaning: Weights and bias of the first linear layer
+    codeName: ff1_w, ff1_b
+    shape: (d, F) and (F,)
+  - symbol: Z
+    meaning: The widened rows, before ReLU
+    codeName: Z
+    shape: (T, F)
+  - symbol: A
+    meaning: The widened rows after ReLU. On this page A means this array and nothing else
+    codeName: A
+    shape: (T, F)
+  - symbol: W_2, b_2
+    meaning: Weights and bias of the second linear layer
+    codeName: ff2_w, ff2_b
+    shape: (F, d) and (d,)
+  - symbol: \mathrm{Ff}
+    meaning: The output of the feed-forward layer. ffn_forward does not name it, and block_forward calls it ff
+    codeName: ff
+    shape: (T, d)
+  - symbol: F
+    meaning: The width of the hidden rows
+    codeName: cfg.ff_dim
+    shape: scalar
+  - symbol: x
+    meaning: One row of X_n
+    codeName: Xn[t]
+    shape: (d,)
+example: null
+shapes:
+  - id: ffn-forward
+    label: Widen, ReLU, narrow
+    stages:
+      - name: Xn
+        dims: [T, d]
+      - name: Z
+        dims: [T, F]
+      - name: A
+        dims: [T, F]
+      - name: out
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_forward
+      match: Z = Xn @ params[p + "ff1_w"] + params[p + "ff1_b"]
+source:
+  - file: transformer.py
+    symbol: transformer.ffn_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["51"]
+  page: 11
+notes:
+  - The code writes both linear layers in place. It does not call ops.linear_forward.

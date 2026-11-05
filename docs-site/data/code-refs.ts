@@ -307,6 +307,73 @@ export const CODE_REFS: Record<string, CodeTarget> = {
   "ln.eps-default": { file: "ops.py", symbol: "ops.layer_norm_forward", match: "epsilon = 1e-5" },
   "ln.eps-config": { file: "config.py", symbol: "config.ln_eps", match: "ln_eps      = 1e-5" },
 
+  "block.def": { ...BLOCK, match: "def block_forward(X, params, l: int, cfg: ModelConfig):" },
+  "block.ffn-call": { ...BLOCK, match: "ff, c_ff = ffn_forward(Xn2, params, p)" },
+  "block.return": { ...BLOCK, match: "return X1 + ff" },
+  "block.back-call": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: 'dX = block_backward(dX, cache["blocks"][l], params, l, cfg, grads)',
+  },
+  "ffn.params-first": {
+    ...INIT,
+    match: 'p[b + "ff1_w"], p[b + "ff1_b"] = xavier_uniform(d, F, rng), np.zeros(F)',
+  },
+  "ffn.params-second": {
+    ...INIT,
+    match: 'p[b + "ff2_w"], p[b + "ff2_b"] = xavier_uniform(F, d, rng), np.zeros(d)',
+  },
+  "ffn.back-call": {
+    file: "transformer.py",
+    symbol: "transformer.block_backward",
+    match: 'dXn2 = ffn_backward(dY, c["ff"], params, p, grads)',
+  },
+  "ffn.test-forward": {
+    file: "tests/test_transformer.py",
+    symbol: "tests.test_transformer.test_ffn_worked_example",
+    match: "y, cache = ffn_forward(np.array([[1., -1.]]), params, p)",
+  },
+  "model.block-loop": {
+    ...FORWARD,
+    match: "for l in range(cfg.num_layers):",
+  },
+  "model.key": { ...INIT, match: 'b = f"b{l}." # key' },
+  "model.key-block": { ...BLOCK, match: 'p = f"b{l}."' },
+  "model.grads-zero": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: "grads = {k: np.zeros_like(v) for k, v in params.items()}",
+  },
+  "model.reverse": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: "for l in reversed(range(cfg.num_layers)):",
+  },
+  "model.grads-shape-test": {
+    file: "tests/test_transformer.py",
+    symbol: "tests.test_transformer.test_grads_have_the_shape_of_params",
+    match: "assert grads.keys() == params.keys()",
+  },
+  "model.overfit-test": {
+    file: "tests/test_transformer.py",
+    symbol: "tests.test_transformer.test_overfit_one_window",
+    match: "assert loss < 0.05",
+  },
+  "model.batch-add": {
+    file: "train.py",
+    symbol: "train.batch_loss_and_grads",
+    match: "grads[k] += g[k] / B",
+  },
+  "model.discard-cache-generate": {
+    file: "generate.py",
+    symbol: "generate.generate",
+    match: "logits, _ = forward(params, np.array(ids[-window:]), cfg)",
+  },
+  "model.discard-cache-validation": {
+    file: "train.py",
+    symbol: "train.validation_loss",
+    match: "logits, _ = forward(params, x, cfg)",
+  },
   "forward.assert": { ...FORWARD, match: "assert len(ids) <= cfg.context_len" },
   "forward.return": { ...FORWARD, match: "return logits, dict(" },
   "outside.loss": {

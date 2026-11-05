@@ -1,0 +1,36 @@
+links:
+  - equationId: model.length
+    file: transformer.py
+    symbol: transformer.forward
+    match: assert len(ids) <= cfg.context_len, "sequence longer than the position table"
+    role: implements
+  - equationId: model.blocks
+    file: transformer.py
+    symbol: transformer.forward
+    match: X, c = block_forward(X, params, l, cfg)
+    role: implements
+  - equationId: model.final
+    file: transformer.py
+    symbol: transformer.forward
+    match: Xf, c_lnf = layer_norm_forward(X, params["lnf_g"], params["lnf_b"], cfg.ln_eps)
+    role: implements
+  - equationId: model.logits
+    file: transformer.py
+    symbol: transformer.forward
+    match: logits = Xf @ params["head_w"] + params["head_b"]
+    role: inline
+  - equationId: model.whole
+    file: transformer.py
+    symbol: transformer.forward
+    match: Xf, c_lnf = layer_norm_forward(X, params["lnf_g"], params["lnf_b"], cfg.ln_eps)
+    role: implements
+  - equationId: model.whole
+    file: transformer.py
+    symbol: transformer.forward
+    match: logits = Xf @ params["head_w"] + params["head_b"]
+    role: inline
+  - equationId: model.whole
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_future_tokens_do_not_change_earlier_logits
+    match: la, _ = forward(params, a, cfg)
+    role: test

@@ -1,0 +1,110 @@
+id: transformer.block_forward
+title: Pre-LN block, forward
+category: feed-forward-and-block
+inventory: [M40]
+status: implemented
+summary: >-
+  block_forward runs one transformer block on the sequence X. Each of its two branches reads a
+  normalised copy of the residual stream, and adds its result to the stream as it was before that
+  normalisation. It returns the output and a dictionary of four caches.
+why: >-
+  The block is where one layer of the model does its work. Attention moves information between
+  positions, the feed-forward layer works on each row alone, and the two adds carry the stream past
+  both of them. forward calls this once per layer.
+equations:
+  - id: block.xn
+    latex: X_n = \operatorname{LN}_1(X)
+    role: forward
+    label: First LayerNorm, on a copy
+  - id: block.att
+    latex: \mathrm{Att} = \operatorname{Attention}(X_n)
+    role: forward
+    label: Attention reads the copy
+  - id: block.x1
+    latex: X_1 = X + \mathrm{Att}
+    role: forward
+    label: First residual add
+  - id: block.xn2
+    latex: X_{n2} = \operatorname{LN}_2(X_1)
+    role: forward
+    label: Second LayerNorm, on a copy
+  - id: block.ff
+    latex: \mathrm{Ff} = \operatorname{FFN}(X_{n2})
+    role: forward
+    label: The feed-forward layer reads the copy
+  - id: block.y
+    latex: Y = X_1 + \mathrm{Ff}
+    role: forward
+    label: Second residual add
+  - id: block.compact
+    latex: >-
+      X_1 = X + \operatorname{Attention}(\operatorname{LN}_1(X)), \qquad Y = X_1 +
+      \operatorname{FFN}(\operatorname{LN}_2(X_1))
+    role: forward
+    label: The block on one line
+symbols:
+  - symbol: X
+    meaning: The residual stream entering the block
+    codeName: X
+    shape: (T, d)
+  - symbol: \operatorname{LN}_1, \operatorname{LN}_2
+    meaning: The block's two LayerNorms, each with its own scale and shift
+    codeName: layer_norm_forward with ln1_g, ln1_b and ln2_g, ln2_b
+    shape: (T, d) to (T, d)
+  - symbol: X_n
+    meaning: The normalised copy that attention reads
+    codeName: Xn
+    shape: (T, d)
+  - symbol: \mathrm{Att}
+    meaning: The output of attention
+    codeName: att
+    shape: (T, d)
+  - symbol: X_1
+    meaning: The residual stream after the first add
+    codeName: X1
+    shape: (T, d)
+  - symbol: X_{n2}
+    meaning: The normalised copy that the feed-forward layer reads
+    codeName: Xn2
+    shape: (T, d)
+  - symbol: \mathrm{Ff}
+    meaning: The output of the feed-forward layer
+    codeName: ff
+    shape: (T, d)
+  - symbol: Y
+    meaning: The output of the block. The code returns it without naming it, and block_backward calls its gradient dY
+    codeName: X1 + ff
+    shape: (T, d)
+example: null
+shapes:
+  - id: block-forward
+    label: Every array in the block has the same shape
+    stages:
+      - name: X
+        dims: [T, d]
+      - name: Xn
+        dims: [T, d]
+      - name: att
+        dims: [T, d]
+      - name: X1
+        dims: [T, d]
+      - name: Xn2
+        dims: [T, d]
+      - name: ff
+        dims: [T, d]
+      - name: Y
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.block_forward
+      match: return X1 + ff
+source:
+  - file: transformer.py
+    symbol: transformer.block_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["53"]
+  page: 11
+notes:
+  - The PDF also states these steps unnumbered in section 4.5, p. 9.

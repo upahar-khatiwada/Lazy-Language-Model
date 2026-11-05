@@ -1,0 +1,101 @@
+id: transformer.forward
+title: Whole model, forward
+category: whole-model
+inventory: [M42, M43, M44, M46]
+status: implemented
+summary: >-
+  forward takes one sequence of ids. It adds the embeddings, runs every block in turn, applies the
+  final LayerNorm and projects with the head. It returns the logits and a cache, and applies no
+  softmax to the logits.
+why: >-
+  This is the function that turns token ids into one score per vocabulary token, at every position.
+  Training, validation and generation all call it.
+equations:
+  - id: model.length
+    latex: T \le T_{\max}
+    role: forward
+    label: The sequence must fit the position table
+  - id: model.blocks
+    latex: X^{(l+1)} = \operatorname{Block}_l\!\big(X^{(l)}\big), \qquad l = 0, \dots, L - 1
+    role: forward
+    label: Blocks in sequence
+  - id: model.final
+    latex: X_f = \operatorname{LN}_f\!\big(X^{(L)}\big)
+    role: forward
+    label: Final LayerNorm
+  - id: model.logits
+    latex: Z = X_f W_h + \mathbf{1} b_h^\top
+    role: forward
+    label: The head
+  - id: model.whole
+    latex: \mathrm{Logits} = \operatorname{LN}_f\!\big(X^{(L)}\big)\, W_h + b_h
+    role: forward
+    label: The last two steps together
+symbols:
+  - symbol: T
+    meaning: The length of the sequence
+    codeName: len(ids)
+    shape: scalar
+  - symbol: T_{\max}
+    meaning: The number of rows in the position table
+    codeName: cfg.context_len
+    shape: scalar
+  - symbol: X^{(l)}
+    meaning: The residual stream before block l. X^{(0)} is the output of embed_forward
+    codeName: X
+    shape: (T, d)
+  - symbol: L
+    meaning: The number of blocks. On this page L always means this, and the loss is written as the word loss
+    codeName: cfg.num_layers
+    shape: scalar
+  - symbol: \operatorname{Block}_l
+    meaning: block_forward with the parameters whose keys start with b{l}.
+    codeName: block_forward
+    shape: (T, d) to (T, d)
+  - symbol: \operatorname{LN}_f
+    meaning: The final LayerNorm
+    codeName: layer_norm_forward with lnf_g, lnf_b
+    shape: (T, d) to (T, d)
+  - symbol: X_f
+    meaning: The output of the final LayerNorm
+    codeName: Xf
+    shape: (T, d)
+  - symbol: W_h, b_h
+    meaning: Weights and bias of the head
+    codeName: head_w, head_b
+    shape: (d, V) and (V,)
+  - symbol: Z, \mathrm{Logits}
+    meaning: One score per vocabulary token, at each position
+    codeName: logits
+    shape: (T, V)
+  - symbol: V
+    meaning: The vocabulary size. It depends on the corpus
+    codeName: cfg.vocab_size
+    shape: scalar
+example: null
+shapes:
+  - id: model-forward
+    label: One sequence through the model
+    stages:
+      - name: ids
+        dims: [T]
+      - name: X
+        dims: [T, d]
+      - name: Xf
+        dims: [T, d]
+      - name: logits
+        dims: [T, V]
+    target:
+      file: transformer.py
+      symbol: transformer.forward
+      match: logits = Xf @ params["head_w"] + params["head_b"]
+source:
+  - file: transformer.py
+    symbol: transformer.forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["54"]
+  page: 11
+notes:
+  - The head writes the linear formula in place. It does not call ops.linear_forward.

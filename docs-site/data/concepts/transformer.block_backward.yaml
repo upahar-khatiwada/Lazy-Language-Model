@@ -1,0 +1,135 @@
+id: transformer.block_backward
+title: Residual connections, backward
+category: feed-forward-and-block
+inventory: [M41]
+status: implemented
+summary: >-
+  block_backward runs the block in reverse. It receives dY, the gradient of the loss on the block's
+  output, and returns dX, the gradient on its input. At each residual add, the gradient splits into a
+  part that goes through the branch and a part that goes around it. The two parts are added.
+why: >-
+  Every parameter in the block needs a gradient, so the gradient has to go through both branches. X
+  also reaches the output along the identity path, so dX needs that part too, and it goes on to the
+  block before this one.
+equations:
+  - id: block.back.dxn2
+    latex: dX_{n2} = \operatorname{FFN}^{\text{back}}(dY)
+    role: backward
+    label: Through the feed-forward branch
+  - id: block.back.branch2
+    latex: dX_1^{\text{branch}} = \operatorname{LN}_2^{\text{back}}(dX_{n2})
+    role: backward
+    label: Through the second LayerNorm
+  - id: block.back.dx1
+    latex: dX_1 = dY + dX_1^{\text{branch}}
+    role: backward
+    label: Second add, reversed
+  - id: block.back.dxn
+    latex: dX_n = \operatorname{Attention}^{\text{back}}(dX_1)
+    role: backward
+    label: Through the attention branch
+  - id: block.back.branch1
+    latex: dX^{\text{branch}} = \operatorname{LN}_1^{\text{back}}(dX_n)
+    role: backward
+    label: Through the first LayerNorm
+  - id: block.back.dx
+    latex: dX = dX_1 + dX^{\text{branch}}
+    role: backward
+    label: First add, reversed
+  - id: block.back.terms
+    latex: >-
+      \frac{\partial Y}{\partial \mathrm{Ff}} = I
+      \;\Rightarrow\; d\mathrm{Ff} = dY,
+      \qquad
+      \frac{\partial X_1}{\partial \mathrm{Att}} = I
+      \;\Rightarrow\; d\mathrm{Att} = dX_1
+    role: backward
+    label: What each branch receives
+    derived: true
+  - id: block.back.identity
+    latex: >-
+      Y = X_1 + \mathrm{Ff}(X_1)
+      \;\Rightarrow\;
+      dX_1 = dY \left( I + \frac{\partial \mathrm{Ff}}{\partial X_1} \right)
+      = dY + dY \frac{\partial \mathrm{Ff}}{\partial X_1}
+    role: backward
+    label: Why the identity path carries dY unchanged
+    derived: true
+symbols:
+  - symbol: dY
+    meaning: Gradient of the loss on the output of the block
+    codeName: dY
+    shape: (T, d)
+  - symbol: dX_{n2}
+    meaning: Gradient on the input of the feed-forward layer
+    codeName: dXn2
+    shape: (T, d)
+  - symbol: dX_1^{\text{branch}}
+    meaning: The part of the gradient on X1 that went through the feed-forward branch
+    codeName: dX1_branch
+    shape: (T, d)
+  - symbol: dX_1
+    meaning: Gradient of the loss on X1, with both parts added
+    codeName: dX1
+    shape: (T, d)
+  - symbol: dX_n
+    meaning: Gradient on the input of attention
+    codeName: dXn
+    shape: (T, d)
+  - symbol: dX^{\text{branch}}
+    meaning: The part of the gradient on X that went through the attention branch
+    codeName: dX_branch
+    shape: (T, d)
+  - symbol: dX
+    meaning: Gradient of the loss on X, with both parts added. It is returned
+    codeName: dX1 + dX_branch
+    shape: (T, d)
+  - symbol: I
+    meaning: The identity. An array added to another passes its gradient on unchanged
+    codeName: null
+    shape: none
+  - symbol: \operatorname{FFN}^{\text{back}}, \operatorname{Attention}^{\text{back}}
+    meaning: The backward functions of the two branches
+    codeName: ffn_backward, attention_backward
+    shape: (T, d) to (T, d)
+  - symbol: \operatorname{LN}_1^{\text{back}}, \operatorname{LN}_2^{\text{back}}
+    meaning: layer_norm_backward with each LayerNorm's cache and scale
+    codeName: layer_norm_backward
+    shape: (T, d) to (T, d)
+  - symbol: d\mathrm{Ff}, d\mathrm{Att}
+    meaning: The gradients on each branch's output. The code passes dY and dX1, and has no separate names for them
+    codeName: null
+    shape: (T, d)
+example: null
+shapes:
+  - id: block-backward
+    label: Every gradient in the block has the same shape
+    stages:
+      - name: dY
+        dims: [T, d]
+      - name: dXn2
+        dims: [T, d]
+      - name: dX1_branch
+        dims: [T, d]
+      - name: dX1
+        dims: [T, d]
+      - name: dXn
+        dims: [T, d]
+      - name: dX_branch
+        dims: [T, d]
+      - name: dX
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.block_backward
+      match: return dX1 + dX_branch
+source:
+  - file: transformer.py
+    symbol: transformer.block_backward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: []
+  page: 11
+notes:
+  - The PDF writes the output as X' and calls the block's output gradient dX'. The code calls it dY.

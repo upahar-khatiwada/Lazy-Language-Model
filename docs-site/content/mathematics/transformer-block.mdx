@@ -1,0 +1,315 @@
+---
+title: Transformer Block
+description: The feed-forward network, the pre-LN block as block_forward writes it, residual connections in the backward pass, and what each cache holds and who reads it.
+sourceFile: transformer.py
+status: published
+---
+
+A block has two branches: attention and a feed-forward network. This page covers the feed-forward network, how `block_forward` joins the two branches, how `block_backward` reverses that, and what the forward pass leaves behind for the backward pass.
+
+The numbers on this page are labelled Illustrative Example. The tiny model below has random parameters from the real `init_params`, not learned values. The real sizes appear under Tensor shapes.
+
+## Feed-forward network
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.ffn_forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.ffn_forward" />
+
+<Callout kind="note">
+
+In general, two linear layers with no step between them can be replaced by one linear layer, so a function that is not linear between them is what makes the second layer add anything. This is a general explanation. Nothing in this repository measures it.
+
+</Callout>
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="ffn.z" />
+
+<MathBlock id="ffn.a" />
+
+<MathBlock id="ffn.out" />
+
+For one row, the three steps together are:
+
+<MathBlock id="ffn.whole" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.ffn_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<FfnForwardExample concept="transformer.ffn_forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+With `config.py`, each row widens from <ConfigValue name="emb_dim" /> to <ConfigValue name="ff_dim" /> numbers and narrows back to <ConfigValue name="emb_dim" />.
+
+<TensorShape concept="transformer.ffn_forward" shape="ffn-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.ffn_forward" />
+
+`init_params` creates the two layers' parameters. Both weight matrices start as Xavier uniform draws, and both biases start at zero:
+
+<CodeStep id="ffn.params-first" />
+
+<CodeStep id="ffn.params-second" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.ffn_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="transformer.ffn_forward" />
+
+## Feed-forward backward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.ffn_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.ffn_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Each equation below follows the order of `ffn_backward`. The second linear layer comes first. `linear_backward` returns three results for it:
+
+<MathBlock id="ffn.back.da" />
+
+<MathBlock id="ffn.back.dw2" />
+
+<MathBlock id="ffn.back.db2" />
+
+ReLU has no parameters. A hidden value that ReLU set to 0 sends no gradient back:
+
+<MathBlock id="ffn.back.dz" />
+
+Then the first linear layer:
+
+<MathBlock id="ffn.back.dxn" />
+
+<MathBlock id="ffn.back.dw1" />
+
+<MathBlock id="ffn.back.db1" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.ffn_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<FfnBackwardExample concept="transformer.ffn_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="transformer.ffn_backward" shape="ffn-backward" />
+
+<TensorShape concept="transformer.ffn_backward" shape="ffn-backward-second" />
+
+<TensorShape concept="transformer.ffn_backward" shape="ffn-backward-first" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.ffn_backward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.ffn_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`block_backward` calls it first, with `dY` (<CodeLine id="ffn.back-call" />). No test calls `ffn_backward` directly. `test_every_tensor_passes` reaches it through the whole model, and compares the four gradients with central differences.
+
+<Trace concept="transformer.ffn_backward" />
+
+**How this reaches a parameter update.** `grads` is filled in place. `batch_loss_and_grads` averages the gradients over the batch (<CodeLine id="train.gradient" />), `clip_grad_norm` may scale them (<CodeLine id="train.clip" />), and `opt.step` uses them (<CodeLine id="train.adamw" />). `ff1_w` and `ff2_w` also get weight decay, and the biases do not. `dXn` goes on to the second LayerNorm's backward (<CodeLine id="update.ln2" />).
+
+## The pre-LN block
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.block_forward" split />
+
+This form is called pre-LN because of where the LayerNorm sits in the code. Each one runs before its sub-layer: the first on the line before attention (<CodeLine id="ln.block-first" />, <CodeLine id="attention.call" />), and the second on the line before the feed-forward layer (<CodeLine id="ln.block-second" />, <CodeLine id="block.ffn-call" />).
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.block_forward" />
+
+<Callout kind="note">
+
+In general, placing normalisation before a sub-layer keeps the residual path itself free of normalisation, and this is often reported to make deep networks easier to train. This is a general explanation. Nothing in this repository measures that effect.
+
+</Callout>
+
+<ConceptStep>Mathematics</ConceptStep>
+
+One equation per statement of `block_forward`, in the same order:
+
+<MathBlock id="block.xn" />
+
+<MathBlock id="block.att" />
+
+<MathBlock id="block.x1" />
+
+<MathBlock id="block.xn2" />
+
+<MathBlock id="block.ff" />
+
+<MathBlock id="block.y" />
+
+Written together:
+
+<MathBlock id="block.compact" />
+
+The adds use `X` and `X1`, not the normalised copies. So the normalised copies leave the stream as soon as their branch has read them.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.block_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Step through one row of a tiny block. Each step shows the vector before and after, and each add shows both terms and their sum.
+
+<ResidualStreamExample concept="transformer.block_forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+Inside the feed-forward layer rows are wider, as shown above, and inside attention they split into heads. Each array `block_forward` itself names is `(T, d)`, which is what allows the adds.
+
+<TensorShape concept="transformer.block_forward" shape="block-forward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.block_forward" />
+
+All three LayerNorm calls in the model pass `cfg.ln_eps`, which is <ConfigValue name="ln_eps" /> from the `ModelConfig` default. <PageLink page="mathematics/layernorm">LayerNorm</PageLink> explains why editing `config.ln_eps` has no effect.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.block_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`forward` calls it once per layer, and `num_layers` is <ConfigValue name="num_layers" /> in `config.py`. No test calls `block_forward` directly. Tests reach it through `forward`.
+
+<Trace concept="transformer.block_forward" />
+
+## Residual connections in the backward pass
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.block_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.block_backward" />
+
+<Callout kind="note">
+
+In general, a path that passes the gradient on unchanged gives earlier layers a gradient that does not have to shrink through every layer on its way there. This is a general explanation. Nothing in this repository measures that effect.
+
+</Callout>
+
+<ConceptStep>Mathematics</ConceptStep>
+
+One equation per step of `block_backward`, in the same order. The output add reverses first, because it ran last:
+
+<MathBlock id="block.back.dxn2" />
+
+<MathBlock id="block.back.branch2" />
+
+<MathBlock id="block.back.dx1" />
+
+Then the first add:
+
+<MathBlock id="block.back.dxn" />
+
+<MathBlock id="block.back.branch1" />
+
+<MathBlock id="block.back.dx" />
+
+**What each branch receives.** Each branch's output is one term of a sum, and the derivative of a sum with respect to one term is the identity. So the feed-forward backward receives `dY` as it is, and attention's backward receives `dX1` as it is.
+
+<MathBlock id="block.back.terms" />
+
+**Why the identity path carries the gradient unchanged.** `X1` reaches `Y` by two routes: directly, and through the branch. The direct route is an add, whose derivative is the identity, so multiplying `dY` by it leaves `dY` as it was. That is the term `dY` on the line `dX1 = dY + dX1_branch`. The branch route adds the other term.
+
+<MathBlock id="block.back.identity" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.block_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<BlockBackwardExample concept="transformer.block_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="transformer.block_backward" shape="block-backward" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.block_backward" />
+
+This diagram follows those lines. Select a step to see its function and lines.
+
+<GradientFlowDiagram flow="block" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.block_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`loss_and_grads` calls it once per layer, last block first (<CodeLine id="block.back-call" />). No test calls it directly. `test_every_tensor_passes` reaches it through the whole model.
+
+<Trace concept="transformer.block_backward" />
+
+**How this reaches a parameter update.** `block_backward` stores nothing itself except the two LayerNorms' gradients (<CodeLine id="update.ln2" />, <CodeLine id="update.ln1" />). The branch functions fill the rest of `grads`. The optimizer then uses them, through the same steps as above: <CodeLine id="train.gradient" />, <CodeLine id="train.clip" /> and <CodeLine id="train.adamw" />. `dX` is returned (<CodeLine id="update.residual" />). It becomes the `dY` of the block before this one, or goes to `embed_backward` after the first block.
+
+## Caches
+
+The forward pass returns each cache alongside its output, because the backward pass needs values it cannot get otherwise. `block_forward` collects four of them in one dictionary. `block_backward` reads each one once, in reverse order:
+
+<CacheTable rows="block" />
+
+The backward functions read parameters from `params`, not from a cache. `block_forward` leaves `att`, `ff`, `X` and `X1` out of its caches, because no backward function reads them. In the code, both the feed-forward cache and the attention cache have a key named `A`. They hold different arrays.
+
+## Parameters of one block
+
+Each block has its own copy of these. The names and shapes come from calling `init_params`. Only the feed-forward and LayerNorm rows are new on this page. <PageLink page="mathematics/attention">Attention</PageLink> covers the others.
+
+<ParameterTable
+  names={[
+    "b{l}.ln1_g",
+    "b{l}.ln1_b",
+    "b{l}.wq",
+    "b{l}.bq",
+    "b{l}.wk",
+    "b{l}.bk",
+    "b{l}.wv",
+    "b{l}.bv",
+    "b{l}.wo",
+    "b{l}.bo",
+    "b{l}.ln2_g",
+    "b{l}.ln2_b",
+    "b{l}.ff1_w",
+    "b{l}.ff1_b",
+    "b{l}.ff2_w",
+    "b{l}.ff2_b",
+  ]}
+/>
+
+Next: <PageLink page="mathematics/full-model">Full Model</PageLink> joins the blocks to the embeddings and the head.

@@ -1,0 +1,131 @@
+id: transformer.ffn_backward
+title: Feed-forward network, backward
+category: feed-forward-and-block
+inventory: [M39]
+status: implemented
+summary: >-
+  ffn_backward receives dOut, the gradient of the loss on the output of the feed-forward layer. It
+  goes back through the second linear layer, through ReLU, and through the first linear layer. It adds
+  four parameter gradients to grads and returns dXn, the gradient on the input.
+why: >-
+  W_1, b_1, W_2 and b_2 are parameters, so the optimizer needs a gradient for each. dXn continues to
+  the second LayerNorm's backward, and from there to the earlier layers.
+equations:
+  - id: ffn.back.da
+    latex: dA = d\mathrm{Out}\, W_2^\top
+    role: backward
+    label: Gradient on the ReLU output
+  - id: ffn.back.dw2
+    latex: dW_2 = A^\top d\mathrm{Out}
+    role: backward
+    label: Gradient on the second weights
+  - id: ffn.back.db2
+    latex: db_2 = \mathbf{1}^\top d\mathrm{Out}
+    role: backward
+    label: Gradient on the second bias
+  - id: ffn.back.dz
+    latex: dZ = dA \odot \mathbb{1}[Z > 0]
+    role: backward
+    label: Through ReLU
+  - id: ffn.back.dxn
+    latex: dX_n = dZ\, W_1^\top
+    role: backward
+    label: Gradient on the input
+  - id: ffn.back.dw1
+    latex: dW_1 = X_n^\top dZ
+    role: backward
+    label: Gradient on the first weights
+  - id: ffn.back.db1
+    latex: db_1 = \mathbf{1}^\top dZ
+    role: backward
+    label: Gradient on the first bias
+symbols:
+  - symbol: d\mathrm{Out}
+    meaning: Gradient of the loss on the output of the feed-forward layer. block_backward passes dY
+    codeName: dOut
+    shape: (T, d)
+  - symbol: dA
+    meaning: Gradient on the ReLU output
+    codeName: dA
+    shape: (T, F)
+  - symbol: dZ
+    meaning: Gradient on the widened rows, before ReLU
+    codeName: dZ
+    shape: (T, F)
+  - symbol: dX_n
+    meaning: Gradient on the input, returned to block_backward
+    codeName: dXn
+    shape: (T, d)
+  - symbol: dW_1, db_1
+    meaning: Gradients on the first linear layer
+    codeName: dW1, db1
+    shape: (d, F) and (F,)
+  - symbol: dW_2, db_2
+    meaning: Gradients on the second linear layer
+    codeName: dW2, db2
+    shape: (F, d) and (d,)
+  - symbol: A, Z, X_n
+    meaning: The arrays the forward pass left in its cache
+    codeName: c["A"], c["Z"], c["Xn"]
+    shape: (T, F), (T, F) and (T, d)
+  - symbol: \mathbb{1}[Z > 0]
+    meaning: 1 where Z is positive and 0 elsewhere, including at Z = 0
+    codeName: (Z > 0)
+    shape: (T, F)
+  - symbol: \mathbf{1}^\top
+    meaning: A sum over rows
+    codeName: .sum(axis=0)
+    shape: (T,)
+  - symbol: \odot
+    meaning: Multiplication element by element
+    codeName: "*"
+    shape: none
+example: null
+shapes:
+  - id: ffn-backward
+    label: Back through the three steps
+    stages:
+      - name: dOut
+        dims: [T, d]
+      - name: dA
+        dims: [T, F]
+      - name: dZ
+        dims: [T, F]
+      - name: dXn
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_backward
+      match: dZ = relu_backward(c["Z"], dA)
+  - id: ffn-backward-second
+    label: Parameter gradients of the second layer
+    stages:
+      - name: dW2
+        dims: [F, d]
+      - name: db2
+        dims: [d]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_backward
+      match: dA, dW2, db2 = linear_backward(c["A"], params[p + "ff2_w"], dOut)
+  - id: ffn-backward-first
+    label: Parameter gradients of the first layer
+    stages:
+      - name: dW1
+        dims: [d, F]
+      - name: db1
+        dims: [F]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_backward
+      match: dXn, dW1, db1 = linear_backward(c["Xn"], params[p + "ff1_w"], dZ)
+source:
+  - file: transformer.py
+    symbol: transformer.ffn_backward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["52"]
+  page: 11
+notes:
+  - Both linear layers go through ops.linear_backward, unlike attention_backward, which writes those formulas in place.

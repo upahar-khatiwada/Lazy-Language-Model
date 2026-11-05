@@ -596,3 +596,71 @@ Append one entry per finished task. Newest at the bottom.
     - pytest was not rerun, because no repository code or golden input changed.
     - No state-changing git command was run.
   - Decision needed from the human: should the E007 note in `contract/PDF_VS_CODE.md` change to match, now that the pages say Implemented?
+
+### Task 11: Transformer Block & Full Model Pages (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Pages: new `content/mathematics/transformer-block.mdx` (Part A), `content/mathematics/full-model.mdx` (Part B).
+  - Concepts and links, one file each in `data/concepts/` and `data/links/`: `transformer.ffn_forward`, `transformer.ffn_backward`, `transformer.block_forward`, `transformer.block_backward`, `transformer.forward`, `transformer.loss_and_grads`.
+  - Data: new `data/gradient-flow.ts`, `data/caches.ts`; changed `data/code-refs.ts`.
+  - Engine: new `lib/math/block.ts`, `lib/math/model.ts`, `lib/residual-stream.ts`; changed `lib/parameters.ts` (`expandBlockName`), `lib/golden.ts`, `lib/site-verify.ts` (checks both flows and the caches).
+  - Golden: `scripts/make_golden.py`; new `data/golden/block.json`, `data/golden/model.json`. 210 cases in 11 files. The other golden files have no content change. `loss_and_grads.order` holds a traced run: the real call order, and the line that first filled each entry of `grads`.
+  - Components: new `BlockExamples`, `ResidualStream`, `GradientFlow` with `GradientFlow.module.css`. Changed `mdx.tsx`.
+  - Tests: new `tests/transformer-block.test.ts`, `tests/full-model.test.ts`, `tests/e2e/block-model.spec.ts`. Changed `tests/math.golden.test.ts`, `tests/math.mirrors.test.ts`, `tests/site-data.test.ts` and `tests/e2e/home.spec.ts` (the last two assumed these pages were unwritten).
+  - `contract/DISCREPANCIES.md` section 3: one new row, `linear_bwd` against `linear_backward`. `contract/` is git-ignored, so this edit exists only on this machine.
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added.
+- Commands run and results (Bun 1.3.13, Node v26.13.0; `.next`, `out` and `test-results` deleted before the final build; HEAD `12afe8e`, `sha` `66da45b`):
+  - `bun install --frozen-lockfile`: `Checked 528 installs across 596 packages (no changes)`.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 210 golden cases match a fresh run.`
+  - `bun run verify:links`: `OK: 278 links, 49 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `verify:content: not implemented yet`, exit 0. It is still the stub from Task 02, so this run checks nothing.
+  - `bun run lint`: `All matched files use Prettier code style!`, exit 0. `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files 19 passed (19)`, `Tests 1198 passed (1198)`.
+  - `bun run build`: exit 0.
+  - **`bunx playwright test` (full suite): `1 failed`, `312 passed (18.7m)`, on the final build.** The failure was `block-model.spec.ts` `the Block page and Attention link here and to each other`: `strict mode violation`, because the page has an inline link and a pager link with that name. Both have the right address. Only that test changed, to `exact: true`, with no page or build output changed. `bunx playwright test tests/e2e/block-model.spec.ts`: `30 passed (2.4m)`. **The full suite was not rerun after that test-only fix.**
+  - The 30 tests include axe on both pages at 1280 light and dark, 1000 light, 390 light and dark, with no findings and no sideways page scroll.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.41s`.
+  - Part A acceptance, checked before Part B was started: `bun run test -- tests/transformer-block`: `57 passed`, and that spec's Part A tests in the browser: `17 passed (1.5m)`.
+  - Final comparison, scratchpad script reading `transformer.py` and `data/gradient-flow.ts`: `loss_and_grads` steps at lines 172, 173, 174, 175, 176, 181, 187, 188, and `block_backward` steps at lines 143, 144, 147, 148, 149, 152, all in order, `statements with no step: []` for both. It leaves out the `grads[...]` lines, `p = ...`, the `for` line and `return loss, grads`, which the diagrams show as writes or leave out by design.
+  - Traced run of the real function, direct calls of `loss_and_grads`: `forward`, `cross_entropy_forward`, `cross_entropy_backward`, `linear_backward`, `layer_norm_backward`, `block_backward` with `l` 1 then 0, `embed_backward`. Tests compare the diagram and the engine with it.
+  - Acceptance, tamper: a scratchpad script applied 17 changes one at a time, ran the tests, restored and compared hashes. All 17 were caught, including `engine: residual drops dY: Tests 3 failed`, `engine: blocks forward order in backward: Tests 3 failed`, `block flow: two steps swapped by call: Tests 4 failed`, `shape: head weights flipped: Tests 1 failed`, `page: typed size: Tests 1 failed`.
+  - Screenshots reviewed by eye: stepper at 1280 and 390 dark, block and model diagrams at 1280, block diagram at 390 dark, both cache tables, the grads table, and on the final build the first add at 390 dark, three equations and the key table. Not viewed: the numeric check tables on these pages, the model diagram at 390, and a selected step other than the first in a diagram (tests cover that one).
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files, the same as before. No state-changing git command was run.
+  - Failures seen on the way:
+    - A long Git Bash heredoc failed with `unexpected EOF` before running anything, as in earlier tasks. Scripts went through the Write tool.
+    - Git Bash rewrote a `/mathematics/...` argument into a Windows path. `MSYS_NO_PATHCONV=1` fixed it.
+    - My scratch server held `out/` open, so `rm` and one build failed with `Device or resource busy`. Stopping it fixed that. One more `bun run build` right after failed, and the `tail` cut off the message, so the cause is not known. The next build and the final clean build both passed.
+    - `verify:links` rejected equations whose only link had the role `call`, and an unquoted YAML `match` ending in `:`. The links now use `implements`, because in these functions the call is what computes the equation.
+    - Re-reading my own text found one wrong rule: the key scheme said attention weights end in `w`, while `wq` starts with it. Reworded.
+- Findings:
+  - PDF against code: E069 writes `linear_bwd`, and the code has `linear_backward`. It is in `contract/DISCREPANCIES.md`. The PDF was not reopened (D4), so this relies on `contract/PDF_VS_CODE.md`.
+  - `cross_entropy_forward` does not call `softmax_forward`. It computes log probabilities and returns their exponential. The page says this, and a test checks it.
+  - In the tiny block, the feed-forward output of row 2 is all zeros, from a real run: every hidden value there is negative, so ReLU zeroes them. The stepper opens on row 1, and row 2 stays selectable. It says nothing about the trained model.
+- Assumptions:
+  - The task says Part B has no new equations beyond earlier pages, but every concept needs one of its own. `transformer.loss_and_grads` has four records that state only the order of calls, labelled "Order of calls", and the page says they add no new derivative. The derivatives are reused by id or linked.
+  - `transformer.forward` has `model.whole`, as the task gives it, and `model.length`, from inventory row M42.
+  - `block.back.terms` and `block.back.identity` carry `derived: true`, because the PDF gives the split but not these derivatives.
+  - `transformer.block_backward` and `transformer.loss_and_grads` have `pdfRef` section 4.5, p. 11, with no equation number, from rows M41, M47, M48 and E071. The PDF was not reopened (D4).
+  - `Trace` prints "Not stated in the PDF" where the task says "None", as in Tasks 08 to 10. Every concept here has a `pdfRef`.
+  - All numbers are Illustrative Example. None is Actual Model Output. The feed-forward example uses the numbers of `test_ffn_worked_example` (D3), with a hand-picked `dOut`. The tiny model's parameters are random draws from the real `init_params`, and the captions say they are not learned.
+  - The Full Model page does not show `ce.loss` or `emb.sum`. `ce.loss` uses `L` for the loss, while `L` here is the block count, and `emb.sum` uses `P` for the position table, while `P` here is the probabilities (`contract/DISCREPANCIES.md` section 6 item 7). It links to those pages instead.
+  - The optional Part B interaction was included, and the block diagram uses the same component. The two adds in the block diagram and the zeros dictionary in the model diagram are marked "No function call", because they are not calls.
+  - The diagram is HTML rather than SVG, so it can stack on a phone and keep real buttons.
+  - "Only the identity path" sets `ln1_g` and `ln2_g` to 0, as an experiment for the page, and its caption says `init_params` starts both at ones.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the task's parts.
+- Open issues:
+  - The full e2e suite was not rerun after the test-only fix above. Run `bun run test:e2e` to close this.
+  - `verify:content` is still a stub. The task's final check therefore verifies nothing by itself; the checks live in the tests above.
+  - `/reference/sources` does not exist (the nav slug is `reference/sources-discrepancies`), so this task's new row, like those of Tasks 08 and 09, is only in `contract/DISCREPANCIES.md`. The page's task must include them.
+  - `verify:golden` on another machine was not tried. Central differences for the new `ffn`, `block` and `model` cases are compared to 6 decimals, because their round-off depends on the machine. The other new values use the usual `1e-12`, which may be too tight elsewhere.
+  - At 390px the stepper's last column, the longest equations and the wide tables scroll inside their own wrappers, so part of them is out of view until scrolled.
+  - Both pages are long, by the protocol: about 27,900px and 21,500px at 1280.
+  - Links to unwritten pages (AdamW / Learning Rate / Clipping) show as disabled text until those pages exist.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 still appears in server logs.
+  - GitHub links were not opened, because the working rules allow no requests to other sites.
+- LLM observations, reported only and nothing changed: no new bugs. `ffn_forward`'s cache and `attention_forward`'s cache both use the key `A` for different arrays, which is correct but easy to misread; the page warns about it. `forward` builds its cache during validation and generation, where it is discarded (already in `contract/PDF_VS_CODE.md`).
+- Decisions needed from the human:
+  - Still open from Task 10: should the E007 note in `contract/PDF_VS_CODE.md` change to match, now that the pages say Implemented?
+- Status: Task 11 finished, with one test-only fix after the last full e2e run. Nothing was committed.

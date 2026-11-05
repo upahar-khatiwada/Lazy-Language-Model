@@ -1,0 +1,56 @@
+links:
+  - equationId: ffn.back.da
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dA, dW2, db2 = linear_backward(c["A"], params[p + "ff2_w"], dOut)
+    role: implements
+  - equationId: ffn.back.dw2
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dA, dW2, db2 = linear_backward(c["A"], params[p + "ff2_w"], dOut)
+    role: implements
+  - equationId: ffn.back.dw2
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: grads[p + "ff2_w"] += dW2
+    role: implements
+  - equationId: ffn.back.db2
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dA, dW2, db2 = linear_backward(c["A"], params[p + "ff2_w"], dOut)
+    role: implements
+  - equationId: ffn.back.db2
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: grads[p + "ff2_b"] += db2
+    role: implements
+  - equationId: ffn.back.dz
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dZ = relu_backward(c["Z"], dA)
+    role: implements
+  - equationId: ffn.back.dxn
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dXn, dW1, db1 = linear_backward(c["Xn"], params[p + "ff1_w"], dZ)
+    role: implements
+  - equationId: ffn.back.dw1
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dXn, dW1, db1 = linear_backward(c["Xn"], params[p + "ff1_w"], dZ)
+    role: implements
+  - equationId: ffn.back.dw1
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: grads[p + "ff1_w"] += dW1
+    role: implements
+  - equationId: ffn.back.db1
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: dXn, dW1, db1 = linear_backward(c["Xn"], params[p + "ff1_w"], dZ)
+    role: implements
+  - equationId: ffn.back.db1
+    file: transformer.py
+    symbol: transformer.ffn_backward
+    match: grads[p + "ff1_b"] += db1
+    role: implements
