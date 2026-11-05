@@ -1,0 +1,22 @@
+.page {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0 auto;
+  max-width: 1500px;
+  padding: var(--space-5) var(--gutter);
+}
+
+.header {
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.panels {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
+}

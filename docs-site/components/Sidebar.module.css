@@ -1,0 +1,49 @@
+.sidebar {
+  background: var(--bg);
+  display: none;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-3) var(--space-6);
+}
+
+/* Mobile: an opened sidebar is a drawer under the top bar. */
+.open {
+  bottom: 0;
+  box-shadow: var(--shadow);
+  display: block;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: var(--topbar-height);
+  z-index: 15;
+}
+
+.group + .group {
+  margin-top: var(--space-4);
+}
+
+.groupTitle {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 860px) {
+  .sidebar {
+    border-right: var(--border-width) solid var(--line);
+    display: block;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    height: calc(100vh - var(--topbar-height));
+    position: sticky;
+    top: var(--topbar-height);
+  }
+}

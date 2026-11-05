@@ -83,3 +83,58 @@ Append one entry per finished task. Newest at the bottom.
   - No new LLM issues found. `contract/DISCREPANCIES.md` section 8 still stands.
 - Decisions needed from the human: none.
 - Status: Task 02 finished. Nothing was committed.
+
+### Task 03: Design System & Layout Shell (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Part A: `styles/tokens.css`, `styles/base.css`, `app/layout.tsx`, `app/design/`, `lib/highlight.ts`, `components/` `Badge`, `Callout`, `MathBlock`, `CodeBlock`, `CopyButton`, `DataTable`, `Button`, `SearchField`, `SidebarItem`, `ThemeToggle`, `Specimens`, with their CSS modules.
+  - Part B: `data/nav.ts`, `lib/nav.ts`, `lib/content.ts`, `lib/remark-headings.ts`, `app/(docs)/layout.tsx`, `app/(docs)/page.tsx` (moved from `app/page.tsx`), `app/(docs)/[...slug]/page.tsx`, `components/` `DocsChrome`, `Sidebar`, `DocMain`, `Breadcrumbs`, `PrevNext`, `OnThisPage`, `mdx.tsx`, with their CSS modules; placeholders `content/getting-started/introduction.mdx`, `content/mathematics/tokenization.mdx`.
+  - Tests: `tests/tokens.test.ts`, `tests/nav.test.ts`, `tests/e2e/design.spec.ts`, `tests/e2e/shell.spec.ts`, `tests/e2e/hydration.ts`.
+  - Config and docs: `package.json`, `bun.lock`, `playwright.config.ts` (`workers: 1`), `README.md`, this entry.
+  - Regenerated with `bun run sync:repo`: `data/generated/repo-meta.json`, `data/generated/code-index.json`.
+  - Nothing outside `docs-site/` was changed. Nothing was committed.
+- Dependencies added, exact pins: `katex` 0.19.1, `shiki` 4.6.0, `@mdx-js/mdx` 3.1.1, `remark-gfm` 4.0.1, `gray-matter` 4.0.3, `github-slugger` 2.0.0, `mdast-util-to-string` 4.0.0, `unist-util-visit` 5.2.0; dev: `@axe-core/playwright` 4.14.0, `@types/katex` 0.16.8, `@types/mdast` 4.0.4, `@types/mdx` 2.0.14. Lighthouse was a one-off `bunx`, not a dependency.
+- Commands run and results (Node v26.13.0, Bun 1.3.13; `.next` and `out` deleted before the final build):
+  - `bun install --frozen-lockfile`: `Checked 527 installs across 595 packages (no changes)`, exit 0.
+  - `bun run build`: `Compiled successfully`; `/`, `/design`, `/getting-started/introduction`, `/mathematics/tokenization`; exit 0.
+  - `bun run lint`: `All matched files use Prettier code style!`, exit 0.
+  - `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files 4 passed (4)`, `Tests 79 passed (79)`, exit 0.
+  - `bun run test:e2e`: `Running 31 tests using 1 worker`, `31 passed (32.7s)`, exit 0.
+  - `bun run test:e2e --repeat-each=5 --workers=1`: `155 passed (2.6m)`, exit 0. This ran before `workers: 1` went into the config.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`, exit 0.
+  - `bunx lighthouse@13.6.0 http://127.0.0.1:3000/design/ --only-categories=accessibility --chrome-flags=--headless=new` with Playwright's Chromium: accessibility score 1, no failed audits, exit 0.
+  - Measured prose lines on `/design`: `69, 67, 64, 64, 65, 18; mean 65.8`.
+  - Screenshots reviewed by eye: `/design` at 1500 (both panels, viewed before the final rebuild; only generated SHAs changed after), a placeholder at 1280 light, 1000 dark, 390 light and dark.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --stat -- ':(top)*.py'`: empty. HEAD `1995594`.
+  - Failures seen on the way:
+    - First `/design` run: 5 browser tests failed. Horizontal overflow of 374px at 390 (grid tracks grew to fit the code block), callouts as `aside` broke axe `landmark-unique`, prose lines averaged 73 characters. All fixed. The token scan also falsely matched `--badge-green-bg`; the test now ignores `var(--...)` names.
+    - `bun run typecheck` right after moving `app/page.tsx` failed on a stale `.next/types/validator.ts`, and passed after a build.
+    - Theme toggle test clicked before hydration. Fixed with `clickWhenHydrated`.
+    - `--repeat-each=3` with 8 workers: 6 then 4 failures of 93, including `net::ERR_CONNECTION_REFUSED`. `--workers=2 --repeat-each=5`: 1 rail failure of 155, not diagnosed separately. A scratch server with a backlog of 512 at 8 workers: `155 passed (46.4s)`. So the cause is the small backlog of `python -m http.server`, and the suite now runs one worker.
+- Decisions from the human in this task:
+  - Light `--syntax-comment` is `#616e85` (4.55:1 on code background), not the specified `#76839a` (3.38:1, fails AA).
+  - Gradient Checking is in a new Testing group after Code, not in Mathematics, following D2.
+- Assumptions:
+  - "Desktop (0700px and up)" means 1100px and up, since tablet ends at 1099px.
+  - "Math <-> Code" displays as "Math ↔ Code".
+  - Previous and next skip disabled pages, because those have no route.
+  - Search field borders use `--muted`, because `--line` is only 1.24:1. Cards and tables keep `--line`.
+  - All text is at least 14px, including sidebar file names.
+  - Badge colours were chosen in this task, because the brief gave hues only. Extra tokens were also added: `--on-accent`, `--hover`, `--active-bg`.
+  - `/` is a minimal page in the shell: the existing heading and a link to the first available page.
+  - The pin moved to `1995594` during this task because the human committed `data/corpus.csv` in that commit. `.py` files did not change between `c17aa75` and `1995594`, and `code-index.json` is identical apart from the SHA, so line numbers still hold.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the approved plan.
+- Open issues:
+  - `contract/` was not edited and is now out of date: it pins `c17aa75` and describes `data/corpus.csv` as an uncommitted change. `contract/DISCREPANCIES.md` section 7 and D1 ("the corpus will not be committed") no longer match, because commit `1995594` contains that corpus. The checkpoint's vocabulary came from this corpus, but the inferred difference in training settings still stands.
+  - Keyboard, resize and focus checks were automated in Playwright, not done by hand. Layout shift (below 0.01) was measured on localhost, not on a slow network.
+  - GitHub links were not opened, because the working rules allow no `curl` to other sites. The local `origin/main` ref equals HEAD.
+  - `sha` staying put after a docs-only commit is still untested. Run `bun run verify:generated` after committing this task.
+  - The on-this-page rail can leave the last heading inactive on a short page that cannot scroll that heading up to the reading line, unless the reader clicks it.
+  - The mobile drawer stays open on browser Back if the page does not change; it closes on any navigation to another page.
+  - On mobile, the 44px minimum width on the "Docs" breadcrumb leaves a slightly wider gap before its separator.
+  - `next/font/google` needs network access at build time. The site itself makes no requests to font hosts.
+  - `code-link`, `Badge` and `MathBlock` are shown on `/design` only; no real page uses them yet. Search is a disabled button until its task.
+  - No new LLM issues found.
+- Decisions needed from the human:
+  - Should `contract/` and D1 be updated for commit `1995594`? Later tasks read them first, and they are stale on the pin and the corpus.
+- Status: Task 03 finished. Nothing was committed.

@@ -1,0 +1,36 @@
+.field {
+  display: block;
+  max-width: 360px;
+}
+
+.label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+}
+
+/* --muted, not --line: the boundary of an input needs at least 3:1 against its background. */
+.input {
+  background: var(--surface);
+  border: var(--border-width) solid var(--muted);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-3);
+  transition: var(--transition-colors);
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+@media (max-width: 859px) {
+  .input {
+    min-height: var(--touch-target);
+  }
+}

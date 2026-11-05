@@ -1,0 +1,57 @@
+.rail {
+  display: none;
+}
+
+.title {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.link {
+  border-radius: var(--radius);
+  color: var(--text);
+  display: block;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  padding: var(--space-1) var(--space-2);
+  text-decoration: none;
+  transition: var(--transition-colors);
+}
+
+.link:hover {
+  background: var(--hover);
+}
+
+.nested {
+  padding-left: var(--space-5);
+}
+
+.active {
+  background: var(--active-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (min-width: 1100px) {
+  .rail {
+    align-self: start;
+    display: block;
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    max-height: calc(100vh - var(--topbar-height));
+    overflow-y: auto;
+    padding: var(--space-5) var(--space-3);
+    position: sticky;
+    top: var(--topbar-height);
+  }
+}

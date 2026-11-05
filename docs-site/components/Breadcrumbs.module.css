@@ -1,0 +1,36 @@
+.list {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-sm);
+  gap: 0 var(--space-2);
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+}
+
+.item {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.item:not(:last-child)::after {
+  content: "/";
+}
+
+.link {
+  align-items: center;
+  display: inline-flex;
+}
+
+@media (max-width: 859px) {
+  .link {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
+
+  .item {
+    min-height: var(--touch-target);
+  }
+}

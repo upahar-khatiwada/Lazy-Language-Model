@@ -1,0 +1,178 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Anchored headings must not end up underneath the sticky top bar. */
+  scroll-padding-top: calc(var(--topbar-height) + var(--space-4));
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+html,
+[data-theme] {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: var(--lh-heading);
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+}
+
+h2 {
+  font-size: var(--fs-h2);
+}
+
+h3 {
+  font-size: var(--fs-h3);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+  transition: var(--transition-colors);
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+
+:not(pre) > code {
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  padding: 1px var(--space-1);
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--accent);
+  outline-offset: var(--focus-width);
+}
+
+/* Amber link used for jumps between mathematics and code. */
+.code-link {
+  background: var(--highlight);
+  border-bottom: var(--border-width) solid var(--highlight-line);
+  border-radius: var(--radius) var(--radius) 0 0;
+  color: var(--text);
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+  padding: 1px var(--space-1);
+  text-decoration: none;
+}
+
+.code-link:hover {
+  border-bottom-color: var(--text);
+}
+
+/* Prose: paragraphs and lists keep a readable measure; tables and code may use the full column. */
+.prose > * + * {
+  margin-top: var(--space-4);
+}
+
+.prose > h2 {
+  margin-top: var(--space-7);
+}
+
+.prose > h3 {
+  margin-top: var(--space-6);
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+  max-width: var(--measure);
+}
+
+.prose ul,
+.prose ol {
+  margin-bottom: 0;
+  padding-left: var(--space-5);
+}
+
+table {
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  width: 100%;
+}
+
+th,
+td {
+  border: var(--border-width) solid var(--line);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--code-bg);
+  font-weight: 600;
+}
+
+td {
+  background: var(--surface);
+}
+
+.visually-hidden {
+  border: 0;
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.skip-link {
+  background: var(--surface);
+  border: var(--border-width) solid var(--accent);
+  border-radius: var(--radius);
+  left: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  position: fixed;
+  top: var(--space-2);
+  transform: translateY(-200%);
+  z-index: 30;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

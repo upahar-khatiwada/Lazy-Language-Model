@@ -34,7 +34,9 @@ Git Bash on Windows rewrites a value starting with `/` into a Windows path, whic
 | ----------------- | ------------------------------------------------------------- |
 | `app/`            | Next.js routes                                                |
 | `components/`     | React components                                              |
-| `content/`        | MDX page content                                              |
+| `styles/`         | `tokens.css` holds every colour literal; `base.css` is global |
+| `content/`        | MDX pages at `content/<slug>.mdx`, with frontmatter           |
+| `data/nav.ts`     | Navigation tree. A page is disabled until its MDX file exists |
 | `data/concepts/`  | Hand-written structured concept data                          |
 | `data/links/`     | Hand-written structured link data                             |
 | `data/generated/` | Machine-generated repository facts. Never edit by hand        |
@@ -43,6 +45,10 @@ Git Bash on Windows rewrites a value starting with `/` into a Windows path, whic
 | `scripts/`        | Extraction and verification scripts                           |
 | `tests/`          | Vitest tests; Playwright tests are in `tests/e2e/`            |
 | `contract/`       | Repository inventories, architecture and discrepancies        |
+
+## Design system
+
+`/design` is a hidden style guide that renders every element in both themes. It is not in the navigation and is marked `noindex`. Components take colours from the tokens in `styles/tokens.css` only; `tests/tokens.test.ts` enforces that and checks WCAG AA contrast.
 
 ## Generated data
 

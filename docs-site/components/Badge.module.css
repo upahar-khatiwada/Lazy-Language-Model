@@ -1,0 +1,24 @@
+.badge {
+  border: var(--border-width) solid currentColor;
+  border-radius: var(--radius);
+  display: inline-block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 1px var(--space-2);
+}
+
+.illustrative {
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+}
+
+.actual {
+  background: var(--badge-green-bg);
+  color: var(--badge-green-text);
+}
+
+.derived {
+  background: var(--badge-violet-bg);
+  color: var(--badge-violet-text);
+}

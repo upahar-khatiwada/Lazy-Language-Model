@@ -1,0 +1,63 @@
+.main {
+  min-width: 0;
+  padding: var(--space-4) var(--gutter) var(--space-7);
+}
+
+/* The mouse never reaches this element; it is only a target for the skip link. */
+.main:focus {
+  outline: none;
+}
+
+.header {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.description {
+  color: var(--muted);
+  max-width: var(--measure);
+}
+
+.sourceFile {
+  color: var(--muted);
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+
+.notice {
+  margin-bottom: var(--space-5);
+}
+
+.footer {
+  border-top: var(--border-width) solid var(--line);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  min-width: 0;
+  padding: var(--space-3) var(--gutter);
+}
+
+.footer a {
+  align-items: center;
+  display: inline-flex;
+  min-height: var(--touch-target);
+}
+
+@media (min-width: 860px) {
+  .main {
+    grid-column: 2;
+    grid-row: 1;
+    padding: var(--space-5) var(--space-5) var(--space-7);
+  }
+
+  .footer {
+    grid-column: 2;
+    grid-row: 2;
+    padding: var(--space-3) var(--space-5);
+  }
+
+  .footer a {
+    display: inline;
+    min-height: 0;
+  }
+}

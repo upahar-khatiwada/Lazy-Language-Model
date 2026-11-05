@@ -1,0 +1,144 @@
+/*
+ * Design tokens. This is the only file allowed to contain colour literals
+ * (tests/tokens.test.ts enforces that and checks WCAG AA contrast).
+ *
+ * The dark values appear twice on purpose: once for prefers-color-scheme and once for an explicit
+ * data-theme override. tests/tokens.test.ts fails if the two copies differ.
+ */
+
+:root {
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Shape */
+  --radius: 6px;
+  --border-width: 1px;
+  --focus-width: 2px;
+
+  /* Type */
+  --font-body: var(--font-plex-sans), system-ui, sans-serif;
+  --font-code: var(--font-plex-mono), ui-monospace, monospace;
+  --fs-sm: 14px;
+  --fs-body: 15px;
+  --fs-h3: 17px;
+  --fs-h2: 21px;
+  --fs-h1: 28px;
+  --lh-body: 1.65;
+  --lh-heading: 1.3;
+  --measure: 50ch;
+
+  /* Layout */
+  --topbar-height: 56px;
+  --sidebar-width: 250px;
+  --rail-width: 210px;
+  --content-max: 780px;
+  --gutter: 16px;
+  --control-height: 36px;
+  --touch-target: 44px;
+
+  /* Motion */
+  --transition-colors: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --text: #151b26;
+  --muted: #566175;
+  --line: #dbe0e8;
+  --accent: #0b6b7c;
+  --on-accent: #ffffff;
+  --highlight: #fff0bf;
+  --highlight-line: #d9a900;
+  --code-bg: #eef1f5;
+  --hover: #e9edf3;
+  --active-bg: #e3f1f4;
+  --shadow: 0 1px 3px #151b2626;
+
+  --syntax-keyword: #a1315f;
+  --syntax-string: #25764a;
+  --syntax-number: #a35a00;
+  --syntax-comment: #616e85;
+  --syntax-function: #0b6b7c;
+
+  --badge-amber-bg: #fff0bf;
+  --badge-amber-text: #5c4300;
+  --badge-green-bg: #dff3e6;
+  --badge-green-text: #1c5a38;
+  --badge-violet-bg: #ece6fb;
+  --badge-violet-text: #4c2f94;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: #0f131a;
+    --surface: #161b24;
+    --text: #e7eaf0;
+    --muted: #9aa5b8;
+    --line: #283041;
+    --accent: #4fc3d6;
+    --on-accent: #0f131a;
+    --highlight: #4a3f12;
+    --highlight-line: #c9a227;
+    --code-bg: #1a202b;
+    --hover: #1f2632;
+    --active-bg: #15303a;
+    --shadow: 0 1px 3px #00000066;
+
+    --syntax-keyword: #f08cb4;
+    --syntax-string: #7fd6a0;
+    --syntax-number: #f0b35a;
+    --syntax-comment: #7f8ba0;
+    --syntax-function: #4fc3d6;
+
+    --badge-amber-bg: #4a3f12;
+    --badge-amber-text: #ffe08a;
+    --badge-green-bg: #17392a;
+    --badge-green-text: #a5e8bf;
+    --badge-violet-bg: #2e2455;
+    --badge-violet-text: #cfc0ff;
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0f131a;
+  --surface: #161b24;
+  --text: #e7eaf0;
+  --muted: #9aa5b8;
+  --line: #283041;
+  --accent: #4fc3d6;
+  --on-accent: #0f131a;
+  --highlight: #4a3f12;
+  --highlight-line: #c9a227;
+  --code-bg: #1a202b;
+  --hover: #1f2632;
+  --active-bg: #15303a;
+  --shadow: 0 1px 3px #00000066;
+
+  --syntax-keyword: #f08cb4;
+  --syntax-string: #7fd6a0;
+  --syntax-number: #f0b35a;
+  --syntax-comment: #7f8ba0;
+  --syntax-function: #4fc3d6;
+
+  --badge-amber-bg: #4a3f12;
+  --badge-amber-text: #ffe08a;
+  --badge-green-bg: #17392a;
+  --badge-green-text: #a5e8bf;
+  --badge-violet-bg: #2e2455;
+  --badge-violet-text: #cfc0ff;
+}

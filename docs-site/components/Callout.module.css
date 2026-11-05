@@ -1,0 +1,25 @@
+.callout {
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+}
+
+.label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.note {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+.warning {
+  background: var(--highlight);
+  border-color: var(--highlight-line);
+}
+
+.source {
+  background: var(--code-bg);
+}

@@ -1,0 +1,74 @@
+.topbar {
+  align-items: center;
+  background: var(--surface);
+  border-bottom: var(--border-width) solid var(--line);
+  display: flex;
+  gap: var(--space-2);
+  height: var(--topbar-height);
+  padding: 0 var(--gutter);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  align-items: center;
+  color: var(--text);
+  display: inline-flex;
+  font-weight: 600;
+  min-height: var(--touch-target);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brandLong {
+  display: none;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  justify-content: center;
+  min-height: calc(100vh - var(--topbar-height));
+}
+
+/* Very narrow phones: the controls matter more than the name. */
+@media (max-width: 359px) {
+  .brand {
+    display: none;
+  }
+}
+
+@media (min-width: 860px) {
+  .contents {
+    display: none;
+  }
+
+  .brandLong {
+    display: inline;
+  }
+
+  .brandShort {
+    display: none;
+  }
+
+  .shell {
+    grid-template-columns:
+      var(--sidebar-width)
+      minmax(0, calc(var(--content-max) + 2 * var(--space-5)));
+  }
+}
+
+@media (min-width: 1100px) {
+  .shell {
+    grid-template-columns:
+      var(--sidebar-width)
+      minmax(0, calc(var(--content-max) + 2 * var(--space-5)))
+      var(--rail-width);
+  }
+}
