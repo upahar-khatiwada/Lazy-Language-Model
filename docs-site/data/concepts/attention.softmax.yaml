@@ -28,6 +28,14 @@ symbols:
     meaning: How much of position j's value position i receives
     codeName: A[h, i, j]
     shape: scalar
+  - symbol: z_i
+    meaning: One number in the row softmax receives. Here, one masked score
+    codeName: x
+    shape: scalar
+  - symbol: c
+    meaning: The constant subtracted from a row. The code uses the row's largest score
+    codeName: np.max(x, axis=-1, keepdims=True)
+    shape: one per row
 example: null
 shapes:
   - id: attention-softmax
@@ -44,8 +52,6 @@ shapes:
 source:
   - file: transformer.py
     symbol: transformer.attention_forward
-  - file: ops.py
-    symbol: ops.softmax_forward
 usedBy: []
 pdfRef:
   section: "4.5"

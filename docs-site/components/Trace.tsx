@@ -4,12 +4,26 @@ import { loadCallGraph } from "@/lib/repo";
 import { Badge } from "./Badge";
 import styles from "./Trace.module.css";
 
+// Allows a line break after a dot or underscore. The text itself does not change.
+function BreakableName({ name }: { name: string }) {
+  return (
+    <code className={styles.name}>
+      {name.split(/(?<=[._])/).map((part, index) => (
+        <span key={index}>
+          {part}
+          <wbr />
+        </span>
+      ))}
+    </code>
+  );
+}
+
 function SymbolLink({ id }: { id: string }) {
   const symbol = loadSymbolIndex().get(id);
-  if (!symbol) return <code>{id}</code>;
+  if (!symbol) return <BreakableName name={id} />;
   return (
     <a href={symbol.permalink}>
-      <code>{id}</code>
+      <BreakableName name={id} />
     </a>
   );
 }
@@ -20,8 +34,8 @@ function SymbolList({ title, ids }: { title: string; ids: string[] }) {
     <p>
       {title}:{" "}
       {ids.map((id, index) => (
-        <span key={id}>
-          {index > 0 ? ", " : null}
+        <span className={styles.item} key={id}>
+          {index > 0 ? <span className={styles.comma}>, </span> : null}
           <SymbolLink id={id} />
         </span>
       ))}

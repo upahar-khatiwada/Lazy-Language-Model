@@ -323,3 +323,49 @@ for (const [width, theme] of [
     }
   });
 }
+
+test.describe("the gradient-check table", () => {
+  test.describe("at 390px", () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test("it scrolls inside its own container, both ways", async ({ page }) => {
+      await page.goto(PAGE);
+      const wrap = page.getByRole("group", { name: "Checking the backward numerically" });
+      const box = await wrap.evaluate((el) => ({
+        overflowX: getComputedStyle(el).overflowX,
+        overflowY: getComputedStyle(el).overflowY,
+        wide: el.scrollWidth > el.clientWidth,
+        tall: el.scrollHeight > el.clientHeight,
+        height: el.getBoundingClientRect().height,
+      }));
+      expect(box).toMatchObject({ overflowX: "auto", overflowY: "auto", wide: true, tall: true });
+      expect(box.height).toBeLessThanOrEqual(24 * 16 + 2);
+      expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+    });
+
+    test("the Where is it used block has no stray commas", async ({ page }) => {
+      await page.goto(PAGE);
+      const trace = page.locator("#softmax-per-row ~ dl").first();
+      await expect(trace).toBeVisible();
+      const commas = trace.locator("[class*=comma]");
+      for (const comma of await commas.all()) await expect(comma).toBeHidden();
+    });
+  });
+
+  test("at 1280px it shows whole, and each matrix row starts its own line", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 844 });
+    await page.goto(PAGE);
+    const wrap = page.getByRole("group", { name: "Checking the backward numerically" });
+    expect(await wrap.evaluate((el) => el.scrollHeight <= el.clientHeight)).toBe(true);
+    expect(await wrap.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    const lines = wrap.locator('tr[data-gradient="dXn"] td:nth-child(2) code span');
+    await expect(lines).toHaveCount(backward.dXn.length);
+    await expectExact(wrap.locator('tr[data-gradient="dXn"] td:nth-child(2) code'), backward.dXn);
+  });
+});
+
+test("the Output example shows the bias, so out can be reproduced", async ({ page }) => {
+  await page.goto(PAGE);
+  const inputs = golden.cases.find((item) => item.id === "attention_forward.cat_sat")!.inputs;
+  await expectExact(page.getByTestId("ex-bo"), inputs.bo);
+});

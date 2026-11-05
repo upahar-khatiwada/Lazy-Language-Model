@@ -88,6 +88,17 @@ export function WorkedTable({
   );
 }
 
+// A matrix where each row starts a new line. On a phone the rows do not wrap, so the table scrolls.
+function MatrixLines({ value }: { value: Matrix }) {
+  return (
+    <code className={styles.matrixLines} data-exact={JSON.stringify(value)}>
+      {value.map((row, r) => (
+        <span key={r}>{formatNumbers(row, 4)}</span>
+      ))}
+    </code>
+  );
+}
+
 export type CheckRow = { name: string; analytic: Matrix; numeric: Matrix };
 
 const flat = (m: Matrix) => m.flat();
@@ -123,7 +134,7 @@ export function GradientCheck({
         </>
       }
     >
-      <DataTable label={title} data-testid={testId}>
+      <DataTable label={title} data-testid={testId} wrapClassName={styles.checkScroll}>
         <thead>
           <tr>
             <th scope="col">Gradient</th>
@@ -139,10 +150,10 @@ export function GradientCheck({
                 <code>{row.name}</code>
               </td>
               <td>
-                <Value value={row.analytic} />
+                <MatrixLines value={row.analytic} />
               </td>
               <td>
-                <Value value={row.numeric} />
+                <MatrixLines value={row.numeric} />
               </td>
               <td data-testid="largest-gap" data-exact={largestGap(row)}>
                 <code className={styles.nowrap}>{largestGap(row).toExponential(1)}</code>

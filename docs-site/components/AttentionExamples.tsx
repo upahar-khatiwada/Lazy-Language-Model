@@ -246,6 +246,10 @@ export function AttentionOutputExample({ concept }: { concept: string }) {
           <ResultMatrix label="wo" testId="ex-wo" values={inputs.wo} />
           <ResultMatrix label="out" testId="ex-out" values={out} />
         </Matrices>
+        <p data-testid="ex-bo" data-exact={JSON.stringify(inputs.bo)}>
+          <code>out = O @ wo + bo</code>, with <code>bo = {vector(inputs.bo)}</code> added to every
+          row.
+        </p>
       </VizFigure>
     </Anchored>
   );

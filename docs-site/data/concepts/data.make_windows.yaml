@@ -2,7 +2,7 @@ id: data.make_windows
 title: Sliding windows
 category: data
 inventory: [M08]
-status: derived
+status: implemented
 summary: >-
   make_windows slides a window of T ids along the stream, moving k ids each time. The inputs are the
   window. The targets are the window that starts one id later, so each input row moves one place
@@ -15,6 +15,7 @@ equations:
     latex: s \in \{0,\, k,\, 2k,\, \dots\}, \qquad s < N - T
     role: none
     label: Where windows start
+    derived: true
   - id: windows.input
     latex: x^{(s)}_{t} = \text{ids}_{s+t}, \qquad t = 0, \dots, T-1
     role: none

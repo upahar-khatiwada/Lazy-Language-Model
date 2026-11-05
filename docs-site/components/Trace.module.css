@@ -41,3 +41,18 @@
     padding: var(--space-3) 0;
   }
 }
+
+.name {
+  overflow-wrap: normal;
+}
+
+/* A phone shows one name per line, so the separators go. */
+@media (max-width: 859px) {
+  .item {
+    display: block;
+  }
+
+  .comma {
+    display: none;
+  }
+}

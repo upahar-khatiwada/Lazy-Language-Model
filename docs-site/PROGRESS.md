@@ -566,3 +566,33 @@ Append one entry per finished task. Newest at the bottom.
 - Decisions needed from the human:
   - Still open from Task 07: `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while that task labelled them Derived.
 - Status: Task 10 finished, with one test-only fix after the last full e2e run. Nothing was committed.
+- Follow-up after Task 10, at the human's request (2026-11-05). No new features.
+  - **M08 and M15: Implemented.** `contract/PDF_VS_CODE.md` lists both as "In PDF: yes": E014 is Eq. 17 (`make_windows`), and E007 is Eq. 2 (the parameter count). `contract/MATH_INVENTORY.md` already said Implemented, so it was not changed. This closes the question open since Task 07.
+    - Changed: `data/concepts/data.make_windows.yaml` and `data/concepts/transformer.count_params.yaml` (status), `components/ArchitectureTables.tsx` (the `ParameterCount` badge).
+    - `windows.starts` carries its own `derived: true`, because E014 states the inputs and targets but not the set of starts. The `count_params` summary still says the code never evaluates the formula.
+    - Left as it was: the E007 row of `PDF_VS_CODE.md` says "In code: partly" and "label Derived from implementation". That note now disagrees with the pages. M09 (Eq. 18) stays Derived, in all three places, because its form differs from the code's.
+  - Screenshots of the Softmax and Output sections and lab steps at 1280 light and 390 dark, reviewed on the near-final build. Only the check table was viewed after the last CSS change, the hanging indent. Fixed:
+    - Softmax: "Called by" listed `generate.sample_next` and "Tested by" listed softmax unit tests, because the concept named `ops.softmax_forward` as a source. `attention.softmax` now names only `attention_forward`; the link records still show `ops.py`.
+    - Softmax: the reused shift equation used `z_i` and `c`, which were not in the symbol table. Added.
+    - Output: the example never showed `bo`, so `out` could not be reproduced. Added.
+    - `Trace`, on every page: long test names broke mid-word (`normalise` / `d`), and on phones commas fell onto their own lines. Names now break after dots and underscores, and a phone shows one name per line with no commas.
+    - Seen and left: on desktop the Output example's three matrices wrap to two rows, because they do not fit. At 390, the symbol and `EquationCode` tables scroll sideways, with the last column cut off until scrolled. `ResultMatrix` trims trailing zeros, so decimals do not line up. The Q, K, V example shows no `wq` or `bq`, the same gap `bo` had; it was outside the two sections asked about.
+  - Gradient-check table: `GradientCheck` now starts each matrix row on its own line. At the project's phone breakpoint (859px and below) rows do not wrap, and the table scrolls both ways inside a 24rem box with a pinned header. At 390 on the Attention page, the table was 2,205px tall in the page flow and is now at most 24rem. This applies on all 5 uses of the component. The whole page only fell from 60,576px to 59,211px, because the rest of its length is the protocol.
+    - On desktop the table is whole, with no scroll. Rows wrap there with a hanging indent, and the table is taller than before: 1,175px, was 888px.
+    - A first version made the desktop table scroll too, hiding the Largest gap column. The numbers showed it, it was fixed, and a test now covers it.
+  - Other files changed: `components/Trace.tsx` and its CSS, `components/DataTable.tsx` (`wrapClassName`), `components/OpsExamples.tsx`, `components/Examples.module.css`, `components/AttentionExamples.tsx`, `data/concepts/attention.softmax.yaml`. Tests: `tests/attention.test.ts`, `tests/mathematics-pages.test.ts`, `tests/e2e/attention.spec.ts`, `tests/e2e/pages.spec.ts`.
+  - Commands run and results (clean `.next`, `out`, `test-results`; Node prepended to PATH):
+    - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+    - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`
+    - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+    - `bun run verify:golden`: `OK: 197 golden cases match a fresh run.`
+    - `bun run verify:links`: `OK: 229 links, 43 concepts and 1 pipelines match the code.`
+    - `bun run verify:content`: `verify:content: not implemented yet`, so it still checks nothing.
+    - `bun run lint`: `All matched files use Prettier code style!`. `bun run typecheck`: exit 0.
+    - `bun run test`: `Test Files 17 passed (17)`, `Tests 1054 passed (1054)`.
+    - `bun run build`: `Compiled successfully`.
+    - `bun run test:e2e`: `Running 283 tests using 1 worker`, `283 passed (17.1m)`, exit 0, on that same build. This closes the Task 10 item about not rerunning the full suite. Includes axe on the Attention page at 1280, 1000 and 390.
+    - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files.
+    - pytest was not rerun, because no repository code or golden input changed.
+    - No state-changing git command was run.
+  - Decision needed from the human: should the E007 note in `contract/PDF_VS_CODE.md` change to match, now that the pages say Implemented?

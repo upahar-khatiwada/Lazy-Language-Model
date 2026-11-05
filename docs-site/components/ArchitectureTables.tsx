@@ -138,7 +138,7 @@ export function ParameterCount({ configOnly = false }: { configOnly?: boolean })
   const { perVocabulary, constant } = countInV(parameters, { ...realValues(), L: value("L") });
   return (
     <div className={styles.count} data-testid="parameter-count">
-      <Badge kind="derived" />
+      <Badge kind="implemented" />
       {configOnly ? null : (
         <TexDisplay
           tex={`N = ${countFormulaTex(parameters)}`}

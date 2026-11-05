@@ -99,3 +99,33 @@
   color: var(--text);
   font-weight: 600;
 }
+
+.matrixLines {
+  background: none;
+  display: block;
+}
+
+/* A hanging indent keeps matrix rows apart when one wraps. */
+.matrixLines span {
+  display: block;
+  padding-left: 2ch;
+  text-indent: -2ch;
+}
+
+/* On a phone the table keeps its size and scrolls here, so it adds no width or great height to the page. */
+@media (max-width: 859px) {
+  .matrixLines {
+    white-space: nowrap;
+  }
+
+  .checkScroll {
+    max-height: 24rem;
+    overflow-y: auto;
+  }
+
+  .checkScroll th {
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+  }
+}

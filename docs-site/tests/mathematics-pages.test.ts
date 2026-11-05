@@ -3,7 +3,7 @@ import { SYMBOL_COVERAGE } from "@/data/coverage";
 import { NOTATION } from "@/data/notation";
 import { CODE_REFS } from "@/data/code-refs";
 import { requireTarget, targetLines } from "@/lib/code-targets";
-import { getEquation, loadConcepts } from "@/lib/concepts";
+import { getConcept, getEquation, loadConcepts } from "@/lib/concepts";
 import { readPageBody } from "@/lib/content";
 import { resolveDimension } from "@/lib/dimensions";
 import { loadGolden, type GoldenCase } from "@/lib/golden";
@@ -404,5 +404,30 @@ describe("Part C: the data pipeline", () => {
     expect(loadConcepts().flatMap(({ equations }) => equations.map(({ id }) => id))).not.toContain(
       "data.factorisation",
     );
+  });
+});
+
+// contract/PDF_VS_CODE.md lists both as stated by the PDF: E014 is Eq. 17, and E007 is Eq. 2.
+describe("M08 and M15 say Implemented, as contract/MATH_INVENTORY.md does", () => {
+  test.each([
+    ["data.make_windows", "M08", "17"],
+    ["transformer.count_params", "M15", "2"],
+  ])("%s", (id, row, equation) => {
+    const concept = getConcept(id);
+    expect(concept.inventory).toContain(row);
+    expect(concept.status).toBe("implemented");
+    expect(concept.pdfRef?.equations).toContain(equation);
+  });
+
+  test("the page still says the code never evaluates the Eq. 2 formula", () => {
+    expect(getConcept("transformer.count_params").summary).toMatch(
+      /never evaluates\s+that formula/,
+    );
+  });
+
+  test("the window starts carry their own label, because Eq. 17 does not state them", () => {
+    const { equations } = getConcept("data.make_windows");
+    expect(equations.find(({ id }) => id === "windows.starts")?.derived).toBe(true);
+    expect(equations.filter(({ derived }) => derived)).toHaveLength(1);
   });
 });

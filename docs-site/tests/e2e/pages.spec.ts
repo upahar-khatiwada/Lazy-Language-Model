@@ -76,7 +76,8 @@ test.describe("Architecture", () => {
   test("the total is written with V as a symbol", async ({ page }) => {
     await page.goto(ARCHITECTURE);
     const count = page.getByTestId("parameter-count");
-    await expect(count.getByText("Derived from implementation")).toBeVisible();
+    await expect(count.getByText("Implemented")).toBeVisible();
+    await expect(count.getByText("Derived from implementation")).toHaveCount(0);
     await expect(count.locator("annotation").last()).toContainText("V +");
   });
 

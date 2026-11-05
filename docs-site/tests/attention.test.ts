@@ -399,3 +399,16 @@ describe("the page", () => {
     expect(body).toContain("`dS` is exactly 0 there");
   });
 });
+
+describe("the Softmax section's evidence", () => {
+  test("it traces attention's use of softmax, not every caller of softmax_forward", () => {
+    expect(getConcept("attention.softmax").source.map(({ symbol }) => symbol)).toEqual([
+      "transformer.attention_forward",
+    ]);
+  });
+
+  test("the shift equation's symbols are in the table", () => {
+    const symbols = getConcept("attention.softmax").symbols.map(({ symbol }) => symbol);
+    expect(symbols).toEqual(expect.arrayContaining(["z_i", "c"]));
+  });
+});
