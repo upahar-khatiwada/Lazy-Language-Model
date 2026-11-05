@@ -1,0 +1,3131 @@
+{
+  "files": [
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 16,
+          "endLine": 30,
+          "id": "checkpoint.save_checkpoint",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "save_checkpoint",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/checkpoint.py#L16-L30",
+          "signature": "def save_checkpoint(prefix, params, cfg: ModelConfig, tok: Tokenizer)",
+          "source": "def save_checkpoint(prefix, params, cfg: ModelConfig, tok: Tokenizer):\n    folder = os.path.dirname(prefix)\n    if folder:\n        os.makedirs(folder, exist_ok=True)\n\n    np.savez(prefix + \".npz\", **params) # keys like \"b0.wq\" are kept as they are\n\n    with open(prefix + \".json\", \"w\", encoding=\"utf-8\") as f:\n        json.dump(asdict(cfg), f)\n\n    # stoi is not saved, it is just itos turned around, so load rebuilds it\n    # json has no tuples, so each merge's \"pair\" is stored as a list, merge_tokens only\n    # uses pair[0] and pair[1], so a list works exactly the same\n    with open(prefix + \".tok.json\", \"w\", encoding=\"utf-8\") as f:\n        json.dump({\"merges\": tok.merges, \"itos\": tok.itos}, f, ensure_ascii=False)",
+          "startLine": 16
+        },
+        {
+          "decorators": [],
+          "defLine": 32,
+          "endLine": 46,
+          "id": "checkpoint.load_checkpoint",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "load_checkpoint",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/checkpoint.py#L32-L46",
+          "signature": "def load_checkpoint(prefix)",
+          "source": "def load_checkpoint(prefix):\n    with np.load(prefix + \".npz\") as z:\n        params = {k: z[k] for k in z.files} # copy out, the file closes after this block\n\n    with open(prefix + \".json\", encoding=\"utf-8\") as f:\n        cfg = ModelConfig(**json.load(f))\n\n    with open(prefix + \".tok.json\", encoding=\"utf-8\") as f:\n        d = json.load(f)\n\n    stoi = {}\n    for i in range(len(d[\"itos\"])):\n        stoi[d[\"itos\"][i]] = i\n\n    return params, cfg, Tokenizer(d[\"merges\"], stoi, d[\"itos\"])",
+          "startLine": 32
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 4,
+          "module": "json",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": false,
+          "line": 5,
+          "module": "os",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": false,
+          "line": 6,
+          "module": "dataclasses",
+          "name": "asdict"
+        },
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 7,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 8,
+          "module": "tokenizer",
+          "name": "Tokenizer"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 9,
+          "module": "transformer",
+          "name": "ModelConfig"
+        }
+      ],
+      "lineCount": 46,
+      "module": "checkpoint",
+      "path": "checkpoint.py"
+    },
+    {
+      "classes": [],
+      "constants": [
+        {
+          "endLine": 2,
+          "isLiteral": true,
+          "name": "context_len",
+          "source": "context_len = 32 # suppose 5 tokens then theres 5x32 rows, the model can look 32 texts at once",
+          "startLine": 2,
+          "value": 32
+        },
+        {
+          "endLine": 3,
+          "isLiteral": true,
+          "name": "emb_dim",
+          "source": "emb_dim     = 32 # size of the vector that flows through the entire model with same width at each layer",
+          "startLine": 3,
+          "value": 32
+        },
+        {
+          "endLine": 4,
+          "isLiteral": true,
+          "name": "num_heads",
+          "source": "num_heads   = 2 # emb_dim must be divisible by this, model splits each vector into 2 halves of 16 numbers and runs attention separately",
+          "startLine": 4,
+          "value": 2
+        },
+        {
+          "endLine": 5,
+          "isLiteral": true,
+          "name": "ff_dim",
+          "source": "ff_dim      = 128 # in the feed forward step, vector is stretched from 32 to 128 temporarily to allow model compute richer things",
+          "startLine": 5,
+          "value": 128
+        },
+        {
+          "endLine": 6,
+          "isLiteral": true,
+          "name": "num_layers",
+          "source": "num_layers  = 2 # number of layers of the LLM",
+          "startLine": 6,
+          "value": 2
+        },
+        {
+          "endLine": 7,
+          "isLiteral": true,
+          "name": "seq_len",
+          "source": "seq_len     = 16 # each training example is a 16 rows table, we cut the input corpus into pieces of 16 tokens",
+          "startLine": 7,
+          "value": 16
+        },
+        {
+          "endLine": 8,
+          "isLiteral": true,
+          "name": "ln_eps",
+          "source": "ln_eps      = 1e-5 # tiny number added inside layer norm so we never divide by zero",
+          "startLine": 8,
+          "value": 1e-05
+        },
+        {
+          "endLine": 11,
+          "isLiteral": true,
+          "name": "corpus_path",
+          "source": "corpus_path   = \"data/corpus.csv\" # file the text is read from",
+          "startLine": 11,
+          "value": "data/corpus.csv"
+        },
+        {
+          "endLine": 12,
+          "isLiteral": true,
+          "name": "corpus_column",
+          "source": "corpus_column = \"text\" # which column of the csv holds the text",
+          "startLine": 12,
+          "value": "text"
+        },
+        {
+          "endLine": 13,
+          "isLiteral": true,
+          "name": "max_rows",
+          "source": "max_rows      = 2000 # only read this many rows, keeps training fast",
+          "startLine": 13,
+          "value": 2000
+        },
+        {
+          "endLine": 14,
+          "isLiteral": true,
+          "name": "num_merges",
+          "source": "num_merges    = 500 # how many times BPE glues the most common pair into a new token, more merges = bigger vocab",
+          "startLine": 14,
+          "value": 500
+        },
+        {
+          "endLine": 15,
+          "isLiteral": true,
+          "name": "val_fraction",
+          "source": "val_fraction  = 0.1 # last 10% of the token stream is kept aside to test the model on text it never trained on",
+          "startLine": 15,
+          "value": 0.1
+        },
+        {
+          "endLine": 16,
+          "isLiteral": true,
+          "name": "stride",
+          "source": "stride        = 1 # how far the window slides each time, 1 = every possible window (neighbours overlap by 15 tokens)",
+          "startLine": 16,
+          "value": 1
+        },
+        {
+          "endLine": 19,
+          "isLiteral": true,
+          "name": "batch_size",
+          "source": "batch_size   = 16 # how many windows we average the gradient over before one update",
+          "startLine": 19,
+          "value": 16
+        },
+        {
+          "endLine": 20,
+          "isLiteral": true,
+          "name": "epochs",
+          "source": "epochs       = 20 # how many full passes over the training windows",
+          "startLine": 20,
+          "value": 20
+        },
+        {
+          "endLine": 21,
+          "isLiteral": true,
+          "name": "grad_clip",
+          "source": "grad_clip    = 1.0 # if the whole gradient is longer than this, shrink it to this length so one bad batch cant blow up the model",
+          "startLine": 21,
+          "value": 1.0
+        },
+        {
+          "endLine": 24,
+          "isLiteral": true,
+          "name": "lr_max",
+          "source": "lr_max       = 1e-3 # biggest learning rate, reached right after warmup",
+          "startLine": 24,
+          "value": 0.001
+        },
+        {
+          "endLine": 25,
+          "isLiteral": true,
+          "name": "lr_min",
+          "source": "lr_min       = 1e-4 # smallest learning rate, where the cosine decay ends",
+          "startLine": 25,
+          "value": 0.0001
+        },
+        {
+          "endLine": 26,
+          "isLiteral": true,
+          "name": "warmup_steps",
+          "source": "warmup_steps = 50 # number of steps spent ramping the learning rate up from near 0, a fresh model is fragile",
+          "startLine": 26,
+          "value": 50
+        },
+        {
+          "endLine": 27,
+          "isLiteral": true,
+          "name": "beta1",
+          "source": "beta1        = 0.9 # how much of the old gradient direction Adam keeps (momentum)",
+          "startLine": 27,
+          "value": 0.9
+        },
+        {
+          "endLine": 28,
+          "isLiteral": true,
+          "name": "beta2",
+          "source": "beta2        = 0.999 # how much of the old squared gradient Adam keeps (typical gradient size)",
+          "startLine": 28,
+          "value": 0.999
+        },
+        {
+          "endLine": 29,
+          "isLiteral": true,
+          "name": "adam_eps",
+          "source": "adam_eps     = 1e-8 # tiny number so Adam never divides by zero",
+          "startLine": 29,
+          "value": 1e-08
+        },
+        {
+          "endLine": 30,
+          "isLiteral": true,
+          "name": "weight_decay",
+          "source": "weight_decay = 0.01 # each step shrinks the weight matrices slightly, only matrices, not biases or layer norm",
+          "startLine": 30,
+          "value": 0.01
+        },
+        {
+          "endLine": 33,
+          "isLiteral": true,
+          "name": "temperature",
+          "source": "temperature    = 0.8 # below 1 = safer and more repetitive, above 1 = more random, 0 = always pick the top token",
+          "startLine": 33,
+          "value": 0.8
+        },
+        {
+          "endLine": 34,
+          "isLiteral": true,
+          "name": "top_k",
+          "source": "top_k          = 0 # only sample from the k most likely tokens, 0 = turned off",
+          "startLine": 34,
+          "value": 0
+        },
+        {
+          "endLine": 35,
+          "isLiteral": true,
+          "name": "top_p",
+          "source": "top_p          = 0.9 # only sample from the smallest group of tokens whose probabilities add up to 0.9",
+          "startLine": 35,
+          "value": 0.9
+        },
+        {
+          "endLine": 36,
+          "isLiteral": true,
+          "name": "max_new_tokens",
+          "source": "max_new_tokens = 50 # how many tokens talk.py writes after your prompt",
+          "startLine": 36,
+          "value": 50
+        },
+        {
+          "endLine": 39,
+          "isLiteral": true,
+          "name": "seed",
+          "source": "seed = 42 # fixes the random numbers so a run can be repeated exactly",
+          "startLine": 39,
+          "value": 42
+        },
+        {
+          "endLine": 44,
+          "isLiteral": false,
+          "name": "head_dim",
+          "source": "head_dim = emb_dim // num_heads # width of one head, 32 / 2 = 16",
+          "startLine": 44,
+          "value": null
+        }
+      ],
+      "docstring": null,
+      "functions": [],
+      "imports": [],
+      "lineCount": 44,
+      "module": "config",
+      "path": "config.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 5,
+          "endLine": 12,
+          "id": "data.load_corpus",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "load_corpus",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/data.py#L5-L12",
+          "signature": "def load_corpus(path, column, max_rows) -> str",
+          "source": "def load_corpus(path, column, max_rows) -> str:\n    df = pd.read_csv(path, nrows=max_rows)\n \n    if column not in df.columns:\n        raise ValueError(f\"no column {column!r}, the file has {list(df.columns)}\")\n \n    texts = df[column].dropna().astype(str).str.strip()\n    return \"\\n\".join(texts) + \"\\n\"",
+          "startLine": 5
+        },
+        {
+          "decorators": [],
+          "defLine": 15,
+          "endLine": 16,
+          "id": "data.encode_corpus",
+          "kind": "function",
+          "leadingComments": [
+            "BPE tokenizer is called to turn this into a 1D array of integers"
+          ],
+          "name": "encode_corpus",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/data.py#L15-L16",
+          "signature": "def encode_corpus(text: str, tok: Tokenizer) -> np.ndarray",
+          "source": "def encode_corpus(text: str, tok: Tokenizer) -> np.ndarray:\n    return np.array(tok.encode(text), dtype=np.int64)",
+          "startLine": 15
+        },
+        {
+          "decorators": [],
+          "defLine": 19,
+          "endLine": 21,
+          "id": "data.split_ids",
+          "kind": "function",
+          "leadingComments": [
+            "this cuts id stream so 0.1 keeps first 90% for training and last 10% for testing"
+          ],
+          "name": "split_ids",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/data.py#L19-L21",
+          "signature": "def split_ids(ids, val_fraction)",
+          "source": "def split_ids(ids, val_fraction):\n    cut = int((1 - val_fraction) * len(ids))\n    return ids[:cut], ids[cut:]",
+          "startLine": 19
+        },
+        {
+          "decorators": [],
+          "defLine": 24,
+          "endLine": 33,
+          "id": "data.make_windows",
+          "kind": "function",
+          "leadingComments": [
+            "A language model learns to predict the next token. We slide a window of length T along the ids. The input is the window, and the target is the same window shifted one token to the left."
+          ],
+          "name": "make_windows",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/data.py#L24-L33",
+          "signature": "def make_windows(ids, seq_len, stride = 1)",
+          "source": "def make_windows(ids, seq_len, stride = 1):\n    if len(ids) <= seq_len:\n        raise ValueError(f\"need more than seq_len={seq_len} tokens, got {len(ids)}\")\n \n    starts = np.arange(0, len(ids) - seq_len, stride)\n    rows = starts[:, None] + np.arange(seq_len)\n \n    inputs = pd.DataFrame(ids[rows])\n    targets = pd.DataFrame(ids[rows + 1])\n    return inputs, targets",
+          "startLine": 24
+        },
+        {
+          "decorators": [],
+          "defLine": 36,
+          "endLine": 43,
+          "id": "data.iterate_batches",
+          "kind": "function",
+          "leadingComments": [
+            "Training doesn’t use all windows at once, because that would make each update slow. It also doesn’t use one window at a time, because that would make updates noisy. This function hands out batch_size windows at a time."
+          ],
+          "name": "iterate_batches",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/data.py#L36-L43",
+          "signature": "def iterate_batches(inputs, targets, batch_size, rng, shuffle = True)",
+          "source": "def iterate_batches(inputs, targets, batch_size, rng, shuffle = True):\n    order = inputs.index\n    if shuffle:\n        order = inputs.sample(frac=1, random_state=rng).index\n \n    for i in range(0, len(order), batch_size):\n        rows = order[i : i + batch_size]\n        yield inputs.loc[rows].to_numpy(), targets.loc[rows].to_numpy()",
+          "startLine": 36
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": "pd",
+          "internal": false,
+          "line": 2,
+          "module": "pandas",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "tokenizer",
+          "name": "Tokenizer"
+        }
+      ],
+      "lineCount": 43,
+      "module": "data",
+      "path": "data.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 7,
+          "endLine": 26,
+          "id": "generate.sample_next",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "sample_next",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/generate.py#L7-L26",
+          "signature": "def sample_next(logits, temperature, top_k, top_p, rng)",
+          "source": "def sample_next(logits, temperature, top_k, top_p, rng):\n    if temperature < 1e-6:\n        return int(np.argmax(logits))\n\n    p = softmax_forward(logits / temperature)\n\n    if 0 < top_k < len(p):\n        cutoff = np.sort(p)[-top_k] # # k-th largest probabilit\n        p = np.where(p >= cutoff, p, 0.0) # zero everything below it\n        p = p / p.sum() # renormalise so it sums to 1 again\n\n    if top_p < 1.0:\n        order = np.argsort(-p)\n        cum = np.cumsum(p[order])\n        keep = order[: np.searchsorted(cum, top_p) + 1]\n        q = np.zeros_like(p)\n        q[keep] = p[keep]\n        p = q / q.sum()\n\n    return int(rng.choice(len(p), p=p))",
+          "startLine": 7
+        },
+        {
+          "decorators": [],
+          "defLine": 28,
+          "endLine": 35,
+          "id": "generate.generate",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "generate",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/generate.py#L28-L35",
+          "signature": "def generate(params, cfg: ModelConfig, seed_ids, max_new_tokens, window, temperature, top_k, top_p, rng)",
+          "source": "def generate(params, cfg: ModelConfig, seed_ids, max_new_tokens, window, temperature, top_k, top_p, rng):\n    ids = list(seed_ids)\n\n    for _ in range(max_new_tokens):\n        logits, _ = forward(params, np.array(ids[-window:]), cfg)\n        ids.append(sample_next(logits[-1], temperature, top_k, top_p, rng)) # logits[-1] is used because the last position is the only one that has seen the whole context\n\n    return ids",
+          "startLine": 28
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "softmax_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "forward"
+        },
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 5,
+          "module": "numpy",
+          "name": null
+        }
+      ],
+      "lineCount": 35,
+      "module": "generate",
+      "path": "generate.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 3,
+          "endLine": 14,
+          "id": "gradcheck.numerical_grad",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "numerical_grad",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/gradcheck.py#L3-L14",
+          "signature": "def numerical_grad(f, x, h = 1e-5)",
+          "source": "def numerical_grad(f, x, h = 1e-5):\n    g = np.zeros_like(x)\n    for idx in np.ndindex(*x.shape):\n        old = x[idx]\n        x[idx] = old + h\n        fp = f(x)\n        x[idx] = old - h\n        fm = f(x)\n        x[idx] = old\n        g[idx] = (fp - fm) / (2 * h)\n\n    return g",
+          "startLine": 3
+        },
+        {
+          "decorators": [],
+          "defLine": 16,
+          "endLine": 17,
+          "id": "gradcheck.relative_error",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "relative_error",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/gradcheck.py#L16-L17",
+          "signature": "def relative_error(a, b, eps = 1e-12)",
+          "source": "def relative_error(a, b, eps = 1e-12):\n    return abs(a - b) / max(abs(a), abs(b), eps)",
+          "startLine": 16
+        },
+        {
+          "decorators": [],
+          "defLine": 19,
+          "endLine": 33,
+          "id": "gradcheck.check_params",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "check_params",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/gradcheck.py#L19-L33",
+          "signature": "def check_params(loss_fn, params, grads, rng, samples_per_param = 5, h = 1e-5)",
+          "source": "def check_params(loss_fn, params, grads, rng, samples_per_param = 5, h = 1e-5):\n    worst: dict[str, float] = {}\n    for name, W in params.items():\n        w = 0.0\n        for _ in range(samples_per_param):\n            idx = tuple(int(rng.integers(s)) for s in W.shape)\n            old = W[idx]\n            W[idx] = old + h\n            fp = loss_fn(params)\n            W[idx] = old - h\n            fm = loss_fn(params)\n            W[idx] = old\n            w = max(w, relative_error(grads[name][idx], (fp - fm) / (2 * h)))\n        worst[name] = w\n    return worst",
+          "startLine": 19
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        }
+      ],
+      "lineCount": 33,
+      "module": "gradcheck",
+      "path": "gradcheck.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 3,
+          "endLine": 5,
+          "id": "ops.xavier_uniform",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "xavier_uniform",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L3-L5",
+          "signature": "def xavier_uniform(fan_in, fan_out, rng)",
+          "source": "def xavier_uniform(fan_in, fan_out, rng):\n    a = np.sqrt(6.0 / (fan_in + fan_out))\n    return rng.uniform(-a, a, size=(fan_in, fan_out))",
+          "startLine": 3
+        },
+        {
+          "decorators": [],
+          "defLine": 7,
+          "endLine": 8,
+          "id": "ops.linear_forward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "linear_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L7-L8",
+          "signature": "def linear_forward(X, W, b)",
+          "source": "def linear_forward(X, W, b):\n    return X @ W + b",
+          "startLine": 7
+        },
+        {
+          "decorators": [],
+          "defLine": 10,
+          "endLine": 14,
+          "id": "ops.linear_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "linear_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L10-L14",
+          "signature": "def linear_backward(X, W, dY)",
+          "source": "def linear_backward(X, W, dY):\n    dW = X.T @ dY\n    db = dY.sum(axis=0)\n    dX = dY @ W.T\n    return dX, dW, db",
+          "startLine": 10
+        },
+        {
+          "decorators": [],
+          "defLine": 16,
+          "endLine": 17,
+          "id": "ops.relu_forward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "relu_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L16-L17",
+          "signature": "def relu_forward(X)",
+          "source": "def relu_forward(X):\n    return np.maximum(0.0, X)",
+          "startLine": 16
+        },
+        {
+          "decorators": [],
+          "defLine": 19,
+          "endLine": 20,
+          "id": "ops.relu_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "relu_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L19-L20",
+          "signature": "def relu_backward(Z, dA)",
+          "source": "def relu_backward(Z, dA):\n    return dA * (Z > 0)",
+          "startLine": 19
+        },
+        {
+          "decorators": [],
+          "defLine": 22,
+          "endLine": 24,
+          "id": "ops.softmax_forward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "softmax_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L22-L24",
+          "signature": "def softmax_forward(x)",
+          "source": "def softmax_forward(x):\n    e = np.exp(x - np.max(x, axis=-1, keepdims=True))\n    return e / e.sum(axis=-1, keepdims=True)",
+          "startLine": 22
+        },
+        {
+          "decorators": [],
+          "defLine": 26,
+          "endLine": 27,
+          "id": "ops.softmax_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "softmax_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L26-L27",
+          "signature": "def softmax_backward(y, dY)",
+          "source": "def softmax_backward(y, dY):\n    return y * (dY - np.sum(y * dY, axis=-1, keepdims=True))",
+          "startLine": 26
+        },
+        {
+          "decorators": [],
+          "defLine": 29,
+          "endLine": 34,
+          "id": "ops.cross_entropy_forward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "cross_entropy_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L29-L34",
+          "signature": "def cross_entropy_forward(logits, targets)",
+          "source": "def cross_entropy_forward(logits, targets):\n    z = logits - logits.max(axis=-1, keepdims=True)\n    logp = z - np.log(np.exp(z).sum(axis=-1, keepdims=True))\n    T = len(targets)\n    loss = -logp[np.arange(T), targets].mean()\n    return float(loss), np.exp(logp)",
+          "startLine": 29
+        },
+        {
+          "decorators": [],
+          "defLine": 36,
+          "endLine": 40,
+          "id": "ops.cross_entropy_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "cross_entropy_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L36-L40",
+          "signature": "def cross_entropy_backward(probs, targets)",
+          "source": "def cross_entropy_backward(probs, targets):\n    T = len(targets)\n    dZ = probs.copy()\n    dZ[np.arange(T), targets] -= 1.0\n    return dZ / T",
+          "startLine": 36
+        },
+        {
+          "decorators": [],
+          "defLine": 42,
+          "endLine": 47,
+          "id": "ops.layer_norm_forward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "layer_norm_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L42-L47",
+          "signature": "def layer_norm_forward(X, gamma, beta, epsilon = 1e-5)",
+          "source": "def layer_norm_forward(X, gamma, beta, epsilon = 1e-5):\n    mu = X.mean(axis=-1, keepdims=True)\n    var = ((X - mu) ** 2).mean(axis=-1, keepdims=True)\n    s = 1.0 / np.sqrt(var + epsilon)\n    Xhat = (X - mu) * s\n    return gamma * Xhat + beta, (Xhat, s)",
+          "startLine": 42
+        },
+        {
+          "decorators": [],
+          "defLine": 49,
+          "endLine": 57,
+          "id": "ops.layer_norm_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "layer_norm_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L49-L57",
+          "signature": "def layer_norm_backward(dY, cache, gamma)",
+          "source": "def layer_norm_backward(dY, cache, gamma):\n    Xhat, s = cache\n    dXhat = dY * gamma\n    dX = s * (dXhat - dXhat.mean(axis=-1, keepdims=True)\n                - Xhat * (dXhat * Xhat).mean(axis=-1, keepdims=True))\n    \n    dgamma = (dY * Xhat).sum(axis=0)\n    dbeta = dY.sum(axis=0)\n    return dX, dgamma, dbeta",
+          "startLine": 49
+        },
+        {
+          "decorators": [],
+          "defLine": 59,
+          "endLine": 60,
+          "id": "ops.perplexity",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "perplexity",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/ops.py#L59-L60",
+          "signature": "def perplexity(loss)",
+          "source": "def perplexity(loss):\n    return float(np.exp(loss))",
+          "startLine": 59
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        }
+      ],
+      "lineCount": 60,
+      "module": "ops",
+      "path": "ops.py"
+    },
+    {
+      "classes": [
+        {
+          "bases": [],
+          "decorators": [],
+          "defLine": 6,
+          "endLine": 30,
+          "fields": [],
+          "id": "optim.Adam",
+          "isDataclass": false,
+          "kind": "class",
+          "leadingComments": [],
+          "methods": [
+            {
+              "decorators": [],
+              "defLine": 7,
+              "endLine": 11,
+              "id": "optim.Adam.__init__",
+              "kind": "method",
+              "leadingComments": [],
+              "name": "__init__",
+              "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/optim.py#L7-L11",
+              "signature": "def __init__(self, params, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.0)",
+              "source": "    def __init__(self, params, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.0):\n        self.m = {k: np.zeros_like(v) for k, v in params.items()} # running average of the gradient (which direction to go)\n        self.v = {k: np.zeros_like(v) for k, v in params.items()} # running average of gradient squared (how big the gradients usually are)\n        self.t = 0 # step counter, needed for bias correction\n        self.b1, self.b2, self.eps, self.wd = beta1, beta2, eps, weight_decay",
+              "startLine": 7
+            },
+            {
+              "decorators": [],
+              "defLine": 13,
+              "endLine": 30,
+              "id": "optim.Adam.step",
+              "kind": "method",
+              "leadingComments": [],
+              "name": "step",
+              "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/optim.py#L13-L30",
+              "signature": "def step(self, params, grads, lr)",
+              "source": "    def step(self, params, grads, lr):\n        self.t += 1 # first step is t=1, so 1 - b1**t is never zero\n\n        for k in params:\n            g = grads[k]\n\n            self.m[k] = self.b1 * self.m[k] + (1 - self.b1) * g # mostly old direction, a little new gradient\n            self.v[k] = self.b2 * self.v[k] + (1 - self.b2) * g * g # same idea, but for the squared gradient\n\n            mhat = self.m[k] / (1 - self.b1 ** self.t) # m starts at 0 so it is too small early on, this scales it back up\n            vhat = self.v[k] / (1 - self.b2 ** self.t)\n\n            update = mhat / (np.sqrt(vhat) + self.eps) # direction divided by typical size, so every number moves about lr per step\n\n            if params[k].ndim >= 2: # weight decay only for matrices, not biases or layer norm gamma/beta\n                update = update + self.wd * params[k] # shrink the weight a little, outside the m/v part (this is the \"W\" in AdamW)\n\n            params[k] -= lr * update # changes the array in place, nothing to return",
+              "startLine": 13
+            }
+          ],
+          "name": "Adam",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/optim.py#L6-L30",
+          "signature": "class Adam",
+          "source": "class Adam:\n    def __init__(self, params, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.0):\n        self.m = {k: np.zeros_like(v) for k, v in params.items()} # running average of the gradient (which direction to go)\n        self.v = {k: np.zeros_like(v) for k, v in params.items()} # running average of gradient squared (how big the gradients usually are)\n        self.t = 0 # step counter, needed for bias correction\n        self.b1, self.b2, self.eps, self.wd = beta1, beta2, eps, weight_decay\n\n    def step(self, params, grads, lr):\n        self.t += 1 # first step is t=1, so 1 - b1**t is never zero\n\n        for k in params:\n            g = grads[k]\n\n            self.m[k] = self.b1 * self.m[k] + (1 - self.b1) * g # mostly old direction, a little new gradient\n            self.v[k] = self.b2 * self.v[k] + (1 - self.b2) * g * g # same idea, but for the squared gradient\n\n            mhat = self.m[k] / (1 - self.b1 ** self.t) # m starts at 0 so it is too small early on, this scales it back up\n            vhat = self.v[k] / (1 - self.b2 ** self.t)\n\n            update = mhat / (np.sqrt(vhat) + self.eps) # direction divided by typical size, so every number moves about lr per step\n\n            if params[k].ndim >= 2: # weight decay only for matrices, not biases or layer norm gamma/beta\n                update = update + self.wd * params[k] # shrink the weight a little, outside the m/v part (this is the \"W\" in AdamW)\n\n            params[k] -= lr * update # changes the array in place, nothing to return",
+          "startLine": 6
+        }
+      ],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 32,
+          "endLine": 37,
+          "id": "optim.lr_schedule",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "lr_schedule",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/optim.py#L32-L37",
+          "signature": "def lr_schedule(step, warmup, total, lr_max, lr_min)",
+          "source": "def lr_schedule(step, warmup, total, lr_max, lr_min):\n    if step <= warmup:\n        return lr_max * step / warmup # warm-up: ramp from near 0 up to lr_max, a fresh model is fragile\n\n    frac = (step - warmup) / (total - warmup) # how far through the decay we are, goes from 0 to 1\n    return lr_min + 0.5 * (lr_max - lr_min) * (1 + math.cos(math.pi * frac)) # cosine slide from lr_max down to lr_min",
+          "startLine": 32
+        },
+        {
+          "decorators": [],
+          "defLine": 40,
+          "endLine": 50,
+          "id": "optim.clip_grad_norm",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "clip_grad_norm",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/optim.py#L40-L50",
+          "signature": "def clip_grad_norm(grads, max_norm)",
+          "source": "def clip_grad_norm(grads, max_norm):\n    total = 0.0\n    for k in grads:\n        total += (grads[k] ** 2).sum() # add up the squares of every gradient number in every tensor\n    norm = np.sqrt(total) # length of the whole gradient as one big vector\n\n    if norm > max_norm:\n        for k in grads:\n            grads[k] *= max_norm / norm # shrink every tensor by the same factor, direction stays, length becomes max_norm\n\n    return float(norm) # the length before clipping, train.py prints it as |g|",
+          "startLine": 40
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 3,
+          "module": "math",
+          "name": null
+        },
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 4,
+          "module": "numpy",
+          "name": null
+        }
+      ],
+      "lineCount": 50,
+      "module": "optim",
+      "path": "optim.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 7,
+          "endLine": 27,
+          "id": "talk.main",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "main",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/talk.py#L7-L27",
+          "signature": "def main(prefix=\"checkpoints/model\")",
+          "source": "def main(prefix=\"checkpoints/model\"):\n    params, cfg, tok = load_checkpoint(prefix)\n    rng = np.random.default_rng(config.seed)\n    print(f\"loaded {prefix}  (V={cfg.vocab_size})\")\n    print(\"Type the start of a text and press Enter. Empty line quits.\")\n\n    while True:\n        try:\n            prompt = input(\"> \")\n        except EOFError:\n            break\n\n        if prompt.strip() == \"\":\n            break\n\n        ids = tok.encode(prompt)\n\n        out = generate(params, cfg, ids, config.max_new_tokens, config.seq_len,\n                       config.temperature, config.top_k, config.top_p, rng)\n\n        print(tok.decode(out[len(ids):])) # only the new tokens, the prompt is already on screen",
+          "startLine": 7
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 1,
+          "module": "sys",
+          "name": null
+        },
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 2,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "config",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "checkpoint",
+          "name": "load_checkpoint"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 5,
+          "module": "generate",
+          "name": "generate"
+        }
+      ],
+      "lineCount": 30,
+      "module": "talk",
+      "path": "talk.py"
+    },
+    {
+      "classes": [],
+      "constants": [
+        {
+          "endLine": 10,
+          "isLiteral": true,
+          "name": "CORPUS",
+          "source": "CORPUS = \"low low low lower newest newest\\nthe low newest tower\\n\"",
+          "startLine": 10,
+          "value": "low low low lower newest newest\nthe low newest tower\n"
+        }
+      ],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [
+            "@pytest.fixture"
+          ],
+          "defLine": 14,
+          "endLine": 21,
+          "id": "tests.test_checkpoint.saved",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "saved",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L13-L21",
+          "signature": "def saved(tmp_path)",
+          "source": "@pytest.fixture\ndef saved(tmp_path):\n    tok = build_tokenizer(CORPUS, max_merges=8)\n    cfg = ModelConfig(tok.vocab_size, context_len=8, emb_dim=4,\n                      num_heads=2, ff_dim=8, num_layers=2)\n    params = init_params(cfg, np.random.default_rng(0))\n    prefix = str(tmp_path / \"ckpt\" / \"model\")        # \"ckpt\" does not exist yet\n    save_checkpoint(prefix, params, cfg, tok)\n    return prefix, params, cfg, tok",
+          "startLine": 13
+        },
+        {
+          "decorators": [],
+          "defLine": 24,
+          "endLine": 27,
+          "id": "tests.test_checkpoint.test_save_creates_the_three_files",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_save_creates_the_three_files",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L24-L27",
+          "signature": "def test_save_creates_the_three_files(saved)",
+          "source": "def test_save_creates_the_three_files(saved):\n    prefix = saved[0]\n    for ext in (\".npz\", \".json\", \".tok.json\"):\n        assert open(prefix + ext, \"rb\").read()       # exists and is not empty",
+          "startLine": 24
+        },
+        {
+          "decorators": [],
+          "defLine": 30,
+          "endLine": 32,
+          "id": "tests.test_checkpoint.test_config_round_trips",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_config_round_trips",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L30-L32",
+          "signature": "def test_config_round_trips(saved)",
+          "source": "def test_config_round_trips(saved):\n    prefix, _, cfg, _ = saved\n    assert load_checkpoint(prefix)[1] == cfg",
+          "startLine": 30
+        },
+        {
+          "decorators": [],
+          "defLine": 35,
+          "endLine": 40,
+          "id": "tests.test_checkpoint.test_weights_round_trip_exactly",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_weights_round_trip_exactly",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L35-L40",
+          "signature": "def test_weights_round_trip_exactly(saved)",
+          "source": "def test_weights_round_trip_exactly(saved):\n    prefix, params, _, _ = saved\n    loaded = load_checkpoint(prefix)[0]\n    assert loaded.keys() == params.keys()\n    for k in params:\n        assert np.array_equal(loaded[k], params[k]), k",
+          "startLine": 35
+        },
+        {
+          "decorators": [],
+          "defLine": 43,
+          "endLine": 52,
+          "id": "tests.test_checkpoint.test_tokenizer_round_trips",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_tokenizer_round_trips",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L43-L52",
+          "signature": "def test_tokenizer_round_trips(saved)",
+          "source": "def test_tokenizer_round_trips(saved):\n    prefix, _, _, tok = saved\n    t2 = load_checkpoint(prefix)[2]\n    assert t2.itos == tok.itos\n    assert t2.stoi == tok.stoi\n    assert t2.vocab_size == tok.vocab_size\n    for s in [\"low newest\", \"lower tower\", \"  low  \", \"low!\"]:   # \"!\" was never seen\n        assert t2.encode(s) == tok.encode(s), s\n        assert t2.decode(t2.encode(s)) == tok.decode(tok.encode(s)), s\n    assert t2.encode(\"low!\")[-1] == 0                # unseen character is still <unk>",
+          "startLine": 43
+        },
+        {
+          "decorators": [],
+          "defLine": 55,
+          "endLine": 61,
+          "id": "tests.test_checkpoint.test_loaded_model_gives_identical_logits",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_loaded_model_gives_identical_logits",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L55-L61",
+          "signature": "def test_loaded_model_gives_identical_logits(saved)",
+          "source": "def test_loaded_model_gives_identical_logits(saved):\n    prefix, params, cfg, tok = saved\n    p2, c2, t2 = load_checkpoint(prefix)\n    ids = np.array(tok.encode(\"low newest tower\"))\n    a, _ = forward(params, ids, cfg)\n    b, _ = forward(p2, ids, c2)\n    assert np.array_equal(a, b)",
+          "startLine": 55
+        },
+        {
+          "decorators": [],
+          "defLine": 64,
+          "endLine": 70,
+          "id": "tests.test_checkpoint.test_non_ascii_characters_survive",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_non_ascii_characters_survive",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L64-L70",
+          "signature": "def test_non_ascii_characters_survive(tmp_path)",
+          "source": "def test_non_ascii_characters_survive(tmp_path):\n    tok = build_tokenizer(\"café café über\\n\", max_merges=3)\n    cfg = ModelConfig(tok.vocab_size, 8, 4, 2, 8, 1)\n    prefix = str(tmp_path / \"m\")\n    save_checkpoint(prefix, init_params(cfg, np.random.default_rng(0)), cfg, tok)\n    t2 = load_checkpoint(prefix)[2]\n    assert t2.decode(t2.encode(\"café über\")) == \"café über\"",
+          "startLine": 64
+        },
+        {
+          "decorators": [],
+          "defLine": 73,
+          "endLine": 76,
+          "id": "tests.test_checkpoint.test_tok_file_is_plain_json",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_tok_file_is_plain_json",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_checkpoint.py#L73-L76",
+          "signature": "def test_tok_file_is_plain_json(saved)",
+          "source": "def test_tok_file_is_plain_json(saved):\n    d = json.load(open(saved[0] + \".tok.json\", encoding=\"utf-8\"))\n    assert set(d) == {\"merges\", \"itos\"}\n    assert d[\"itos\"][0] == \"<unk>\"",
+          "startLine": 73
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 1,
+          "module": "json",
+          "name": null
+        },
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 3,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": false,
+          "line": 4,
+          "module": "pytest",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 6,
+          "module": "checkpoint",
+          "name": "load_checkpoint"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 6,
+          "module": "checkpoint",
+          "name": "save_checkpoint"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 7,
+          "module": "tokenizer",
+          "name": "build_tokenizer"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 8,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 8,
+          "module": "transformer",
+          "name": "forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 8,
+          "module": "transformer",
+          "name": "init_params"
+        }
+      ],
+      "lineCount": 76,
+      "module": "tests.test_checkpoint",
+      "path": "tests/test_checkpoint.py"
+    },
+    {
+      "classes": [],
+      "constants": [
+        {
+          "endLine": 7,
+          "isLiteral": false,
+          "name": "IDS",
+          "source": "IDS = np.array([3, 1, 4, 1, 5, 2, 6, 5, 3, 5])   # N = 10",
+          "startLine": 7,
+          "value": null
+        }
+      ],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 10,
+          "endLine": 16,
+          "id": "tests.test_data.test_window_table_matches_hand_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_window_table_matches_hand_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L10-L16",
+          "signature": "def test_window_table_matches_hand_example()",
+          "source": "def test_window_table_matches_hand_example():\n    # T = 4, stride 1 -> W = N - T = 6 windows\n    x, y = make_windows(IDS, seq_len=4)\n    x, y = x.to_numpy(), y.to_numpy()\n    assert x.shape == (6, 4) and y.shape == (6, 4)\n    assert x[0].tolist() == [3, 1, 4, 1] and y[0].tolist() == [1, 4, 1, 5]\n    assert x[5].tolist() == [2, 6, 5, 3] and y[5].tolist() == [6, 5, 3, 5]",
+          "startLine": 10
+        },
+        {
+          "decorators": [],
+          "defLine": 19,
+          "endLine": 21,
+          "id": "tests.test_data.test_targets_are_inputs_shifted_by_one",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_targets_are_inputs_shifted_by_one",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L19-L21",
+          "signature": "def test_targets_are_inputs_shifted_by_one()",
+          "source": "def test_targets_are_inputs_shifted_by_one():\n    x, y = make_windows(IDS, seq_len=4)\n    assert (y.to_numpy()[:, :-1] == x.to_numpy()[:, 1:]).all()",
+          "startLine": 19
+        },
+        {
+          "decorators": [],
+          "defLine": 24,
+          "endLine": 26,
+          "id": "tests.test_data.test_stride_skips_windows",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_stride_skips_windows",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L24-L26",
+          "signature": "def test_stride_skips_windows()",
+          "source": "def test_stride_skips_windows():\n    x, _ = make_windows(IDS, seq_len=4, stride=2)\n    assert x.to_numpy()[:, 0].tolist() == [3, 4, 5]       # starts 0, 2, 4",
+          "startLine": 24
+        },
+        {
+          "decorators": [],
+          "defLine": 29,
+          "endLine": 31,
+          "id": "tests.test_data.test_too_few_tokens_raises",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_too_few_tokens_raises",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L29-L31",
+          "signature": "def test_too_few_tokens_raises()",
+          "source": "def test_too_few_tokens_raises():\n    with pytest.raises(ValueError):\n        make_windows(np.arange(4), seq_len=4)",
+          "startLine": 29
+        },
+        {
+          "decorators": [],
+          "defLine": 34,
+          "endLine": 38,
+          "id": "tests.test_data.test_split_is_contiguous_and_disjoint",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_split_is_contiguous_and_disjoint",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L34-L38",
+          "signature": "def test_split_is_contiguous_and_disjoint()",
+          "source": "def test_split_is_contiguous_and_disjoint():\n    ids = np.arange(100)\n    train, val = split_ids(ids, 0.1)\n    assert len(train) == 90 and len(val) == 10\n    assert train[-1] + 1 == val[0]                        # cut, no overlap",
+          "startLine": 34
+        },
+        {
+          "decorators": [],
+          "defLine": 41,
+          "endLine": 45,
+          "id": "tests.test_data.test_window_counts_for_n_3000",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_window_counts_for_n_3000",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L41-L45",
+          "signature": "def test_window_counts_for_n_3000()",
+          "source": "def test_window_counts_for_n_3000():\n    # guide: N = 3000, T = 16, rho = 0.1 -> 2684 train and 284 val windows\n    train, val = split_ids(np.arange(3000), 0.1)\n    assert len(make_windows(train, 16)[0]) == 2684\n    assert len(make_windows(val, 16)[0]) == 284",
+          "startLine": 41
+        },
+        {
+          "decorators": [],
+          "defLine": 48,
+          "endLine": 58,
+          "id": "tests.test_data.test_batches_cover_every_window_once",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_batches_cover_every_window_once",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L48-L58",
+          "signature": "def test_batches_cover_every_window_once()",
+          "source": "def test_batches_cover_every_window_once():\n    x, y = make_windows(np.arange(50), seq_len=4)         # 46 windows\n    rng = np.random.default_rng(0)\n    seen, sizes = [], []\n    for xb, yb in iterate_batches(x, y, batch_size=16, rng=rng):\n        assert xb.shape == yb.shape and xb.shape[1] == 4\n        assert (yb[:, :-1] == xb[:, 1:]).all()            # pairs stay aligned\n        seen.extend(xb[:, 0].tolist())\n        sizes.append(len(xb))\n    assert sorted(seen) == list(range(46))\n    assert sizes == [16, 16, 14]",
+          "startLine": 48
+        },
+        {
+          "decorators": [],
+          "defLine": 61,
+          "endLine": 64,
+          "id": "tests.test_data.test_no_shuffle_keeps_order",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_no_shuffle_keeps_order",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L61-L64",
+          "signature": "def test_no_shuffle_keeps_order()",
+          "source": "def test_no_shuffle_keeps_order():\n    x, y = make_windows(np.arange(20), seq_len=4)\n    first = next(iterate_batches(x, y, 5, np.random.default_rng(0), shuffle=False))[0]\n    assert first[:, 0].tolist() == [0, 1, 2, 3, 4]",
+          "startLine": 61
+        },
+        {
+          "decorators": [],
+          "defLine": 67,
+          "endLine": 70,
+          "id": "tests.test_data.test_load_corpus_joins_rows_and_skips_missing",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_load_corpus_joins_rows_and_skips_missing",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L67-L70",
+          "signature": "def test_load_corpus_joins_rows_and_skips_missing(tmp_path)",
+          "source": "def test_load_corpus_joins_rows_and_skips_missing(tmp_path):\n    f = tmp_path / \"c.csv\"\n    pd.DataFrame({\"text\": [\" hello \", None, \"world\"]}).to_csv(f, index=False)\n    assert load_corpus(str(f), \"text\", 10) == \"hello\\nworld\\n\"",
+          "startLine": 67
+        },
+        {
+          "decorators": [],
+          "defLine": 73,
+          "endLine": 76,
+          "id": "tests.test_data.test_load_corpus_respects_max_rows",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_load_corpus_respects_max_rows",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L73-L76",
+          "signature": "def test_load_corpus_respects_max_rows(tmp_path)",
+          "source": "def test_load_corpus_respects_max_rows(tmp_path):\n    f = tmp_path / \"c.csv\"\n    pd.DataFrame({\"text\": [\"a\", \"b\", \"c\"]}).to_csv(f, index=False)\n    assert load_corpus(str(f), \"text\", 2) == \"a\\nb\\n\"",
+          "startLine": 73
+        },
+        {
+          "decorators": [],
+          "defLine": 79,
+          "endLine": 83,
+          "id": "tests.test_data.test_load_corpus_wrong_column_raises",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_load_corpus_wrong_column_raises",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_data.py#L79-L83",
+          "signature": "def test_load_corpus_wrong_column_raises(tmp_path)",
+          "source": "def test_load_corpus_wrong_column_raises(tmp_path):\n    f = tmp_path / \"c.csv\"\n    pd.DataFrame({\"body\": [\"a\"]}).to_csv(f, index=False)\n    with pytest.raises(ValueError):\n        load_corpus(str(f), \"text\", 10)",
+          "startLine": 79
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": "pd",
+          "internal": false,
+          "line": 2,
+          "module": "pandas",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": false,
+          "line": 3,
+          "module": "pytest",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 5,
+          "module": "data",
+          "name": "iterate_batches"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 5,
+          "module": "data",
+          "name": "load_corpus"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 5,
+          "module": "data",
+          "name": "make_windows"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 5,
+          "module": "data",
+          "name": "split_ids"
+        }
+      ],
+      "lineCount": 83,
+      "module": "tests.test_data",
+      "path": "tests/test_data.py"
+    },
+    {
+      "classes": [
+        {
+          "bases": [],
+          "decorators": [],
+          "defLine": 7,
+          "endLine": 11,
+          "fields": [],
+          "id": "tests.test_generate.SpyRng",
+          "isDataclass": false,
+          "kind": "class",
+          "leadingComments": [],
+          "methods": [
+            {
+              "decorators": [],
+              "defLine": 9,
+              "endLine": 11,
+              "id": "tests.test_generate.SpyRng.choice",
+              "kind": "method",
+              "leadingComments": [],
+              "name": "choice",
+              "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L9-L11",
+              "signature": "def choice(self, n, p)",
+              "source": "    def choice(self, n, p):\n        self.p = np.asarray(p)\n        return 0",
+              "startLine": 9
+            }
+          ],
+          "name": "SpyRng",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L7-L11",
+          "signature": "class SpyRng",
+          "source": "class SpyRng:\n    \"\"\"Stands in for the rng: records the distribution handed to choice().\"\"\"\n    def choice(self, n, p):\n        self.p = np.asarray(p)\n        return 0",
+          "startLine": 7
+        }
+      ],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 14,
+          "endLine": 17,
+          "id": "tests.test_generate.probs_used",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "probs_used",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L14-L17",
+          "signature": "def probs_used(logits, temperature=1.0, top_k=0, top_p=1.0)",
+          "source": "def probs_used(logits, temperature=1.0, top_k=0, top_p=1.0):\n    rng = SpyRng()\n    sample_next(np.asarray(logits, dtype=float), temperature, top_k, top_p, rng)\n    return rng.p",
+          "startLine": 14
+        },
+        {
+          "decorators": [],
+          "defLine": 20,
+          "endLine": 24,
+          "id": "tests.test_generate.test_temperature_examples",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_temperature_examples",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L20-L24",
+          "signature": "def test_temperature_examples()",
+          "source": "def test_temperature_examples():\n    z = [2.0, 1.0, 0.0]\n    assert np.allclose(probs_used(z, 0.5), [0.867, 0.117, 0.016], atol=1e-3)\n    assert np.allclose(probs_used(z, 1.0), [0.665, 0.245, 0.090], atol=1e-3)\n    assert np.allclose(probs_used(z, 2.0), [0.506, 0.307, 0.186], atol=1e-3)",
+          "startLine": 20
+        },
+        {
+          "decorators": [],
+          "defLine": 27,
+          "endLine": 30,
+          "id": "tests.test_generate.test_temperature_zero_is_greedy",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_temperature_zero_is_greedy",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L27-L30",
+          "signature": "def test_temperature_zero_is_greedy()",
+          "source": "def test_temperature_zero_is_greedy():\n    rng = np.random.default_rng(0)\n    assert all(sample_next(np.array([0.1, 2.0, 1.0]), 0.0, 0, 1.0, rng) == 1\n               for _ in range(20))",
+          "startLine": 27
+        },
+        {
+          "decorators": [],
+          "defLine": 33,
+          "endLine": 35,
+          "id": "tests.test_generate.test_top_k_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_top_k_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L33-L35",
+          "signature": "def test_top_k_example()",
+          "source": "def test_top_k_example():\n    z = np.log([0.50, 0.30, 0.15, 0.05])\n    assert np.allclose(probs_used(z, top_k=2), [0.625, 0.375, 0, 0])",
+          "startLine": 33
+        },
+        {
+          "decorators": [],
+          "defLine": 38,
+          "endLine": 41,
+          "id": "tests.test_generate.test_top_k_one_is_greedy",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_top_k_one_is_greedy",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L38-L41",
+          "signature": "def test_top_k_one_is_greedy()",
+          "source": "def test_top_k_one_is_greedy():\n    rng = np.random.default_rng(0)\n    z = np.array([0.1, 2.0, 1.9, 0.0])\n    assert all(sample_next(z, 1.0, 1, 1.0, rng) == 1 for _ in range(30))",
+          "startLine": 38
+        },
+        {
+          "decorators": [],
+          "defLine": 44,
+          "endLine": 47,
+          "id": "tests.test_generate.test_top_p_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_top_p_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L44-L47",
+          "signature": "def test_top_p_example()",
+          "source": "def test_top_p_example():\n    # cumulative sums (.50, .80, .95, 1): the token that crosses 0.9 is kept\n    z = np.log([0.50, 0.30, 0.15, 0.05])\n    assert np.allclose(probs_used(z, top_p=0.9), [0.526, 0.316, 0.158, 0], atol=1e-3)",
+          "startLine": 44
+        },
+        {
+          "decorators": [],
+          "defLine": 50,
+          "endLine": 54,
+          "id": "tests.test_generate.test_top_p_adapts_to_confidence",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_top_p_adapts_to_confidence",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L50-L54",
+          "signature": "def test_top_p_adapts_to_confidence()",
+          "source": "def test_top_p_adapts_to_confidence():\n    confident = np.log([0.95, 0.03, 0.01, 0.01])\n    unsure = np.log([0.30, 0.30, 0.20, 0.20])\n    assert (probs_used(confident, top_p=0.9) > 0).sum() == 1\n    assert (probs_used(unsure, top_p=0.9) > 0).sum() == 4",
+          "startLine": 50
+        },
+        {
+          "decorators": [],
+          "defLine": 57,
+          "endLine": 60,
+          "id": "tests.test_generate.tiny",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "tiny",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L57-L60",
+          "signature": "def tiny()",
+          "source": "def tiny():\n    cfg = ModelConfig(vocab_size=7, context_len=8, emb_dim=4,\n                      num_heads=2, ff_dim=8, num_layers=1)\n    return cfg, init_params(cfg, np.random.default_rng(0))",
+          "startLine": 57
+        },
+        {
+          "decorators": [],
+          "defLine": 63,
+          "endLine": 67,
+          "id": "tests.test_generate.test_generate_length_and_range",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_generate_length_and_range",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L63-L67",
+          "signature": "def test_generate_length_and_range()",
+          "source": "def test_generate_length_and_range():\n    cfg, params = tiny()\n    out = generate(params, cfg, [1, 2, 3], 10, 8, 0.8, 0, 0.9, np.random.default_rng(1))\n    assert len(out) == 13 and out[:3] == [1, 2, 3]\n    assert all(0 <= i < cfg.vocab_size for i in out)",
+          "startLine": 63
+        },
+        {
+          "decorators": [],
+          "defLine": 70,
+          "endLine": 75,
+          "id": "tests.test_generate.test_generate_window_keeps_long_sequences_legal",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_generate_window_keeps_long_sequences_legal",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L70-L75",
+          "signature": "def test_generate_window_keeps_long_sequences_legal()",
+          "source": "def test_generate_window_keeps_long_sequences_legal():\n    # 20 tokens exceed context_len = 8; the window cuts what the model sees\n    cfg, params = tiny()\n    out = generate(params, cfg, list(range(7)) * 3, 5, 8, 0.0, 0, 1.0,\n                   np.random.default_rng(0))\n    assert len(out) == 26",
+          "startLine": 70
+        },
+        {
+          "decorators": [],
+          "defLine": 78,
+          "endLine": 82,
+          "id": "tests.test_generate.test_greedy_generation_is_deterministic",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_greedy_generation_is_deterministic",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_generate.py#L78-L82",
+          "signature": "def test_greedy_generation_is_deterministic()",
+          "source": "def test_greedy_generation_is_deterministic():\n    cfg, params = tiny()\n    a = generate(params, cfg, [1, 2], 8, 8, 0.0, 0, 1.0, np.random.default_rng(0))\n    b = generate(params, cfg, [1, 2], 8, 8, 0.0, 0, 1.0, np.random.default_rng(99))\n    assert a == b",
+          "startLine": 78
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "generate",
+          "name": "generate"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "generate",
+          "name": "sample_next"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "init_params"
+        }
+      ],
+      "lineCount": 82,
+      "module": "tests.test_generate",
+      "path": "tests/test_generate.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 6,
+          "endLine": 13,
+          "id": "tests.test_gradcheck.tiny_setup",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "tiny_setup",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_gradcheck.py#L6-L13",
+          "signature": "def tiny_setup()",
+          "source": "def tiny_setup():\n    cfg = ModelConfig(vocab_size=7, context_len=8, emb_dim=4,\n                      num_heads=2, ff_dim=8, num_layers=2)\n    rng = np.random.default_rng(0)\n    params = init_params(cfg, rng)              # float64\n    ids = rng.integers(7, size=5)\n    targets = rng.integers(7, size=5)\n    return cfg, params, ids, targets, rng",
+          "startLine": 6
+        },
+        {
+          "decorators": [],
+          "defLine": 16,
+          "endLine": 19,
+          "id": "tests.test_gradcheck.test_numerical_grad_on_quadratic",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_numerical_grad_on_quadratic",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_gradcheck.py#L16-L19",
+          "signature": "def test_numerical_grad_on_quadratic()",
+          "source": "def test_numerical_grad_on_quadratic():\n    x = np.array([1., -2., 3.])\n    g = numerical_grad(lambda v: float((v ** 2).sum()), x)   # d/dx sum(x^2) = 2x\n    assert np.allclose(g, 2 * x, atol=1e-8)",
+          "startLine": 16
+        },
+        {
+          "decorators": [],
+          "defLine": 22,
+          "endLine": 30,
+          "id": "tests.test_gradcheck.test_every_tensor_passes",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_every_tensor_passes",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_gradcheck.py#L22-L30",
+          "signature": "def test_every_tensor_passes()",
+          "source": "def test_every_tensor_passes():\n    cfg, params, ids, targets, rng = tiny_setup()\n    loss_fn = lambda p: loss_and_grads(p, ids, targets, cfg)[0]\n    _, grads = loss_and_grads(params, ids, targets, cfg)\n    worst = check_params(loss_fn, params, grads, rng)\n    for name, err in worst.items():\n        if name.endswith(\".bk\"):\n            continue                       # true gradient is 0, checked below\n        assert err < 1e-4, (name, err)",
+          "startLine": 22
+        },
+        {
+          "decorators": [],
+          "defLine": 33,
+          "endLine": 39,
+          "id": "tests.test_gradcheck.test_key_bias_gradient_is_zero",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_key_bias_gradient_is_zero",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_gradcheck.py#L33-L39",
+          "signature": "def test_key_bias_gradient_is_zero()",
+          "source": "def test_key_bias_gradient_is_zero():\n    # adding the same vector to every key shifts each score row by a constant,\n    # softmax ignores constants, so dL/dbk must be 0\n    cfg, params, ids, targets, rng = tiny_setup()\n    _, grads = loss_and_grads(params, ids, targets, cfg)\n    for l in range(cfg.num_layers):\n        assert np.abs(grads[f\"b{l}.bk\"]).max() < 1e-12",
+          "startLine": 33
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 2,
+          "module": "gradcheck",
+          "name": "check_params"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 2,
+          "module": "gradcheck",
+          "name": "numerical_grad"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "transformer",
+          "name": "init_params"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "transformer",
+          "name": "loss_and_grads"
+        }
+      ],
+      "lineCount": 39,
+      "module": "tests.test_gradcheck",
+      "path": "tests/test_gradcheck.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 10,
+          "endLine": 19,
+          "id": "tests.test_ops.test_linear_worked_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_linear_worked_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L10-L19",
+          "signature": "def test_linear_worked_example()",
+          "source": "def test_linear_worked_example():\n    X = np.array([[1., 2.], [0., 1.]])\n    W = np.array([[1., 0., 2.], [-1., 1., 0.]])\n    b = np.array([0., 1., -1.])\n    dY = np.array([[1., 0., 1.], [0., 2., -1.]])\n    assert np.allclose(linear_forward(X, W, b), [[-1, 3, 1], [-1, 2, -1]])\n    dX, dW, db = linear_backward(X, W, dY)\n    assert np.allclose(dW, [[1, 0, 1], [2, 2, 1]])\n    assert np.allclose(db, [1, 2, 0])\n    assert np.allclose(dX, [[3, -1], [-2, 2]])",
+          "startLine": 10
+        },
+        {
+          "decorators": [],
+          "defLine": 22,
+          "endLine": 25,
+          "id": "tests.test_ops.test_relu",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_relu",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L22-L25",
+          "signature": "def test_relu()",
+          "source": "def test_relu():\n    Z = np.array([-1., 2., 0., 3.])\n    assert np.allclose(relu_forward(Z), [0, 2, 0, 3])\n    assert np.allclose(relu_backward(Z, np.ones(4)), [0, 1, 0, 1])",
+          "startLine": 22
+        },
+        {
+          "decorators": [],
+          "defLine": 28,
+          "endLine": 33,
+          "id": "tests.test_ops.test_softmax_values_and_stability",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_softmax_values_and_stability",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L28-L33",
+          "signature": "def test_softmax_values_and_stability()",
+          "source": "def test_softmax_values_and_stability():\n    p = softmax_forward(np.array([[2., 1., 0.]]))\n    assert np.allclose(p, [[0.6652, 0.2447, 0.0900]], atol=1e-3)\n    big = softmax_forward(np.array([[1000., 1001., 1002.]]))\n    assert not np.isnan(big).any()\n    assert np.allclose(big.sum(axis=-1), 1.0)",
+          "startLine": 28
+        },
+        {
+          "decorators": [],
+          "defLine": 36,
+          "endLine": 42,
+          "id": "tests.test_ops.test_softmax_backward_rows_sum_to_zero",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_softmax_backward_rows_sum_to_zero",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L36-L42",
+          "signature": "def test_softmax_backward_rows_sum_to_zero()",
+          "source": "def test_softmax_backward_rows_sum_to_zero():\n    z = np.array([[2., 1., 0.], [0., 3., 1.]])\n    p = softmax_forward(z)\n    dp = np.array([[1., 0., 0.], [0., 2., -1.]])\n    dz = softmax_backward(p, dp)\n    assert np.allclose(dz.sum(axis=-1), 0.0)\n    assert np.allclose(dz[0], [0.2227, -0.1628, -0.0599], atol=1e-3)",
+          "startLine": 36
+        },
+        {
+          "decorators": [],
+          "defLine": 45,
+          "endLine": 51,
+          "id": "tests.test_ops.test_cross_entropy_worked_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_cross_entropy_worked_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L45-L51",
+          "signature": "def test_cross_entropy_worked_example()",
+          "source": "def test_cross_entropy_worked_example():\n    logits = np.array([[2., 1., 0.]])\n    targets = np.array([0])\n    loss, probs = cross_entropy_forward(logits, targets)\n    assert np.isclose(loss, 0.4076, atol=1e-3)\n    assert np.allclose(cross_entropy_backward(probs, targets),\n                       [[-0.3348, 0.2447, 0.0900]], atol=1e-3)",
+          "startLine": 45
+        },
+        {
+          "decorators": [],
+          "defLine": 54,
+          "endLine": 60,
+          "id": "tests.test_ops.test_cross_entropy_is_mean_over_positions",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_cross_entropy_is_mean_over_positions",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L54-L60",
+          "signature": "def test_cross_entropy_is_mean_over_positions()",
+          "source": "def test_cross_entropy_is_mean_over_positions():\n    logits = np.zeros((4, 5))                      # uniform -> loss = ln 5\n    targets = np.array([0, 1, 2, 3])\n    loss, probs = cross_entropy_forward(logits, targets)\n    assert np.isclose(loss, np.log(5))\n    dZ = cross_entropy_backward(probs, targets)\n    assert np.isclose(dZ[0, 0], (0.2 - 1) / 4)     # the 1/T factor",
+          "startLine": 54
+        },
+        {
+          "decorators": [],
+          "defLine": 63,
+          "endLine": 66,
+          "id": "tests.test_ops.test_cross_entropy_extreme_logits_no_nan",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_cross_entropy_extreme_logits_no_nan",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L63-L66",
+          "signature": "def test_cross_entropy_extreme_logits_no_nan()",
+          "source": "def test_cross_entropy_extreme_logits_no_nan():\n    logits = np.array([[1000., 0., -1000.]])\n    loss, probs = cross_entropy_forward(logits, np.array([2]))\n    assert np.isfinite(loss)",
+          "startLine": 63
+        },
+        {
+          "decorators": [],
+          "defLine": 69,
+          "endLine": 77,
+          "id": "tests.test_ops.test_layer_norm_worked_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_layer_norm_worked_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L69-L77",
+          "signature": "def test_layer_norm_worked_example()",
+          "source": "def test_layer_norm_worked_example():\n    x = np.array([[1., 2., 3., 6.]])\n    gamma = np.array([1., 1., 2., 2.])\n    beta = np.array([0., 0., 0., 1.])\n    y, cache = layer_norm_forward(x, gamma, beta)\n    assert np.allclose(y, [[-1.069, -0.535, 0, 4.207]], atol=1e-3)\n    dx, dgamma, dbeta = layer_norm_backward(np.array([[1., 0., 0., 1.]]), cache, gamma)\n    assert np.allclose(dx, [[0.4391, -0.2482, -0.4009, 0.2100]], atol=1e-3)\n    assert np.isclose(dx.sum(), 0.0)",
+          "startLine": 69
+        },
+        {
+          "decorators": [],
+          "defLine": 80,
+          "endLine": 84,
+          "id": "tests.test_ops.test_xavier_bound",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_xavier_bound",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L80-L84",
+          "signature": "def test_xavier_bound()",
+          "source": "def test_xavier_bound():\n    rng = np.random.default_rng(0)\n    W = xavier_uniform(32, 32, rng)\n    assert W.shape == (32, 32)\n    assert np.abs(W).max() <= np.sqrt(6 / 64)",
+          "startLine": 80
+        },
+        {
+          "decorators": [],
+          "defLine": 87,
+          "endLine": 88,
+          "id": "tests.test_ops.test_perplexity_of_uniform_is_vocab_size",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_perplexity_of_uniform_is_vocab_size",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_ops.py#L87-L88",
+          "signature": "def test_perplexity_of_uniform_is_vocab_size()",
+          "source": "def test_perplexity_of_uniform_is_vocab_size():\n    assert np.isclose(perplexity(np.log(300)), 300)",
+          "startLine": 87
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "cross_entropy_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "cross_entropy_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "layer_norm_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "layer_norm_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "linear_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "linear_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "perplexity"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "relu_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "relu_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "softmax_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "softmax_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "xavier_uniform"
+        }
+      ],
+      "lineCount": 88,
+      "module": "tests.test_ops",
+      "path": "tests/test_ops.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 6,
+          "endLine": 13,
+          "id": "tests.test_optim.test_adam_two_step_hand_trace",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_adam_two_step_hand_trace",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_optim.py#L6-L13",
+          "signature": "def test_adam_two_step_hand_trace()",
+          "source": "def test_adam_two_step_hand_trace():\n    # theta0 = 1, lr = 0.1, g = 0.5 then 0.25\n    params = {\"w\": np.array([1.0])}\n    opt = Adam(params)\n    opt.step(params, {\"w\": np.array([0.5])}, lr=0.1)\n    assert np.isclose(params[\"w\"][0], 0.9000, atol=1e-4)\n    opt.step(params, {\"w\": np.array([0.25])}, lr=0.1)\n    assert np.isclose(params[\"w\"][0], 0.8068, atol=1e-4)",
+          "startLine": 6
+        },
+        {
+          "decorators": [],
+          "defLine": 16,
+          "endLine": 21,
+          "id": "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_adam_first_step_is_lr_times_sign_of_gradient",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_optim.py#L16-L21",
+          "signature": "def test_adam_first_step_is_lr_times_sign_of_gradient()",
+          "source": "def test_adam_first_step_is_lr_times_sign_of_gradient():\n    # bias correction makes mhat/sqrt(vhat) = g/|g| at t = 1, whatever the size of g\n    for g in (1e-4, 3.0, -250.0):\n        params = {\"w\": np.array([0.0])}\n        Adam(params).step(params, {\"w\": np.array([g])}, lr=0.01)\n        assert np.isclose(params[\"w\"][0], -0.01 * np.sign(g), atol=1e-6)",
+          "startLine": 16
+        },
+        {
+          "decorators": [],
+          "defLine": 24,
+          "endLine": 29,
+          "id": "tests.test_optim.test_weight_decay_only_touches_matrices",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_weight_decay_only_touches_matrices",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_optim.py#L24-L29",
+          "signature": "def test_weight_decay_only_touches_matrices()",
+          "source": "def test_weight_decay_only_touches_matrices():\n    params = {\"W\": np.ones((2, 2)), \"b\": np.ones(2)}\n    zeros = {k: np.zeros_like(v) for k, v in params.items()}\n    Adam(params, weight_decay=0.1).step(params, zeros, lr=0.5)\n    assert np.allclose(params[\"W\"], 1 - 0.5 * 0.1)        # shrunk\n    assert np.allclose(params[\"b\"], 1.0)                  # untouched",
+          "startLine": 24
+        },
+        {
+          "decorators": [],
+          "defLine": 32,
+          "endLine": 35,
+          "id": "tests.test_optim.test_lr_schedule_values",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_lr_schedule_values",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_optim.py#L32-L35",
+          "signature": "def test_lr_schedule_values()",
+          "source": "def test_lr_schedule_values():\n    # W = 10, Ttot = 100, lr_max = 1e-3, lr_min = 1e-4, step is 1-based\n    got = [lr_schedule(t, 10, 100, 1e-3, 1e-4) for t in (1, 5, 10, 55, 100)]\n    assert np.allclose(got, [1e-4, 5e-4, 1e-3, 5.5e-4, 1e-4])",
+          "startLine": 32
+        },
+        {
+          "decorators": [],
+          "defLine": 38,
+          "endLine": 43,
+          "id": "tests.test_optim.test_clip_rescales_all_tensors_together",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_clip_rescales_all_tensors_together",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_optim.py#L38-L43",
+          "signature": "def test_clip_rescales_all_tensors_together()",
+          "source": "def test_clip_rescales_all_tensors_together():\n    grads = {\"a\": np.array([3.0, 4.0]), \"b\": np.array([0.0])}\n    norm = clip_grad_norm(grads, 1.0)\n    assert np.isclose(norm, 5.0)                          # norm BEFORE clipping\n    assert np.allclose(grads[\"a\"], [0.6, 0.8])\n    assert np.isclose(np.sqrt(sum((g ** 2).sum() for g in grads.values())), 1.0)",
+          "startLine": 38
+        },
+        {
+          "decorators": [],
+          "defLine": 46,
+          "endLine": 49,
+          "id": "tests.test_optim.test_clip_leaves_small_gradients_alone",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_clip_leaves_small_gradients_alone",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_optim.py#L46-L49",
+          "signature": "def test_clip_leaves_small_gradients_alone()",
+          "source": "def test_clip_leaves_small_gradients_alone():\n    grads = {\"a\": np.array([0.3, 0.4])}\n    clip_grad_norm(grads, 1.0)\n    assert np.allclose(grads[\"a\"], [0.3, 0.4])",
+          "startLine": 46
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "optim",
+          "name": "Adam"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "optim",
+          "name": "clip_grad_norm"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "optim",
+          "name": "lr_schedule"
+        }
+      ],
+      "lineCount": 49,
+      "module": "tests.test_optim",
+      "path": "tests/test_optim.py"
+    },
+    {
+      "classes": [],
+      "constants": [
+        {
+          "endLine": 7,
+          "isLiteral": true,
+          "name": "CORPUS",
+          "source": "CORPUS = \"low low low lower newest newest\"",
+          "startLine": 7,
+          "value": "low low low lower newest newest"
+        }
+      ],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 10,
+          "endLine": 11,
+          "id": "tests.test_tokenizer.test_count_words_splits_words_spaces_punctuation",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_count_words_splits_words_spaces_punctuation",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L10-L11",
+          "signature": "def test_count_words_splits_words_spaces_punctuation()",
+          "source": "def test_count_words_splits_words_spaces_punctuation():\n    assert count_words(\"a a b!\") == {\"a\": 2, \" \": 2, \"b\": 1, \"!\": 1}",
+          "startLine": 10
+        },
+        {
+          "decorators": [],
+          "defLine": 14,
+          "endLine": 15,
+          "id": "tests.test_tokenizer.test_merge_tokens_simple",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_merge_tokens_simple",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L14-L15",
+          "signature": "def test_merge_tokens_simple()",
+          "source": "def test_merge_tokens_simple():\n    assert merge_tokens([\"a\", \"b\", \"a\", \"b\"], (\"a\", \"b\"), \"ab\") == [\"ab\", \"ab\"]",
+          "startLine": 14
+        },
+        {
+          "decorators": [],
+          "defLine": 18,
+          "endLine": 20,
+          "id": "tests.test_tokenizer.test_merge_tokens_overlap_is_left_to_right",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_merge_tokens_overlap_is_left_to_right",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L18-L20",
+          "signature": "def test_merge_tokens_overlap_is_left_to_right()",
+          "source": "def test_merge_tokens_overlap_is_left_to_right():\n    # a a a  ->  (aa) a, not a (aa)\n    assert merge_tokens([\"a\", \"a\", \"a\"], (\"a\", \"a\"), \"aa\") == [\"aa\", \"a\"]",
+          "startLine": 18
+        },
+        {
+          "decorators": [],
+          "defLine": 23,
+          "endLine": 26,
+          "id": "tests.test_tokenizer.test_first_three_merges_match_hand_trace",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_first_three_merges_match_hand_trace",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L23-L26",
+          "signature": "def test_first_three_merges_match_hand_trace()",
+          "source": "def test_first_three_merges_match_hand_trace():\n    merges = train_bpe_on_text(CORPUS, max_merges=3)\n    got = [(m[\"pair\"], m[\"frequency\"]) for m in merges]\n    assert got == [((\"l\", \"o\"), 4), ((\"lo\", \"w\"), 4), ((\"n\", \"e\"), 2)]",
+          "startLine": 23
+        },
+        {
+          "decorators": [
+            "@pytest.fixture"
+          ],
+          "defLine": 30,
+          "endLine": 31,
+          "id": "tests.test_tokenizer.tok",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "tok",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L29-L31",
+          "signature": "def tok()",
+          "source": "@pytest.fixture\ndef tok():\n    return build_tokenizer(CORPUS, max_merges=5)",
+          "startLine": 29
+        },
+        {
+          "decorators": [],
+          "defLine": 34,
+          "endLine": 35,
+          "id": "tests.test_tokenizer.test_unk_is_id_zero",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_unk_is_id_zero",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L34-L35",
+          "signature": "def test_unk_is_id_zero(tok)",
+          "source": "def test_unk_is_id_zero(tok):\n    assert tok.itos[0] == UNK",
+          "startLine": 34
+        },
+        {
+          "decorators": [],
+          "defLine": 38,
+          "endLine": 41,
+          "id": "tests.test_tokenizer.test_no_characters_dropped",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_no_characters_dropped",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L38-L41",
+          "signature": "def test_no_characters_dropped(tok)",
+          "source": "def test_no_characters_dropped(tok):\n    ids = tok.encode(\"lot\")          # 'lo' + 't'\n    assert len(ids) == 2\n    assert 0 not in ids",
+          "startLine": 38
+        },
+        {
+          "decorators": [],
+          "defLine": 44,
+          "endLine": 45,
+          "id": "tests.test_tokenizer.test_unseen_character_becomes_unk",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_unseen_character_becomes_unk",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L44-L45",
+          "signature": "def test_unseen_character_becomes_unk(tok)",
+          "source": "def test_unseen_character_becomes_unk(tok):\n    assert tok.encode(\"low!\")[-1] == 0",
+          "startLine": 44
+        },
+        {
+          "decorators": [
+            "@pytest.mark.parametrize(\"s\", [\"low newest\", \"lower lower\", \"lot\", \" low \"])"
+          ],
+          "defLine": 49,
+          "endLine": 50,
+          "id": "tests.test_tokenizer.test_round_trip",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_round_trip",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_tokenizer.py#L48-L50",
+          "signature": "def test_round_trip(tok, s)",
+          "source": "@pytest.mark.parametrize(\"s\", [\"low newest\", \"lower lower\", \"lot\", \"  low  \"])\ndef test_round_trip(tok, s):\n    assert tok.decode(tok.encode(s)) == s",
+          "startLine": 48
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 1,
+          "module": "pytest",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "tokenizer",
+          "name": "UNK"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "tokenizer",
+          "name": "build_tokenizer"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "tokenizer",
+          "name": "count_words"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "tokenizer",
+          "name": "merge_tokens"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "tokenizer",
+          "name": "train_bpe_on_text"
+        }
+      ],
+      "lineCount": 50,
+      "module": "tests.test_tokenizer",
+      "path": "tests/test_tokenizer.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 9,
+          "endLine": 12,
+          "id": "tests.test_transformer.tiny_cfg",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "tiny_cfg",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L9-L12",
+          "signature": "def tiny_cfg(**kw)",
+          "source": "def tiny_cfg(**kw):\n    base = dict(vocab_size=7, context_len=8, emb_dim=4, num_heads=2, ff_dim=8, num_layers=2)\n    base.update(kw)\n    return ModelConfig(**base)",
+          "startLine": 9
+        },
+        {
+          "decorators": [],
+          "defLine": 15,
+          "endLine": 19,
+          "id": "tests.test_transformer.test_param_count_matches_formula",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_param_count_matches_formula",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L15-L19",
+          "signature": "def test_param_count_matches_formula()",
+          "source": "def test_param_count_matches_formula():\n    # #params = (2d+1)V + (Tmax+2)d + L(4d^2 + 2dF + F + 9d); d=32, F=128, L=2, Tmax=32, V=300\n    cfg = ModelConfig(300, 32, 32, 2, 128, 2)\n    params = init_params(cfg, np.random.default_rng(0))\n    assert count_params(params) == 45_996",
+          "startLine": 15
+        },
+        {
+          "decorators": [],
+          "defLine": 22,
+          "endLine": 28,
+          "id": "tests.test_transformer.test_initial_loss_is_close_to_ln_vocab",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_initial_loss_is_close_to_ln_vocab",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L22-L28",
+          "signature": "def test_initial_loss_is_close_to_ln_vocab()",
+          "source": "def test_initial_loss_is_close_to_ln_vocab():\n    cfg = ModelConfig(300, 32, 32, 2, 128, 2)\n    rng = np.random.default_rng(0)\n    params = init_params(cfg, rng)\n    ids, targets = rng.integers(300, size=16), rng.integers(300, size=16)\n    loss, _ = loss_and_grads(params, ids, targets, cfg)\n    assert abs(loss - np.log(300)) < 0.5",
+          "startLine": 22
+        },
+        {
+          "decorators": [],
+          "defLine": 31,
+          "endLine": 35,
+          "id": "tests.test_transformer.test_embedding_worked_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_embedding_worked_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L31-L35",
+          "signature": "def test_embedding_worked_example()",
+          "source": "def test_embedding_worked_example():\n    params = {\"tok_emb\": np.array([[.1, .2], [.3, -.1], [.5, .4], [-.2, .6]]),\n              \"pos_emb\": np.array([[0, .1], [.1, 0], [.2, .1]])}\n    X0 = embed_forward(params, np.array([2, 0, 2]))\n    assert np.allclose(X0, [[.5, .5], [.2, .2], [.7, .5]])",
+          "startLine": 31
+        },
+        {
+          "decorators": [],
+          "defLine": 38,
+          "endLine": 44,
+          "id": "tests.test_transformer.test_embedding_backward_sums_repeated_ids",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_embedding_backward_sums_repeated_ids",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L38-L44",
+          "signature": "def test_embedding_backward_sums_repeated_ids()",
+          "source": "def test_embedding_backward_sums_repeated_ids():\n    grads = {\"tok_emb\": np.zeros((4, 2)), \"pos_emb\": np.zeros((3, 2))}\n    dX0 = np.array([[1., 0.], [0., 1.], [2., 2.]])\n    embed_backward(dX0, np.array([2, 0, 2]), grads)\n    assert np.allclose(grads[\"tok_emb\"][2], [3, 2])       # rows 0 and 2 both landed here\n    assert np.allclose(grads[\"tok_emb\"][0], [0, 1])\n    assert np.allclose(grads[\"pos_emb\"], dX0)",
+          "startLine": 38
+        },
+        {
+          "decorators": [],
+          "defLine": 47,
+          "endLine": 56,
+          "id": "tests.test_transformer.test_ffn_worked_example",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_ffn_worked_example",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L47-L56",
+          "signature": "def test_ffn_worked_example()",
+          "source": "def test_ffn_worked_example():\n    p = \"b0.\"\n    params = {p + \"ff1_w\": np.array([[1., 0., -1.], [0., 1., 1.]]),\n              p + \"ff1_b\": np.array([0., .5, 1.]),\n              p + \"ff2_w\": np.array([[1., 2.], [0., 1.], [1., -1.]]),\n              p + \"ff2_b\": np.zeros(2)}\n    y, cache = ffn_forward(np.array([[1., -1.]]), params, p)\n    assert np.allclose(cache[\"Z\"], [[1, -.5, -1]])\n    assert np.allclose(cache[\"A\"], [[1, 0, 0]])           # ReLU zeroes the negatives\n    assert np.allclose(y, [[1, 2]])",
+          "startLine": 47
+        },
+        {
+          "decorators": [],
+          "defLine": 59,
+          "endLine": 63,
+          "id": "tests.test_transformer.test_split_merge_heads_round_trip",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_split_merge_heads_round_trip",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L59-L63",
+          "signature": "def test_split_merge_heads_round_trip()",
+          "source": "def test_split_merge_heads_round_trip():\n    M = np.arange(24, dtype=float).reshape(3, 8)\n    Mh = split_heads(M, 2)\n    assert Mh.shape == (2, 3, 4)\n    assert np.array_equal(merge_heads(Mh), M)",
+          "startLine": 59
+        },
+        {
+          "decorators": [],
+          "defLine": 66,
+          "endLine": 74,
+          "id": "tests.test_transformer.test_attention_weights_are_causal_and_normalised",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_attention_weights_are_causal_and_normalised",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L66-L74",
+          "signature": "def test_attention_weights_are_causal_and_normalised()",
+          "source": "def test_attention_weights_are_causal_and_normalised():\n    cfg = tiny_cfg(num_layers=1)\n    params = init_params(cfg, np.random.default_rng(0))\n    Xn = np.random.default_rng(1).normal(size=(5, 4))\n    _, c = attention_forward(Xn, params, \"b0.\", cfg)\n    A = c[\"A\"]                                            # (H, T, T)\n    assert np.allclose(np.triu(A[0], 1), 0.0)             # nothing flows from the future\n    assert np.allclose(A.sum(axis=-1), 1.0)\n    assert np.allclose(A[:, 0, 0], 1.0)                   # first token only sees itself",
+          "startLine": 66
+        },
+        {
+          "decorators": [],
+          "defLine": 77,
+          "endLine": 86,
+          "id": "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_future_tokens_do_not_change_earlier_logits",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L77-L86",
+          "signature": "def test_future_tokens_do_not_change_earlier_logits()",
+          "source": "def test_future_tokens_do_not_change_earlier_logits():\n    cfg = tiny_cfg()\n    params = init_params(cfg, np.random.default_rng(0))\n    a = np.array([1, 2, 3, 4, 5])\n    b = a.copy()\n    b[4] = 0                                              # change only the last token\n    la, _ = forward(params, a, cfg)\n    lb, _ = forward(params, b, cfg)\n    assert np.allclose(la[:4], lb[:4])\n    assert not np.allclose(la[4], lb[4])",
+          "startLine": 77
+        },
+        {
+          "decorators": [],
+          "defLine": 89,
+          "endLine": 95,
+          "id": "tests.test_transformer.test_grads_have_the_shape_of_params",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_grads_have_the_shape_of_params",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L89-L95",
+          "signature": "def test_grads_have_the_shape_of_params()",
+          "source": "def test_grads_have_the_shape_of_params():\n    cfg = tiny_cfg()\n    rng = np.random.default_rng(0)\n    params = init_params(cfg, rng)\n    _, grads = loss_and_grads(params, rng.integers(7, size=5), rng.integers(7, size=5), cfg)\n    assert grads.keys() == params.keys()\n    assert all(grads[k].shape == params[k].shape for k in params)",
+          "startLine": 89
+        },
+        {
+          "decorators": [],
+          "defLine": 98,
+          "endLine": 110,
+          "id": "tests.test_transformer.test_overfit_one_window",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "test_overfit_one_window",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tests/test_transformer.py#L98-L110",
+          "signature": "def test_overfit_one_window()",
+          "source": "def test_overfit_one_window():\n    # a correct forward + backward + optimiser must be able to memorise 8 tokens\n    cfg = tiny_cfg(emb_dim=16, ff_dim=32)\n    rng = np.random.default_rng(0)\n    params = init_params(cfg, rng)\n    ids, targets = rng.integers(7, size=8), rng.integers(7, size=8)\n    opt = Adam(params)\n    for _ in range(200):\n        loss, grads = loss_and_grads(params, ids, targets, cfg)\n        opt.step(params, grads, lr=1e-2)\n    # (no \"starts near ln V\" check here: with V = 7 the initial logit variance\n    #  ~ 2d/(d+V) is too large for that rule; the V = 300 test covers it)\n    assert loss < 0.05",
+          "startLine": 98
+        }
+      ],
+      "imports": [
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 1,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "optim",
+          "name": "Adam"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "attention_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "count_params"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "embed_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "embed_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "ffn_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "init_params"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "loss_and_grads"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "merge_heads"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "transformer",
+          "name": "split_heads"
+        }
+      ],
+      "lineCount": 110,
+      "module": "tests.test_transformer",
+      "path": "tests/test_transformer.py"
+    },
+    {
+      "classes": [
+        {
+          "bases": [],
+          "decorators": [],
+          "defLine": 79,
+          "endLine": 96,
+          "fields": [],
+          "id": "tokenizer.Tokenizer",
+          "isDataclass": false,
+          "kind": "class",
+          "leadingComments": [],
+          "methods": [
+            {
+              "decorators": [],
+              "defLine": 80,
+              "endLine": 84,
+              "id": "tokenizer.Tokenizer.__init__",
+              "kind": "method",
+              "leadingComments": [],
+              "name": "__init__",
+              "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L80-L84",
+              "signature": "def __init__(self, merges, stoi, itos)",
+              "source": "    def __init__(self, merges, stoi, itos):\n        self.merges = merges\n        self.stoi = stoi\n        self.itos = itos\n        self.vocab_size = len(itos)",
+              "startLine": 80
+            },
+            {
+              "decorators": [],
+              "defLine": 86,
+              "endLine": 90,
+              "id": "tokenizer.Tokenizer.encode",
+              "kind": "method",
+              "leadingComments": [],
+              "name": "encode",
+              "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L86-L90",
+              "signature": "def encode(self, text)",
+              "source": "    def encode(self, text):\n        ids = []\n        for token in apply_merges(text, self.merges):\n            ids.append(self.stoi.get(token, self.stoi[UNK]))\n        return ids",
+              "startLine": 86
+            },
+            {
+              "decorators": [],
+              "defLine": 92,
+              "endLine": 96,
+              "id": "tokenizer.Tokenizer.decode",
+              "kind": "method",
+              "leadingComments": [],
+              "name": "decode",
+              "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L92-L96",
+              "signature": "def decode(self, ids)",
+              "source": "    def decode(self, ids):\n        tokens = []\n        for i in ids:\n            tokens.append(self.itos[i])\n        return \"\".join(tokens)",
+              "startLine": 92
+            }
+          ],
+          "name": "Tokenizer",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L79-L96",
+          "signature": "class Tokenizer",
+          "source": "class Tokenizer:\n    def __init__(self, merges, stoi, itos):\n        self.merges = merges\n        self.stoi = stoi\n        self.itos = itos\n        self.vocab_size = len(itos)\n\n    def encode(self, text):\n        ids = []\n        for token in apply_merges(text, self.merges):\n            ids.append(self.stoi.get(token, self.stoi[UNK]))\n        return ids\n\n    def decode(self, ids):\n        tokens = []\n        for i in ids:\n            tokens.append(self.itos[i])\n        return \"\".join(tokens)",
+          "startLine": 79
+        }
+      ],
+      "constants": [
+        {
+          "endLine": 3,
+          "isLiteral": true,
+          "name": "UNK",
+          "source": "UNK = \"<unk>\"",
+          "startLine": 3,
+          "value": "<unk>"
+        },
+        {
+          "endLine": 4,
+          "isLiteral": false,
+          "name": "PRE_TOKEN_RE",
+          "source": "PRE_TOKEN_RE = re.compile(r\"\\w+|\\s|[^\\w\\s]\")",
+          "startLine": 4,
+          "value": null
+        }
+      ],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 6,
+          "endLine": 10,
+          "id": "tokenizer.count_words",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "count_words",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L6-L10",
+          "signature": "def count_words(text)",
+          "source": "def count_words(text):\n    counts = {}\n    for word in PRE_TOKEN_RE.findall(text):\n        counts[word] = counts.get(word, 0) + 1\n    return counts",
+          "startLine": 6
+        },
+        {
+          "decorators": [],
+          "defLine": 12,
+          "endLine": 22,
+          "id": "tokenizer.merge_tokens",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "merge_tokens",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L12-L22",
+          "signature": "def merge_tokens(tokens, pair, merged)",
+          "source": "def merge_tokens(tokens, pair, merged):\n    result = []\n    i = 0\n    while i < len(tokens):\n        if i < len(tokens) - 1 and tokens[i] == pair[0] and tokens[i + 1] == pair[1]:\n            result.append(merged)\n            i += 2\n        else:\n            result.append(tokens[i])\n            i += 1\n    return result",
+          "startLine": 12
+        },
+        {
+          "decorators": [],
+          "defLine": 24,
+          "endLine": 61,
+          "id": "tokenizer.train_bpe",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "train_bpe",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L24-L61",
+          "signature": "def train_bpe(word_freqs, max_merges=1000)",
+          "source": "def train_bpe(word_freqs, max_merges=1000):\n    word_splits = {}\n    for word in word_freqs:\n        word_splits[word] = list(word)\n\n    merges = []\n\n    for step in range(max_merges):\n        pair_freq = {}\n        for word in word_splits:\n            tokens = word_splits[word]\n            weight = word_freqs[word]\n            for i in range(len(tokens) - 1):\n                key = (tokens[i], tokens[i + 1])\n                pair_freq[key] = pair_freq.get(key, 0) + weight\n\n        if len(pair_freq) == 0:\n            break\n\n        best_pair = None\n        best_count = 0\n        for pair in pair_freq:\n            if pair_freq[pair] > best_count:\n                best_count = pair_freq[pair]\n                best_pair = pair\n\n        if best_pair is None:\n            break\n\n        a, b = best_pair\n        merged = a + b\n\n        for word in word_splits:\n            word_splits[word] = merge_tokens(word_splits[word], best_pair, merged)\n\n        merges.append({\"pair\": best_pair, \"merged\": merged, \"frequency\": best_count})\n\n    return merges",
+          "startLine": 24
+        },
+        {
+          "decorators": [],
+          "defLine": 63,
+          "endLine": 73,
+          "id": "tokenizer.apply_merges",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "apply_merges",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L63-L73",
+          "signature": "def apply_merges(text, merges)",
+          "source": "def apply_merges(text, merges):\n    result = []\n\n    for pre_token in PRE_TOKEN_RE.findall(text):\n        tokens = list(pre_token)\n\n        for m in merges:\n            tokens = merge_tokens(tokens, m[\"pair\"], m[\"merged\"])\n        result.extend(tokens)\n\n    return result",
+          "startLine": 63
+        },
+        {
+          "decorators": [],
+          "defLine": 76,
+          "endLine": 77,
+          "id": "tokenizer.train_bpe_on_text",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "train_bpe_on_text",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L76-L77",
+          "signature": "def train_bpe_on_text(text, max_merges=1000)",
+          "source": "def train_bpe_on_text(text, max_merges=1000):\n    return train_bpe(count_words(text), max_merges)",
+          "startLine": 76
+        },
+        {
+          "decorators": [],
+          "defLine": 99,
+          "endLine": 119,
+          "id": "tokenizer.build_tokenizer",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "build_tokenizer",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/tokenizer.py#L99-L119",
+          "signature": "def build_tokenizer(text, max_merges=1000)",
+          "source": "def build_tokenizer(text, max_merges=1000):\n    merges = train_bpe_on_text(text, max_merges)\n\n    itos = [UNK]\n    seen = {UNK}\n\n    for ch in text:\n        if ch not in seen:\n            seen.add(ch)\n            itos.append(ch)\n\n    for m in merges:\n        if m[\"merged\"] not in seen:\n            seen.add(m[\"merged\"])\n            itos.append(m[\"merged\"])\n    \n    stoi = {}\n    for i in range(len(itos)):\n        stoi[itos[i]] = i\n\n    return Tokenizer(merges, stoi, itos)",
+          "startLine": 99
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 1,
+          "module": "re",
+          "name": null
+        }
+      ],
+      "lineCount": 119,
+      "module": "tokenizer",
+      "path": "tokenizer.py"
+    },
+    {
+      "classes": [],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 12,
+          "endLine": 24,
+          "id": "train.batch_loss_and_grads",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "batch_loss_and_grads",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/train.py#L12-L24",
+          "signature": "def batch_loss_and_grads(params, xb, yb, cfg: ModelConfig)",
+          "source": "def batch_loss_and_grads(params, xb, yb, cfg: ModelConfig):\n    B = len(xb)\n    grads = {k: np.zeros_like(v) for k, v in params.items()}\n    total_loss = 0.0\n\n    for x, y in zip(xb, yb):\n        loss, g = loss_and_grads(params, x, y, cfg)\n        total_loss += loss / B\n\n        for k in grads:\n            grads[k] += g[k] / B\n\n    return total_loss, grads",
+          "startLine": 12
+        },
+        {
+          "decorators": [],
+          "defLine": 26,
+          "endLine": 34,
+          "id": "train.validation_loss",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "validation_loss",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/train.py#L26-L34",
+          "signature": "def validation_loss(params, cfg, inputs, targets)",
+          "source": "def validation_loss(params, cfg, inputs, targets):\n    losses = []\n\n    for x, y in zip(inputs.to_numpy(), targets.to_numpy()):\n        logits, _ = forward(params, x, cfg)\n        loss, _ = cross_entropy_forward(logits, y)\n        losses.append(loss)\n\n    return float(np.mean(losses))",
+          "startLine": 26
+        },
+        {
+          "decorators": [],
+          "defLine": 36,
+          "endLine": 81,
+          "id": "train.main",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "main",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/train.py#L36-L81",
+          "signature": "def main(prefix=\"checkpoints/model\")",
+          "source": "def main(prefix=\"checkpoints/model\"):\n    rng = np.random.default_rng(config.seed)\n\n    # 1. text -> ids -> train/val windows (split BEFORE windowing)\n    text = load_corpus(config.corpus_path, config.corpus_column, config.max_rows)\n    tok = build_tokenizer(text, config.num_merges)\n    ids = encode_corpus(text, tok)\n    train_ids, val_ids = split_ids(ids, config.val_fraction)\n    tr_x, tr_y = make_windows(train_ids, config.seq_len, config.stride)\n    va_x, va_y = make_windows(val_ids, config.seq_len, config.stride)\n\n    # 2. model + optimiser\n    cfg = ModelConfig(tok.vocab_size, config.context_len, config.emb_dim,\n                      config.num_heads, config.ff_dim, config.num_layers)\n    params = init_params(cfg, rng)\n    opt = Adam(params, config.beta1, config.beta2, config.adam_eps, config.weight_decay)\n    print(f\"V={cfg.vocab_size}  ln V={math.log(cfg.vocab_size):.3f}\")\n\n    steps_per_epoch = math.ceil(len(tr_x) / config.batch_size)\n    total_steps = config.epochs * steps_per_epoch\n\n    # 3. the loop: gradient -> clip -> learning rate -> Adam\n    step = 0\n    for epoch in range(config.epochs):\n        for xb, yb in iterate_batches(tr_x, tr_y, config.batch_size, rng):\n            loss, grads = batch_loss_and_grads(params, xb, yb, cfg)\n            norm = clip_grad_norm(grads, config.grad_clip)\n            step += 1\n            lr = lr_schedule(step, config.warmup_steps, total_steps,\n                             config.lr_max, config.lr_min)\n            opt.step(params, grads, lr)\n            if step == 1 or step % 50 == 0:\n                print(f\"step {step:5d}  loss {loss:.3f}  |g| {norm:.2f}  lr {lr:.5f}\")\n\n        v = validation_loss(params, cfg, va_x, va_y)\n        print(f\"epoch {epoch + 1}: val loss {v:.3f}  ppl {perplexity(v):.1f}\")\n        seed_ids = [int(i) for i in va_x.iloc[0][:3]]\n        out = generate(params, cfg, seed_ids, 30, config.seq_len,\n                       config.temperature, config.top_k, config.top_p, rng)\n        print(\"  sample:\", repr(tok.decode(out)))\n\n    # 4. keep the trained model so talk.py can load it later\n    save_checkpoint(prefix, params, cfg, tok)\n    print(f\"saved checkpoint to {prefix}.*\")\n\n    return params, cfg, tok",
+          "startLine": 36
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 1,
+          "module": "math",
+          "name": null
+        },
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 2,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "config",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "data",
+          "name": "encode_corpus"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "data",
+          "name": "iterate_batches"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "data",
+          "name": "load_corpus"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "data",
+          "name": "make_windows"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 4,
+          "module": "data",
+          "name": "split_ids"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 5,
+          "module": "checkpoint",
+          "name": "save_checkpoint"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 6,
+          "module": "generate",
+          "name": "generate"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 7,
+          "module": "ops",
+          "name": "cross_entropy_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 7,
+          "module": "ops",
+          "name": "perplexity"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 8,
+          "module": "optim",
+          "name": "Adam"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 8,
+          "module": "optim",
+          "name": "clip_grad_norm"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 8,
+          "module": "optim",
+          "name": "lr_schedule"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 9,
+          "module": "tokenizer",
+          "name": "build_tokenizer"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 10,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 10,
+          "module": "transformer",
+          "name": "forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 10,
+          "module": "transformer",
+          "name": "init_params"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 10,
+          "module": "transformer",
+          "name": "loss_and_grads"
+        }
+      ],
+      "lineCount": 85,
+      "module": "train",
+      "path": "train.py"
+    },
+    {
+      "classes": [
+        {
+          "bases": [],
+          "decorators": [
+            "@dataclass(frozen=True)"
+          ],
+          "defLine": 8,
+          "endLine": 15,
+          "fields": [
+            {
+              "annotation": "int",
+              "default": null,
+              "line": 9,
+              "name": "vocab_size"
+            },
+            {
+              "annotation": "int",
+              "default": null,
+              "line": 10,
+              "name": "context_len"
+            },
+            {
+              "annotation": "int",
+              "default": null,
+              "line": 11,
+              "name": "emb_dim"
+            },
+            {
+              "annotation": "int",
+              "default": null,
+              "line": 12,
+              "name": "num_heads"
+            },
+            {
+              "annotation": "int",
+              "default": null,
+              "line": 13,
+              "name": "ff_dim"
+            },
+            {
+              "annotation": "int",
+              "default": null,
+              "line": 14,
+              "name": "num_layers"
+            },
+            {
+              "annotation": "float",
+              "default": "1e-5",
+              "line": 15,
+              "name": "ln_eps"
+            }
+          ],
+          "id": "transformer.ModelConfig",
+          "isDataclass": true,
+          "kind": "class",
+          "leadingComments": [],
+          "methods": [],
+          "name": "ModelConfig",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L7-L15",
+          "signature": "class ModelConfig",
+          "source": "@dataclass(frozen=True)\nclass ModelConfig:\n    vocab_size: int\n    context_len: int\n    emb_dim: int\n    num_heads: int\n    ff_dim: int\n    num_layers: int\n    ln_eps: float = 1e-5",
+          "startLine": 7
+        }
+      ],
+      "constants": [],
+      "docstring": null,
+      "functions": [
+        {
+          "decorators": [],
+          "defLine": 17,
+          "endLine": 42,
+          "id": "transformer.init_params",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "init_params",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L17-L42",
+          "signature": "def init_params(cfg: ModelConfig, rng)",
+          "source": "def init_params(cfg: ModelConfig, rng):\n    d, F, V = cfg.emb_dim, cfg.ff_dim, cfg.vocab_size\n\n    p = {\n        \"tok_emb\": xavier_uniform(V, d, rng), # lookup table with one row per vocabulary token\n        \"pos_emb\": xavier_uniform(cfg.context_len, d, rng) # second table with one row per position, weighted average of values\n        # input to first block is tok_emb + pos_emb\n        # this makes cat at first position and fifth position different in a sentence\n    }\n\n    for l in range(cfg.num_layers):\n        b = f\"b{l}.\" # key\n        p[b + \"ln1_g\"], p[b + \"ln1_b\"] = np.ones(d), np.zeros(d) # layer norm\n\n        for n in \"qkvo\":\n            p[b + \"w\" + n] = xavier_uniform(d, d, rng)\n            p[b + \"b\" + n] = np.zeros(d)\n\n        p[b + \"ln2_g\"], p[b + \"ln2_b\"] = np.ones(d), np.zeros(d)\n        p[b + \"ff1_w\"], p[b + \"ff1_b\"] = xavier_uniform(d, F, rng), np.zeros(F)\n        p[b + \"ff2_w\"], p[b + \"ff2_b\"] = xavier_uniform(F, d, rng), np.zeros(d)\n\n    p[\"lnf_g\"], p[\"lnf_b\"] = np.ones(d), np.zeros(d)\n    p[\"head_w\"], p[\"head_b\"] = xavier_uniform(d, V, rng), np.zeros(V)\n\n    return p",
+          "startLine": 17
+        },
+        {
+          "decorators": [],
+          "defLine": 44,
+          "endLine": 45,
+          "id": "transformer.count_params",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "count_params",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L44-L45",
+          "signature": "def count_params(params)",
+          "source": "def count_params(params):\n    return int(sum(v.size for v in params.values()))",
+          "startLine": 44
+        },
+        {
+          "decorators": [],
+          "defLine": 52,
+          "endLine": 53,
+          "id": "transformer.embed_forward",
+          "kind": "function",
+          "leadingComments": [
+            "X0[t] = E[i_t] + P[t]",
+            "pos_emb has one row for every position the model could ever see (context_len)",
+            "training window has 16 tokens, suppose 3 tokens are given for generation",
+            "tok_emb[ids]  ->  (T, d)        e.g. (3, 32)",
+            "pos_emb       ->  (Tmax, d)     (32, 32)    # shapes don't match"
+          ],
+          "name": "embed_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L52-L53",
+          "signature": "def embed_forward(params, ids)",
+          "source": "def embed_forward(params, ids):\n    return params[\"tok_emb\"][ids] + params[\"pos_emb\"][: len(ids)]",
+          "startLine": 52
+        },
+        {
+          "decorators": [],
+          "defLine": 55,
+          "endLine": 57,
+          "id": "transformer.embed_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "embed_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L55-L57",
+          "signature": "def embed_backward(dX0, ids, grads)",
+          "source": "def embed_backward(dX0, ids, grads):\n    np.add.at(grads[\"tok_emb\"], ids, dX0) # grads[\"tok_emb\"][ids[t]] += dX0[t]\n    grads[\"pos_emb\"][: len(ids)] += dX0",
+          "startLine": 55
+        },
+        {
+          "decorators": [],
+          "defLine": 60,
+          "endLine": 62,
+          "id": "transformer.split_heads",
+          "kind": "function",
+          "leadingComments": [
+            "(T,d)->(H,T,dh)"
+          ],
+          "name": "split_heads",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L60-L62",
+          "signature": "def split_heads(M, H)",
+          "source": "def split_heads(M, H):\n    T, d = M.shape\n    return M.reshape(T, H, d // H).transpose(1, 0, 2)",
+          "startLine": 60
+        },
+        {
+          "decorators": [],
+          "defLine": 65,
+          "endLine": 67,
+          "id": "transformer.merge_heads",
+          "kind": "function",
+          "leadingComments": [
+            "(H,T,dh)->(T,d)"
+          ],
+          "name": "merge_heads",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L65-L67",
+          "signature": "def merge_heads(Mh)",
+          "source": "def merge_heads(Mh):\n    H, T, dh = Mh.shape\n    return Mh.transpose(1, 0, 2).reshape(T, H * dh)",
+          "startLine": 65
+        },
+        {
+          "decorators": [],
+          "defLine": 70,
+          "endLine": 86,
+          "id": "transformer.attention_forward",
+          "kind": "function",
+          "leadingComments": [
+            "takes one sequence of normalized token vectors and returns a new vector built from itself and earlier positions"
+          ],
+          "name": "attention_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L70-L86",
+          "signature": "def attention_forward(Xn, params, p, cfg: ModelConfig)",
+          "source": "def attention_forward(Xn, params, p, cfg: ModelConfig):\n    T, d = Xn.shape\n    H = cfg.num_heads\n    dh = d // H # width of one head\n\n    Q = Xn @ params[p+\"wq\"] + params[p+\"bq\"]    # (T,d), QUERY\n    K = Xn @ params[p+\"wk\"] + params[p+\"bk\"]    # KEY\n    V = Xn @ params[p+\"wv\"] + params[p+\"bv\"]    # VALUE\n\n    Qh, Kh, Vh = split_heads(Q, H), split_heads(K, H), split_heads(V, H)\n\n    S = (Qh @ Kh.transpose(0, 2, 1)) / np.sqrt(dh)\n    S = np.where(np.triu(np.ones((T, T), dtype=bool), 1), -np.inf, S)\n    A = softmax_forward(S)\n    O = merge_heads(A @ Vh)\n    out = O @ params[p + \"wo\"] + params[p + \"bo\"]\n    return out, dict(Xn=Xn, Qh=Qh, Kh=Kh, Vh=Vh, A=A, O=O)",
+          "startLine": 70
+        },
+        {
+          "decorators": [],
+          "defLine": 92,
+          "endLine": 109,
+          "id": "transformer.attention_backward",
+          "kind": "function",
+          "leadingComments": [
+            "receives the gradient on attention output and returns gradient on its input",
+            "given   dOut = ∂L/∂out         (T,d)   what arrives from the residual branch",
+            "fills   grads[p+\"wo\",\"bo\",\"wq\",\"bq\",\"wk\",\"bk\",\"wv\",\"bv\"]",
+            "returns dXn  = ∂L/∂Xn          (T,d)   goes on to layer-norm 1's backward"
+          ],
+          "name": "attention_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L92-L109",
+          "signature": "def attention_backward(dOut, c, params, p, cfg: ModelConfig, grads)",
+          "source": "def attention_backward(dOut, c, params, p, cfg: ModelConfig, grads):\n    H = cfg.num_heads\n    dh = cfg.emb_dim // H\n    grads[p + \"wo\"] += c[\"O\"].T @ dOut\n    grads[p + \"bo\"] += dOut.sum(axis=0)\n    dOh = split_heads(dOut @ params[p + \"wo\"].T, H)\n    dVh = c[\"A\"].transpose(0, 2, 1) @ dOh \n    dA = dOh @ c[\"Vh\"].transpose(0, 2, 1)\n    dS = softmax_backward(c[\"A\"], dA)\n    dQh = dS @ c[\"Kh\"] / np.sqrt(dh)\n    dKh = dS.transpose(0, 2, 1) @ c[\"Qh\"] / np.sqrt(dh)\n    dQ, dK, dV = merge_heads(dQh), merge_heads(dKh), merge_heads(dVh)\n    dXn = np.zeros_like(c[\"Xn\"])\n    for n, dM in ((\"q\", dQ), (\"k\", dK), (\"v\", dV)):\n        grads[p + \"w\" + n] += c[\"Xn\"].T @ dM\n        grads[p + \"b\" + n] += dM.sum(axis=0)\n        dXn += dM @ params[p + \"w\" + n].T\n    return dXn",
+          "startLine": 92
+        },
+        {
+          "decorators": [],
+          "defLine": 112,
+          "endLine": 116,
+          "id": "transformer.ffn_forward",
+          "kind": "function",
+          "leadingComments": [
+            "attention moves information between positions"
+          ],
+          "name": "ffn_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L112-L116",
+          "signature": "def ffn_forward(Xn, params, p)",
+          "source": "def ffn_forward(Xn, params, p):\n    Z = Xn @ params[p + \"ff1_w\"] + params[p + \"ff1_b\"]\n    A = relu_forward(Z)\n\n    return A @ params[p + \"ff2_w\"] + params[p + \"ff2_b\"], dict(Xn=Xn, Z=Z, A=A)",
+          "startLine": 112
+        },
+        {
+          "decorators": [],
+          "defLine": 118,
+          "endLine": 128,
+          "id": "transformer.ffn_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "ffn_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L118-L128",
+          "signature": "def ffn_backward(dOut, c, params, p, grads)",
+          "source": "def ffn_backward(dOut, c, params, p, grads):\n    dA, dW2, db2 = linear_backward(c[\"A\"], params[p + \"ff2_w\"], dOut)\n    grads[p + \"ff2_w\"] += dW2\n    grads[p + \"ff2_b\"] += db2\n    dZ = relu_backward(c[\"Z\"], dA)\n    dXn, dW1, db1 = linear_backward(c[\"Xn\"], params[p + \"ff1_w\"], dZ)\n\n    grads[p + \"ff1_w\"] += dW1\n    grads[p + \"ff1_b\"] += db1\n\n    return dXn",
+          "startLine": 118
+        },
+        {
+          "decorators": [],
+          "defLine": 131,
+          "endLine": 139,
+          "id": "transformer.block_forward",
+          "kind": "function",
+          "leadingComments": [
+            "one transformer block in pre-LN form"
+          ],
+          "name": "block_forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L131-L139",
+          "signature": "def block_forward(X, params, l: int, cfg: ModelConfig)",
+          "source": "def block_forward(X, params, l: int, cfg: ModelConfig):\n    p = f\"b{l}.\"\n    Xn, c_ln1 = layer_norm_forward(X, params[p + \"ln1_g\"], params[p + \"ln1_b\"], cfg.ln_eps) # make a normalized copy for attention to read\n    att, c_att = attention_forward(Xn, params, p, cfg) # each position gathers info from earlier positions\n    X1 = X + att\n    Xn2, c_ln2 = layer_norm_forward(X1, params[p + \"ln2_g\"], params[p + \"ln2_b\"], cfg.ln_eps) # normalized copy again, for the feed-forward\n    ff, c_ff = ffn_forward(Xn2, params, p) # ach position thinks on its own\n\n    return X1 + ff, dict(ln1=c_ln1, att=c_att, ln2=c_ln2, ff=c_ff)",
+          "startLine": 131
+        },
+        {
+          "decorators": [],
+          "defLine": 141,
+          "endLine": 152,
+          "id": "transformer.block_backward",
+          "kind": "function",
+          "leadingComments": [],
+          "name": "block_backward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L141-L152",
+          "signature": "def block_backward(dY, c, params, l, cfg: ModelConfig, grads)",
+          "source": "def block_backward(dY, c, params, l, cfg: ModelConfig, grads):\n    p = f\"b{l}.\"\n    dXn2 = ffn_backward(dY, c[\"ff\"], params, p, grads)\n    dX1_branch, dg, db = layer_norm_backward(dXn2, c[\"ln2\"], params[p + \"ln2_g\"])\n    grads[p + \"ln2_g\"] += dg\n    grads[p + \"ln2_b\"] += db\n    dX1 = dY + dX1_branch\n    dXn = attention_backward(dX1, c[\"att\"], params, p, cfg, grads)\n    dX_branch, dg, db = layer_norm_backward(dXn, c[\"ln1\"], params[p + \"ln1_g\"])\n    grads[p + \"ln1_g\"] += dg\n    grads[p + \"ln1_b\"] += db\n    return dX1 + dX_branch",
+          "startLine": 141
+        },
+        {
+          "decorators": [],
+          "defLine": 155,
+          "endLine": 168,
+          "id": "transformer.forward",
+          "kind": "function",
+          "leadingComments": [
+            "whole model in the forward direction"
+          ],
+          "name": "forward",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L155-L168",
+          "signature": "def forward(params, ids, cfg: ModelConfig)",
+          "source": "def forward(params, ids, cfg: ModelConfig):\n    assert len(ids) <= cfg.context_len, \"sequence longer than the position table\"\n\n    X = embed_forward(params, ids)\n    block_caches = []\n\n    for l in range(cfg.num_layers):\n        X, c = block_forward(X, params, l, cfg)\n        block_caches.append(c)\n\n    Xf, c_lnf = layer_norm_forward(X, params[\"lnf_g\"], params[\"lnf_b\"], cfg.ln_eps)\n    logits = Xf @ params[\"head_w\"] + params[\"head_b\"]\n\n    return logits, dict(blocks=block_caches, lnf=c_lnf, Xf=Xf)",
+          "startLine": 155
+        },
+        {
+          "decorators": [],
+          "defLine": 171,
+          "endLine": 190,
+          "id": "transformer.loss_and_grads",
+          "kind": "function",
+          "leadingComments": [
+            "runs forward, computes the loss, then the whole backward pass"
+          ],
+          "name": "loss_and_grads",
+          "permalink": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-/blob/c17aa75afd287dc623009168f50c4544fc1d4a32/transformer.py#L171-L190",
+          "signature": "def loss_and_grads(params, ids, targets, cfg: ModelConfig)",
+          "source": "def loss_and_grads(params, ids, targets, cfg: ModelConfig):\n    logits, cache = forward(params, ids, cfg)\n    loss, probs = cross_entropy_forward(logits, targets)\n    grads = {k: np.zeros_like(v) for k, v in params.items()}\n    dZ = cross_entropy_backward(probs, targets)\n    dXf, dW, db = linear_backward(cache[\"Xf\"], params[\"head_w\"], dZ)\n\n    grads[\"head_w\"] += dW\n    grads[\"head_b\"] += db\n\n    dX, dg, db = layer_norm_backward(dXf, cache[\"lnf\"], params[\"lnf_g\"])\n\n    grads[\"lnf_g\"] += dg\n    grads[\"lnf_b\"] += db\n\n    for l in reversed(range(cfg.num_layers)):\n        dX = block_backward(dX, cache[\"blocks\"][l], params, l, cfg, grads)\n    embed_backward(dX, ids, grads)\n\n    return loss, grads",
+          "startLine": 171
+        }
+      ],
+      "imports": [
+        {
+          "asName": null,
+          "internal": false,
+          "line": 1,
+          "module": "dataclasses",
+          "name": "dataclass"
+        },
+        {
+          "asName": "np",
+          "internal": false,
+          "line": 2,
+          "module": "numpy",
+          "name": null
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "cross_entropy_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "cross_entropy_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "layer_norm_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "layer_norm_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "linear_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "relu_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "relu_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "softmax_backward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "softmax_forward"
+        },
+        {
+          "asName": null,
+          "internal": true,
+          "line": 3,
+          "module": "ops",
+          "name": "xavier_uniform"
+        }
+      ],
+      "lineCount": 190,
+      "module": "transformer",
+      "path": "transformer.py"
+    }
+  ],
+  "sha": "c17aa75afd287dc623009168f50c4544fc1d4a32"
+}

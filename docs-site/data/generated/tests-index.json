@@ -1,0 +1,1494 @@
+{
+  "files": [
+    {
+      "helpers": [
+        {
+          "endLine": 21,
+          "id": "tests.test_checkpoint.saved",
+          "kind": "fixture",
+          "name": "saved",
+          "startLine": 13
+        }
+      ],
+      "module": "tests.test_checkpoint",
+      "path": "tests/test_checkpoint.py",
+      "repoImports": [
+        {
+          "line": 6,
+          "module": "checkpoint",
+          "name": "load_checkpoint"
+        },
+        {
+          "line": 6,
+          "module": "checkpoint",
+          "name": "save_checkpoint"
+        },
+        {
+          "line": 7,
+          "module": "tokenizer",
+          "name": "build_tokenizer"
+        },
+        {
+          "line": 8,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "line": 8,
+          "module": "transformer",
+          "name": "forward"
+        },
+        {
+          "line": 8,
+          "module": "transformer",
+          "name": "init_params"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [],
+          "cases": 1,
+          "endLine": 27,
+          "fixtures": [
+            "tests.test_checkpoint.saved"
+          ],
+          "helpers": [],
+          "id": "tests.test_checkpoint.test_save_creates_the_three_files",
+          "name": "test_save_creates_the_three_files",
+          "reaches": [
+            "checkpoint.save_checkpoint",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 24
+        },
+        {
+          "calls": [
+            "checkpoint.load_checkpoint"
+          ],
+          "cases": 1,
+          "endLine": 32,
+          "fixtures": [
+            "tests.test_checkpoint.saved"
+          ],
+          "helpers": [],
+          "id": "tests.test_checkpoint.test_config_round_trips",
+          "name": "test_config_round_trips",
+          "reaches": [
+            "checkpoint.load_checkpoint",
+            "checkpoint.save_checkpoint",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 30
+        },
+        {
+          "calls": [
+            "checkpoint.load_checkpoint"
+          ],
+          "cases": 1,
+          "endLine": 40,
+          "fixtures": [
+            "tests.test_checkpoint.saved"
+          ],
+          "helpers": [],
+          "id": "tests.test_checkpoint.test_weights_round_trip_exactly",
+          "name": "test_weights_round_trip_exactly",
+          "reaches": [
+            "checkpoint.load_checkpoint",
+            "checkpoint.save_checkpoint",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 35
+        },
+        {
+          "calls": [
+            "checkpoint.load_checkpoint",
+            "tokenizer.Tokenizer.decode",
+            "tokenizer.Tokenizer.encode"
+          ],
+          "cases": 1,
+          "endLine": 52,
+          "fixtures": [
+            "tests.test_checkpoint.saved"
+          ],
+          "helpers": [],
+          "id": "tests.test_checkpoint.test_tokenizer_round_trips",
+          "name": "test_tokenizer_round_trips",
+          "reaches": [
+            "checkpoint.load_checkpoint",
+            "checkpoint.save_checkpoint",
+            "tokenizer.Tokenizer.decode",
+            "tokenizer.Tokenizer.encode",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 43
+        },
+        {
+          "calls": [
+            "checkpoint.load_checkpoint",
+            "tokenizer.Tokenizer.encode",
+            "transformer.forward"
+          ],
+          "cases": 1,
+          "endLine": 61,
+          "fixtures": [
+            "tests.test_checkpoint.saved"
+          ],
+          "helpers": [],
+          "id": "tests.test_checkpoint.test_loaded_model_gives_identical_logits",
+          "name": "test_loaded_model_gives_identical_logits",
+          "reaches": [
+            "checkpoint.load_checkpoint",
+            "checkpoint.save_checkpoint",
+            "tokenizer.Tokenizer.encode",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.forward",
+            "transformer.init_params"
+          ],
+          "startLine": 55
+        },
+        {
+          "calls": [
+            "checkpoint.load_checkpoint",
+            "checkpoint.save_checkpoint",
+            "tokenizer.Tokenizer.decode",
+            "tokenizer.Tokenizer.encode",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "cases": 1,
+          "endLine": 70,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_checkpoint.test_non_ascii_characters_survive",
+          "name": "test_non_ascii_characters_survive",
+          "reaches": [
+            "checkpoint.load_checkpoint",
+            "checkpoint.save_checkpoint",
+            "tokenizer.Tokenizer.decode",
+            "tokenizer.Tokenizer.encode",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 64
+        },
+        {
+          "calls": [],
+          "cases": 1,
+          "endLine": 76,
+          "fixtures": [
+            "tests.test_checkpoint.saved"
+          ],
+          "helpers": [],
+          "id": "tests.test_checkpoint.test_tok_file_is_plain_json",
+          "name": "test_tok_file_is_plain_json",
+          "reaches": [
+            "checkpoint.save_checkpoint",
+            "tokenizer.build_tokenizer",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 73
+        }
+      ]
+    },
+    {
+      "helpers": [],
+      "module": "tests.test_data",
+      "path": "tests/test_data.py",
+      "repoImports": [
+        {
+          "line": 5,
+          "module": "data",
+          "name": "iterate_batches"
+        },
+        {
+          "line": 5,
+          "module": "data",
+          "name": "load_corpus"
+        },
+        {
+          "line": 5,
+          "module": "data",
+          "name": "make_windows"
+        },
+        {
+          "line": 5,
+          "module": "data",
+          "name": "split_ids"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [
+            "data.make_windows"
+          ],
+          "cases": 1,
+          "endLine": 16,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_window_table_matches_hand_example",
+          "name": "test_window_table_matches_hand_example",
+          "reaches": [
+            "data.make_windows"
+          ],
+          "startLine": 10
+        },
+        {
+          "calls": [
+            "data.make_windows"
+          ],
+          "cases": 1,
+          "endLine": 21,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_targets_are_inputs_shifted_by_one",
+          "name": "test_targets_are_inputs_shifted_by_one",
+          "reaches": [
+            "data.make_windows"
+          ],
+          "startLine": 19
+        },
+        {
+          "calls": [
+            "data.make_windows"
+          ],
+          "cases": 1,
+          "endLine": 26,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_stride_skips_windows",
+          "name": "test_stride_skips_windows",
+          "reaches": [
+            "data.make_windows"
+          ],
+          "startLine": 24
+        },
+        {
+          "calls": [
+            "data.make_windows"
+          ],
+          "cases": 1,
+          "endLine": 31,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_too_few_tokens_raises",
+          "name": "test_too_few_tokens_raises",
+          "reaches": [
+            "data.make_windows"
+          ],
+          "startLine": 29
+        },
+        {
+          "calls": [
+            "data.split_ids"
+          ],
+          "cases": 1,
+          "endLine": 38,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_split_is_contiguous_and_disjoint",
+          "name": "test_split_is_contiguous_and_disjoint",
+          "reaches": [
+            "data.split_ids"
+          ],
+          "startLine": 34
+        },
+        {
+          "calls": [
+            "data.make_windows",
+            "data.split_ids"
+          ],
+          "cases": 1,
+          "endLine": 45,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_window_counts_for_n_3000",
+          "name": "test_window_counts_for_n_3000",
+          "reaches": [
+            "data.make_windows",
+            "data.split_ids"
+          ],
+          "startLine": 41
+        },
+        {
+          "calls": [
+            "data.iterate_batches",
+            "data.make_windows"
+          ],
+          "cases": 1,
+          "endLine": 58,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_batches_cover_every_window_once",
+          "name": "test_batches_cover_every_window_once",
+          "reaches": [
+            "data.iterate_batches",
+            "data.make_windows"
+          ],
+          "startLine": 48
+        },
+        {
+          "calls": [
+            "data.iterate_batches",
+            "data.make_windows"
+          ],
+          "cases": 1,
+          "endLine": 64,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_no_shuffle_keeps_order",
+          "name": "test_no_shuffle_keeps_order",
+          "reaches": [
+            "data.iterate_batches",
+            "data.make_windows"
+          ],
+          "startLine": 61
+        },
+        {
+          "calls": [
+            "data.load_corpus"
+          ],
+          "cases": 1,
+          "endLine": 70,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_load_corpus_joins_rows_and_skips_missing",
+          "name": "test_load_corpus_joins_rows_and_skips_missing",
+          "reaches": [
+            "data.load_corpus"
+          ],
+          "startLine": 67
+        },
+        {
+          "calls": [
+            "data.load_corpus"
+          ],
+          "cases": 1,
+          "endLine": 76,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_load_corpus_respects_max_rows",
+          "name": "test_load_corpus_respects_max_rows",
+          "reaches": [
+            "data.load_corpus"
+          ],
+          "startLine": 73
+        },
+        {
+          "calls": [
+            "data.load_corpus"
+          ],
+          "cases": 1,
+          "endLine": 83,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_data.test_load_corpus_wrong_column_raises",
+          "name": "test_load_corpus_wrong_column_raises",
+          "reaches": [
+            "data.load_corpus"
+          ],
+          "startLine": 79
+        }
+      ]
+    },
+    {
+      "helpers": [
+        {
+          "endLine": 11,
+          "id": "tests.test_generate.SpyRng",
+          "kind": "class",
+          "name": "SpyRng",
+          "startLine": 7
+        },
+        {
+          "endLine": 17,
+          "id": "tests.test_generate.probs_used",
+          "kind": "function",
+          "name": "probs_used",
+          "startLine": 14
+        },
+        {
+          "endLine": 60,
+          "id": "tests.test_generate.tiny",
+          "kind": "function",
+          "name": "tiny",
+          "startLine": 57
+        }
+      ],
+      "module": "tests.test_generate",
+      "path": "tests/test_generate.py",
+      "repoImports": [
+        {
+          "line": 3,
+          "module": "generate",
+          "name": "generate"
+        },
+        {
+          "line": 3,
+          "module": "generate",
+          "name": "sample_next"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "init_params"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [],
+          "cases": 1,
+          "endLine": 24,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_generate.probs_used"
+          ],
+          "id": "tests.test_generate.test_temperature_examples",
+          "name": "test_temperature_examples",
+          "reaches": [
+            "generate.sample_next"
+          ],
+          "startLine": 20
+        },
+        {
+          "calls": [
+            "generate.sample_next"
+          ],
+          "cases": 1,
+          "endLine": 30,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_generate.test_temperature_zero_is_greedy",
+          "name": "test_temperature_zero_is_greedy",
+          "reaches": [
+            "generate.sample_next"
+          ],
+          "startLine": 27
+        },
+        {
+          "calls": [],
+          "cases": 1,
+          "endLine": 35,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_generate.probs_used"
+          ],
+          "id": "tests.test_generate.test_top_k_example",
+          "name": "test_top_k_example",
+          "reaches": [
+            "generate.sample_next"
+          ],
+          "startLine": 33
+        },
+        {
+          "calls": [
+            "generate.sample_next"
+          ],
+          "cases": 1,
+          "endLine": 41,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_generate.test_top_k_one_is_greedy",
+          "name": "test_top_k_one_is_greedy",
+          "reaches": [
+            "generate.sample_next"
+          ],
+          "startLine": 38
+        },
+        {
+          "calls": [],
+          "cases": 1,
+          "endLine": 47,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_generate.probs_used"
+          ],
+          "id": "tests.test_generate.test_top_p_example",
+          "name": "test_top_p_example",
+          "reaches": [
+            "generate.sample_next"
+          ],
+          "startLine": 44
+        },
+        {
+          "calls": [],
+          "cases": 1,
+          "endLine": 54,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_generate.probs_used"
+          ],
+          "id": "tests.test_generate.test_top_p_adapts_to_confidence",
+          "name": "test_top_p_adapts_to_confidence",
+          "reaches": [
+            "generate.sample_next"
+          ],
+          "startLine": 50
+        },
+        {
+          "calls": [
+            "generate.generate"
+          ],
+          "cases": 1,
+          "endLine": 67,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_generate.tiny"
+          ],
+          "id": "tests.test_generate.test_generate_length_and_range",
+          "name": "test_generate_length_and_range",
+          "reaches": [
+            "generate.generate",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 63
+        },
+        {
+          "calls": [
+            "generate.generate"
+          ],
+          "cases": 1,
+          "endLine": 75,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_generate.tiny"
+          ],
+          "id": "tests.test_generate.test_generate_window_keeps_long_sequences_legal",
+          "name": "test_generate_window_keeps_long_sequences_legal",
+          "reaches": [
+            "generate.generate",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 70
+        },
+        {
+          "calls": [
+            "generate.generate"
+          ],
+          "cases": 1,
+          "endLine": 82,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_generate.tiny"
+          ],
+          "id": "tests.test_generate.test_greedy_generation_is_deterministic",
+          "name": "test_greedy_generation_is_deterministic",
+          "reaches": [
+            "generate.generate",
+            "transformer.ModelConfig",
+            "transformer.init_params"
+          ],
+          "startLine": 78
+        }
+      ]
+    },
+    {
+      "helpers": [
+        {
+          "endLine": 13,
+          "id": "tests.test_gradcheck.tiny_setup",
+          "kind": "function",
+          "name": "tiny_setup",
+          "startLine": 6
+        }
+      ],
+      "module": "tests.test_gradcheck",
+      "path": "tests/test_gradcheck.py",
+      "repoImports": [
+        {
+          "line": 2,
+          "module": "gradcheck",
+          "name": "check_params"
+        },
+        {
+          "line": 2,
+          "module": "gradcheck",
+          "name": "numerical_grad"
+        },
+        {
+          "line": 3,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "line": 3,
+          "module": "transformer",
+          "name": "init_params"
+        },
+        {
+          "line": 3,
+          "module": "transformer",
+          "name": "loss_and_grads"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [
+            "gradcheck.numerical_grad"
+          ],
+          "cases": 1,
+          "endLine": 19,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_gradcheck.test_numerical_grad_on_quadratic",
+          "name": "test_numerical_grad_on_quadratic",
+          "reaches": [
+            "gradcheck.numerical_grad"
+          ],
+          "startLine": 16
+        },
+        {
+          "calls": [
+            "gradcheck.check_params",
+            "transformer.loss_and_grads"
+          ],
+          "cases": 1,
+          "endLine": 30,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_gradcheck.tiny_setup"
+          ],
+          "id": "tests.test_gradcheck.test_every_tensor_passes",
+          "name": "test_every_tensor_passes",
+          "reaches": [
+            "gradcheck.check_params",
+            "transformer.ModelConfig",
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "startLine": 22
+        },
+        {
+          "calls": [
+            "transformer.loss_and_grads"
+          ],
+          "cases": 1,
+          "endLine": 39,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_gradcheck.tiny_setup"
+          ],
+          "id": "tests.test_gradcheck.test_key_bias_gradient_is_zero",
+          "name": "test_key_bias_gradient_is_zero",
+          "reaches": [
+            "transformer.ModelConfig",
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "startLine": 33
+        }
+      ]
+    },
+    {
+      "helpers": [],
+      "module": "tests.test_ops",
+      "path": "tests/test_ops.py",
+      "repoImports": [
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "cross_entropy_backward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "cross_entropy_forward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "layer_norm_backward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "layer_norm_forward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "linear_backward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "linear_forward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "perplexity"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "relu_backward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "relu_forward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "softmax_backward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "softmax_forward"
+        },
+        {
+          "line": 3,
+          "module": "ops",
+          "name": "xavier_uniform"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [
+            "ops.linear_backward",
+            "ops.linear_forward"
+          ],
+          "cases": 1,
+          "endLine": 19,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_linear_worked_example",
+          "name": "test_linear_worked_example",
+          "reaches": [
+            "ops.linear_backward",
+            "ops.linear_forward"
+          ],
+          "startLine": 10
+        },
+        {
+          "calls": [
+            "ops.relu_backward",
+            "ops.relu_forward"
+          ],
+          "cases": 1,
+          "endLine": 25,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_relu",
+          "name": "test_relu",
+          "reaches": [
+            "ops.relu_backward",
+            "ops.relu_forward"
+          ],
+          "startLine": 22
+        },
+        {
+          "calls": [
+            "ops.softmax_forward"
+          ],
+          "cases": 1,
+          "endLine": 33,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_softmax_values_and_stability",
+          "name": "test_softmax_values_and_stability",
+          "reaches": [
+            "ops.softmax_forward"
+          ],
+          "startLine": 28
+        },
+        {
+          "calls": [
+            "ops.softmax_backward",
+            "ops.softmax_forward"
+          ],
+          "cases": 1,
+          "endLine": 42,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_softmax_backward_rows_sum_to_zero",
+          "name": "test_softmax_backward_rows_sum_to_zero",
+          "reaches": [
+            "ops.softmax_backward",
+            "ops.softmax_forward"
+          ],
+          "startLine": 36
+        },
+        {
+          "calls": [
+            "ops.cross_entropy_backward",
+            "ops.cross_entropy_forward"
+          ],
+          "cases": 1,
+          "endLine": 51,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_cross_entropy_worked_example",
+          "name": "test_cross_entropy_worked_example",
+          "reaches": [
+            "ops.cross_entropy_backward",
+            "ops.cross_entropy_forward"
+          ],
+          "startLine": 45
+        },
+        {
+          "calls": [
+            "ops.cross_entropy_backward",
+            "ops.cross_entropy_forward"
+          ],
+          "cases": 1,
+          "endLine": 60,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_cross_entropy_is_mean_over_positions",
+          "name": "test_cross_entropy_is_mean_over_positions",
+          "reaches": [
+            "ops.cross_entropy_backward",
+            "ops.cross_entropy_forward"
+          ],
+          "startLine": 54
+        },
+        {
+          "calls": [
+            "ops.cross_entropy_forward"
+          ],
+          "cases": 1,
+          "endLine": 66,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_cross_entropy_extreme_logits_no_nan",
+          "name": "test_cross_entropy_extreme_logits_no_nan",
+          "reaches": [
+            "ops.cross_entropy_forward"
+          ],
+          "startLine": 63
+        },
+        {
+          "calls": [
+            "ops.layer_norm_backward",
+            "ops.layer_norm_forward"
+          ],
+          "cases": 1,
+          "endLine": 77,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_layer_norm_worked_example",
+          "name": "test_layer_norm_worked_example",
+          "reaches": [
+            "ops.layer_norm_backward",
+            "ops.layer_norm_forward"
+          ],
+          "startLine": 69
+        },
+        {
+          "calls": [
+            "ops.xavier_uniform"
+          ],
+          "cases": 1,
+          "endLine": 84,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_xavier_bound",
+          "name": "test_xavier_bound",
+          "reaches": [
+            "ops.xavier_uniform"
+          ],
+          "startLine": 80
+        },
+        {
+          "calls": [
+            "ops.perplexity"
+          ],
+          "cases": 1,
+          "endLine": 88,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_ops.test_perplexity_of_uniform_is_vocab_size",
+          "name": "test_perplexity_of_uniform_is_vocab_size",
+          "reaches": [
+            "ops.perplexity"
+          ],
+          "startLine": 87
+        }
+      ]
+    },
+    {
+      "helpers": [],
+      "module": "tests.test_optim",
+      "path": "tests/test_optim.py",
+      "repoImports": [
+        {
+          "line": 3,
+          "module": "optim",
+          "name": "Adam"
+        },
+        {
+          "line": 3,
+          "module": "optim",
+          "name": "clip_grad_norm"
+        },
+        {
+          "line": 3,
+          "module": "optim",
+          "name": "lr_schedule"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step"
+          ],
+          "cases": 1,
+          "endLine": 13,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_optim.test_adam_two_step_hand_trace",
+          "name": "test_adam_two_step_hand_trace",
+          "reaches": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step"
+          ],
+          "startLine": 6
+        },
+        {
+          "calls": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step"
+          ],
+          "cases": 1,
+          "endLine": 21,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient",
+          "name": "test_adam_first_step_is_lr_times_sign_of_gradient",
+          "reaches": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step"
+          ],
+          "startLine": 16
+        },
+        {
+          "calls": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step"
+          ],
+          "cases": 1,
+          "endLine": 29,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_optim.test_weight_decay_only_touches_matrices",
+          "name": "test_weight_decay_only_touches_matrices",
+          "reaches": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step"
+          ],
+          "startLine": 24
+        },
+        {
+          "calls": [
+            "optim.lr_schedule"
+          ],
+          "cases": 1,
+          "endLine": 35,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_optim.test_lr_schedule_values",
+          "name": "test_lr_schedule_values",
+          "reaches": [
+            "optim.lr_schedule"
+          ],
+          "startLine": 32
+        },
+        {
+          "calls": [
+            "optim.clip_grad_norm"
+          ],
+          "cases": 1,
+          "endLine": 43,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_optim.test_clip_rescales_all_tensors_together",
+          "name": "test_clip_rescales_all_tensors_together",
+          "reaches": [
+            "optim.clip_grad_norm"
+          ],
+          "startLine": 38
+        },
+        {
+          "calls": [
+            "optim.clip_grad_norm"
+          ],
+          "cases": 1,
+          "endLine": 49,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_optim.test_clip_leaves_small_gradients_alone",
+          "name": "test_clip_leaves_small_gradients_alone",
+          "reaches": [
+            "optim.clip_grad_norm"
+          ],
+          "startLine": 46
+        }
+      ]
+    },
+    {
+      "helpers": [
+        {
+          "endLine": 31,
+          "id": "tests.test_tokenizer.tok",
+          "kind": "fixture",
+          "name": "tok",
+          "startLine": 29
+        }
+      ],
+      "module": "tests.test_tokenizer",
+      "path": "tests/test_tokenizer.py",
+      "repoImports": [
+        {
+          "line": 3,
+          "module": "tokenizer",
+          "name": "UNK"
+        },
+        {
+          "line": 3,
+          "module": "tokenizer",
+          "name": "build_tokenizer"
+        },
+        {
+          "line": 3,
+          "module": "tokenizer",
+          "name": "count_words"
+        },
+        {
+          "line": 3,
+          "module": "tokenizer",
+          "name": "merge_tokens"
+        },
+        {
+          "line": 3,
+          "module": "tokenizer",
+          "name": "train_bpe_on_text"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [
+            "tokenizer.count_words"
+          ],
+          "cases": 1,
+          "endLine": 11,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_count_words_splits_words_spaces_punctuation",
+          "name": "test_count_words_splits_words_spaces_punctuation",
+          "reaches": [
+            "tokenizer.count_words"
+          ],
+          "startLine": 10
+        },
+        {
+          "calls": [
+            "tokenizer.merge_tokens"
+          ],
+          "cases": 1,
+          "endLine": 15,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_merge_tokens_simple",
+          "name": "test_merge_tokens_simple",
+          "reaches": [
+            "tokenizer.merge_tokens"
+          ],
+          "startLine": 14
+        },
+        {
+          "calls": [
+            "tokenizer.merge_tokens"
+          ],
+          "cases": 1,
+          "endLine": 20,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_merge_tokens_overlap_is_left_to_right",
+          "name": "test_merge_tokens_overlap_is_left_to_right",
+          "reaches": [
+            "tokenizer.merge_tokens"
+          ],
+          "startLine": 18
+        },
+        {
+          "calls": [
+            "tokenizer.train_bpe_on_text"
+          ],
+          "cases": 1,
+          "endLine": 26,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_first_three_merges_match_hand_trace",
+          "name": "test_first_three_merges_match_hand_trace",
+          "reaches": [
+            "tokenizer.train_bpe_on_text"
+          ],
+          "startLine": 23
+        },
+        {
+          "calls": [],
+          "cases": 1,
+          "endLine": 35,
+          "fixtures": [
+            "tests.test_tokenizer.tok"
+          ],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_unk_is_id_zero",
+          "name": "test_unk_is_id_zero",
+          "reaches": [
+            "tokenizer.build_tokenizer"
+          ],
+          "startLine": 34
+        },
+        {
+          "calls": [
+            "tokenizer.Tokenizer.encode"
+          ],
+          "cases": 1,
+          "endLine": 41,
+          "fixtures": [
+            "tests.test_tokenizer.tok"
+          ],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_no_characters_dropped",
+          "name": "test_no_characters_dropped",
+          "reaches": [
+            "tokenizer.Tokenizer.encode",
+            "tokenizer.build_tokenizer"
+          ],
+          "startLine": 38
+        },
+        {
+          "calls": [
+            "tokenizer.Tokenizer.encode"
+          ],
+          "cases": 1,
+          "endLine": 45,
+          "fixtures": [
+            "tests.test_tokenizer.tok"
+          ],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_unseen_character_becomes_unk",
+          "name": "test_unseen_character_becomes_unk",
+          "reaches": [
+            "tokenizer.Tokenizer.encode",
+            "tokenizer.build_tokenizer"
+          ],
+          "startLine": 44
+        },
+        {
+          "calls": [
+            "tokenizer.Tokenizer.decode",
+            "tokenizer.Tokenizer.encode"
+          ],
+          "cases": 4,
+          "endLine": 50,
+          "fixtures": [
+            "tests.test_tokenizer.tok"
+          ],
+          "helpers": [],
+          "id": "tests.test_tokenizer.test_round_trip",
+          "name": "test_round_trip",
+          "reaches": [
+            "tokenizer.Tokenizer.decode",
+            "tokenizer.Tokenizer.encode",
+            "tokenizer.build_tokenizer"
+          ],
+          "startLine": 48
+        }
+      ]
+    },
+    {
+      "helpers": [
+        {
+          "endLine": 12,
+          "id": "tests.test_transformer.tiny_cfg",
+          "kind": "function",
+          "name": "tiny_cfg",
+          "startLine": 9
+        }
+      ],
+      "module": "tests.test_transformer",
+      "path": "tests/test_transformer.py",
+      "repoImports": [
+        {
+          "line": 3,
+          "module": "optim",
+          "name": "Adam"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "ModelConfig"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "attention_forward"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "count_params"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "embed_backward"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "embed_forward"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "ffn_forward"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "forward"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "init_params"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "loss_and_grads"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "merge_heads"
+        },
+        {
+          "line": 4,
+          "module": "transformer",
+          "name": "split_heads"
+        }
+      ],
+      "tests": [
+        {
+          "calls": [
+            "transformer.ModelConfig",
+            "transformer.count_params",
+            "transformer.init_params"
+          ],
+          "cases": 1,
+          "endLine": 19,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_transformer.test_param_count_matches_formula",
+          "name": "test_param_count_matches_formula",
+          "reaches": [
+            "transformer.ModelConfig",
+            "transformer.count_params",
+            "transformer.init_params"
+          ],
+          "startLine": 15
+        },
+        {
+          "calls": [
+            "transformer.ModelConfig",
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "cases": 1,
+          "endLine": 28,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_transformer.test_initial_loss_is_close_to_ln_vocab",
+          "name": "test_initial_loss_is_close_to_ln_vocab",
+          "reaches": [
+            "transformer.ModelConfig",
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "startLine": 22
+        },
+        {
+          "calls": [
+            "transformer.embed_forward"
+          ],
+          "cases": 1,
+          "endLine": 35,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_transformer.test_embedding_worked_example",
+          "name": "test_embedding_worked_example",
+          "reaches": [
+            "transformer.embed_forward"
+          ],
+          "startLine": 31
+        },
+        {
+          "calls": [
+            "transformer.embed_backward"
+          ],
+          "cases": 1,
+          "endLine": 44,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_transformer.test_embedding_backward_sums_repeated_ids",
+          "name": "test_embedding_backward_sums_repeated_ids",
+          "reaches": [
+            "transformer.embed_backward"
+          ],
+          "startLine": 38
+        },
+        {
+          "calls": [
+            "transformer.ffn_forward"
+          ],
+          "cases": 1,
+          "endLine": 56,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_transformer.test_ffn_worked_example",
+          "name": "test_ffn_worked_example",
+          "reaches": [
+            "transformer.ffn_forward"
+          ],
+          "startLine": 47
+        },
+        {
+          "calls": [
+            "transformer.merge_heads",
+            "transformer.split_heads"
+          ],
+          "cases": 1,
+          "endLine": 63,
+          "fixtures": [],
+          "helpers": [],
+          "id": "tests.test_transformer.test_split_merge_heads_round_trip",
+          "name": "test_split_merge_heads_round_trip",
+          "reaches": [
+            "transformer.merge_heads",
+            "transformer.split_heads"
+          ],
+          "startLine": 59
+        },
+        {
+          "calls": [
+            "transformer.attention_forward",
+            "transformer.init_params"
+          ],
+          "cases": 1,
+          "endLine": 74,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_transformer.tiny_cfg"
+          ],
+          "id": "tests.test_transformer.test_attention_weights_are_causal_and_normalised",
+          "name": "test_attention_weights_are_causal_and_normalised",
+          "reaches": [
+            "transformer.ModelConfig",
+            "transformer.attention_forward",
+            "transformer.init_params"
+          ],
+          "startLine": 66
+        },
+        {
+          "calls": [
+            "transformer.forward",
+            "transformer.init_params"
+          ],
+          "cases": 1,
+          "endLine": 86,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_transformer.tiny_cfg"
+          ],
+          "id": "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits",
+          "name": "test_future_tokens_do_not_change_earlier_logits",
+          "reaches": [
+            "transformer.ModelConfig",
+            "transformer.forward",
+            "transformer.init_params"
+          ],
+          "startLine": 77
+        },
+        {
+          "calls": [
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "cases": 1,
+          "endLine": 95,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_transformer.tiny_cfg"
+          ],
+          "id": "tests.test_transformer.test_grads_have_the_shape_of_params",
+          "name": "test_grads_have_the_shape_of_params",
+          "reaches": [
+            "transformer.ModelConfig",
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "startLine": 89
+        },
+        {
+          "calls": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step",
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "cases": 1,
+          "endLine": 110,
+          "fixtures": [],
+          "helpers": [
+            "tests.test_transformer.tiny_cfg"
+          ],
+          "id": "tests.test_transformer.test_overfit_one_window",
+          "name": "test_overfit_one_window",
+          "reaches": [
+            "optim.Adam",
+            "optim.Adam.__init__",
+            "optim.Adam.step",
+            "transformer.ModelConfig",
+            "transformer.init_params",
+            "transformer.loss_and_grads"
+          ],
+          "startLine": 98
+        }
+      ]
+    }
+  ]
+}

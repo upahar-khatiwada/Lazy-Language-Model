@@ -1,0 +1,3572 @@
+{
+  "production": {
+    "checkpoint.load_checkpoint": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            46
+          ],
+          "target": "tokenizer.Tokenizer"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            46
+          ],
+          "target": "tokenizer.Tokenizer.__init__"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            37
+          ],
+          "target": "transformer.ModelConfig"
+        }
+      ],
+      "unresolved": []
+    },
+    "checkpoint.save_checkpoint": {
+      "calls": [],
+      "unresolved": []
+    },
+    "data.encode_corpus": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            16
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        }
+      ],
+      "unresolved": []
+    },
+    "data.iterate_batches": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            43
+          ],
+          "text": "inputs.loc[rows].to_numpy"
+        },
+        {
+          "lines": [
+            39
+          ],
+          "text": "inputs.sample"
+        },
+        {
+          "lines": [
+            43
+          ],
+          "text": "targets.loc[rows].to_numpy"
+        }
+      ]
+    },
+    "data.load_corpus": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            11
+          ],
+          "text": "df[column].dropna"
+        },
+        {
+          "lines": [
+            11
+          ],
+          "text": "df[column].dropna().astype"
+        },
+        {
+          "lines": [
+            11
+          ],
+          "text": "df[column].dropna().astype(str).str.strip"
+        }
+      ]
+    },
+    "data.make_windows": {
+      "calls": [],
+      "unresolved": []
+    },
+    "data.split_ids": {
+      "calls": [],
+      "unresolved": []
+    },
+    "generate.generate": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            33
+          ],
+          "target": "generate.sample_next"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            32
+          ],
+          "target": "transformer.forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            33
+          ],
+          "text": "ids.append"
+        }
+      ]
+    },
+    "generate.sample_next": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            11
+          ],
+          "target": "ops.softmax_forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            16
+          ],
+          "text": "p.sum"
+        },
+        {
+          "lines": [
+            24
+          ],
+          "text": "q.sum"
+        },
+        {
+          "lines": [
+            26
+          ],
+          "text": "rng.choice"
+        }
+      ]
+    },
+    "gradcheck.check_params": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            31
+          ],
+          "target": "gradcheck.relative_error"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            27,
+            29
+          ],
+          "text": "loss_fn"
+        },
+        {
+          "lines": [
+            21
+          ],
+          "text": "params.items"
+        },
+        {
+          "lines": [
+            24
+          ],
+          "text": "rng.integers"
+        }
+      ]
+    },
+    "gradcheck.numerical_grad": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            8,
+            10
+          ],
+          "text": "f"
+        }
+      ]
+    },
+    "gradcheck.relative_error": {
+      "calls": [],
+      "unresolved": []
+    },
+    "ops.cross_entropy_backward": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            38
+          ],
+          "text": "probs.copy"
+        }
+      ]
+    },
+    "ops.cross_entropy_forward": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            30
+          ],
+          "text": "logits.max"
+        },
+        {
+          "lines": [
+            33
+          ],
+          "text": "logp[np.arange(T), targets].mean"
+        },
+        {
+          "lines": [
+            31
+          ],
+          "text": "np.exp(z).sum"
+        }
+      ]
+    },
+    "ops.layer_norm_backward": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            53
+          ],
+          "text": "(dXhat * Xhat).mean"
+        },
+        {
+          "lines": [
+            55
+          ],
+          "text": "(dY * Xhat).sum"
+        },
+        {
+          "lines": [
+            52
+          ],
+          "text": "dXhat.mean"
+        },
+        {
+          "lines": [
+            56
+          ],
+          "text": "dY.sum"
+        }
+      ]
+    },
+    "ops.layer_norm_forward": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            44
+          ],
+          "text": "((X - mu) ** 2).mean"
+        },
+        {
+          "lines": [
+            43
+          ],
+          "text": "X.mean"
+        }
+      ]
+    },
+    "ops.linear_backward": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            12
+          ],
+          "text": "dY.sum"
+        }
+      ]
+    },
+    "ops.linear_forward": {
+      "calls": [],
+      "unresolved": []
+    },
+    "ops.perplexity": {
+      "calls": [],
+      "unresolved": []
+    },
+    "ops.relu_backward": {
+      "calls": [],
+      "unresolved": []
+    },
+    "ops.relu_forward": {
+      "calls": [],
+      "unresolved": []
+    },
+    "ops.softmax_backward": {
+      "calls": [],
+      "unresolved": []
+    },
+    "ops.softmax_forward": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            24
+          ],
+          "text": "e.sum"
+        }
+      ]
+    },
+    "ops.xavier_uniform": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            5
+          ],
+          "text": "rng.uniform"
+        }
+      ]
+    },
+    "optim.Adam.__init__": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            8,
+            9
+          ],
+          "text": "params.items"
+        }
+      ]
+    },
+    "optim.Adam.step": {
+      "calls": [],
+      "unresolved": []
+    },
+    "optim.clip_grad_norm": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            43
+          ],
+          "text": "(grads[k] ** 2).sum"
+        }
+      ]
+    },
+    "optim.lr_schedule": {
+      "calls": [],
+      "unresolved": []
+    },
+    "talk.<module>": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            30
+          ],
+          "target": "talk.main"
+        }
+      ],
+      "unresolved": []
+    },
+    "talk.main": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            8
+          ],
+          "target": "checkpoint.load_checkpoint"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            24
+          ],
+          "target": "generate.generate"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            27
+          ],
+          "target": "tokenizer.Tokenizer.decode"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            22
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            19
+          ],
+          "text": "prompt.strip"
+        }
+      ]
+    },
+    "tokenizer.Tokenizer.__init__": {
+      "calls": [],
+      "unresolved": []
+    },
+    "tokenizer.Tokenizer.decode": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            95
+          ],
+          "text": "tokens.append"
+        }
+      ]
+    },
+    "tokenizer.Tokenizer.encode": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            88
+          ],
+          "target": "tokenizer.apply_merges"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            89
+          ],
+          "text": "ids.append"
+        },
+        {
+          "lines": [
+            89
+          ],
+          "text": "self.stoi.get"
+        }
+      ]
+    },
+    "tokenizer.apply_merges": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            70
+          ],
+          "target": "tokenizer.merge_tokens"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            66
+          ],
+          "text": "PRE_TOKEN_RE.findall"
+        },
+        {
+          "lines": [
+            71
+          ],
+          "text": "result.extend"
+        }
+      ]
+    },
+    "tokenizer.build_tokenizer": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            119
+          ],
+          "target": "tokenizer.Tokenizer"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            119
+          ],
+          "target": "tokenizer.Tokenizer.__init__"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            100
+          ],
+          "target": "tokenizer.train_bpe_on_text"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            108,
+            113
+          ],
+          "text": "itos.append"
+        },
+        {
+          "lines": [
+            107,
+            112
+          ],
+          "text": "seen.add"
+        }
+      ]
+    },
+    "tokenizer.count_words": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            8
+          ],
+          "text": "PRE_TOKEN_RE.findall"
+        },
+        {
+          "lines": [
+            9
+          ],
+          "text": "counts.get"
+        }
+      ]
+    },
+    "tokenizer.merge_tokens": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            17,
+            20
+          ],
+          "text": "result.append"
+        }
+      ]
+    },
+    "tokenizer.train_bpe": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            57
+          ],
+          "target": "tokenizer.merge_tokens"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            59
+          ],
+          "text": "merges.append"
+        },
+        {
+          "lines": [
+            38
+          ],
+          "text": "pair_freq.get"
+        }
+      ]
+    },
+    "tokenizer.train_bpe_on_text": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            77
+          ],
+          "target": "tokenizer.count_words"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            77
+          ],
+          "target": "tokenizer.train_bpe"
+        }
+      ],
+      "unresolved": []
+    },
+    "train.<module>": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            85
+          ],
+          "target": "train.main"
+        }
+      ],
+      "unresolved": []
+    },
+    "train.batch_loss_and_grads": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            18
+          ],
+          "target": "transformer.loss_and_grads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            14
+          ],
+          "text": "params.items"
+        }
+      ]
+    },
+    "train.main": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            78
+          ],
+          "target": "checkpoint.save_checkpoint"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            42
+          ],
+          "target": "data.encode_corpus"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            60
+          ],
+          "target": "data.iterate_batches"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            40
+          ],
+          "target": "data.load_corpus"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            44,
+            45
+          ],
+          "target": "data.make_windows"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            43
+          ],
+          "target": "data.split_ids"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            73
+          ],
+          "target": "generate.generate"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            71
+          ],
+          "target": "ops.perplexity"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            51
+          ],
+          "target": "optim.Adam"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            51
+          ],
+          "target": "optim.Adam.__init__"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            66
+          ],
+          "target": "optim.Adam.step"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            62
+          ],
+          "target": "optim.clip_grad_norm"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            64
+          ],
+          "target": "optim.lr_schedule"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            75
+          ],
+          "target": "tokenizer.Tokenizer.decode"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            41
+          ],
+          "target": "tokenizer.build_tokenizer"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            61
+          ],
+          "target": "train.batch_loss_and_grads"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            70
+          ],
+          "target": "train.validation_loss"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            48
+          ],
+          "target": "transformer.ModelConfig"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            50
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": []
+    },
+    "train.validation_loss": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            31
+          ],
+          "target": "ops.cross_entropy_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            30
+          ],
+          "target": "transformer.forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            29
+          ],
+          "text": "inputs.to_numpy"
+        },
+        {
+          "lines": [
+            32
+          ],
+          "text": "losses.append"
+        },
+        {
+          "lines": [
+            29
+          ],
+          "text": "targets.to_numpy"
+        }
+      ]
+    },
+    "transformer.attention_backward": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            100
+          ],
+          "target": "ops.softmax_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            103
+          ],
+          "target": "transformer.merge_heads"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            97
+          ],
+          "target": "transformer.split_heads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            98
+          ],
+          "text": "c[\"A\"].transpose"
+        },
+        {
+          "lines": [
+            99
+          ],
+          "text": "c[\"Vh\"].transpose"
+        },
+        {
+          "lines": [
+            107
+          ],
+          "text": "dM.sum"
+        },
+        {
+          "lines": [
+            96
+          ],
+          "text": "dOut.sum"
+        },
+        {
+          "lines": [
+            102
+          ],
+          "text": "dS.transpose"
+        }
+      ]
+    },
+    "transformer.attention_forward": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            83
+          ],
+          "target": "ops.softmax_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            84
+          ],
+          "target": "transformer.merge_heads"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            79
+          ],
+          "target": "transformer.split_heads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            81
+          ],
+          "text": "Kh.transpose"
+        }
+      ]
+    },
+    "transformer.block_backward": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            144,
+            149
+          ],
+          "target": "ops.layer_norm_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            148
+          ],
+          "target": "transformer.attention_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            143
+          ],
+          "target": "transformer.ffn_backward"
+        }
+      ],
+      "unresolved": []
+    },
+    "transformer.block_forward": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            133,
+            136
+          ],
+          "target": "ops.layer_norm_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            134
+          ],
+          "target": "transformer.attention_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            137
+          ],
+          "target": "transformer.ffn_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "transformer.count_params": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            45
+          ],
+          "text": "params.values"
+        }
+      ]
+    },
+    "transformer.embed_backward": {
+      "calls": [],
+      "unresolved": []
+    },
+    "transformer.embed_forward": {
+      "calls": [],
+      "unresolved": []
+    },
+    "transformer.ffn_backward": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            119,
+            123
+          ],
+          "target": "ops.linear_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            122
+          ],
+          "target": "ops.relu_backward"
+        }
+      ],
+      "unresolved": []
+    },
+    "transformer.ffn_forward": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            114
+          ],
+          "target": "ops.relu_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "transformer.forward": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            165
+          ],
+          "target": "ops.layer_norm_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            162
+          ],
+          "target": "transformer.block_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            158
+          ],
+          "target": "transformer.embed_forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            163
+          ],
+          "text": "block_caches.append"
+        }
+      ]
+    },
+    "transformer.init_params": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            21,
+            22,
+            32,
+            36,
+            37,
+            40
+          ],
+          "target": "ops.xavier_uniform"
+        }
+      ],
+      "unresolved": []
+    },
+    "transformer.loss_and_grads": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            175
+          ],
+          "target": "ops.cross_entropy_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            173
+          ],
+          "target": "ops.cross_entropy_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            181
+          ],
+          "target": "ops.layer_norm_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            176
+          ],
+          "target": "ops.linear_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            187
+          ],
+          "target": "transformer.block_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            188
+          ],
+          "target": "transformer.embed_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            172
+          ],
+          "target": "transformer.forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            174
+          ],
+          "text": "params.items"
+        }
+      ]
+    },
+    "transformer.merge_heads": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            67
+          ],
+          "text": "Mh.transpose"
+        },
+        {
+          "lines": [
+            67
+          ],
+          "text": "Mh.transpose(1, 0, 2).reshape"
+        }
+      ]
+    },
+    "transformer.split_heads": {
+      "calls": [],
+      "unresolved": [
+        {
+          "lines": [
+            62
+          ],
+          "text": "M.reshape"
+        },
+        {
+          "lines": [
+            62
+          ],
+          "text": "M.reshape(T, H, d // H).transpose"
+        }
+      ]
+    }
+  },
+  "tests": {
+    "tests.test_checkpoint.saved": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            20
+          ],
+          "target": "checkpoint.save_checkpoint"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            15
+          ],
+          "target": "tokenizer.build_tokenizer"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            16
+          ],
+          "target": "transformer.ModelConfig"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            18
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_checkpoint.test_config_round_trips": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            32
+          ],
+          "target": "checkpoint.load_checkpoint"
+        },
+        {
+          "kind": "fixture",
+          "lines": [
+            30
+          ],
+          "target": "tests.test_checkpoint.saved"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_checkpoint.test_loaded_model_gives_identical_logits": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            57
+          ],
+          "target": "checkpoint.load_checkpoint"
+        },
+        {
+          "kind": "fixture",
+          "lines": [
+            55
+          ],
+          "target": "tests.test_checkpoint.saved"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            58
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            59,
+            60
+          ],
+          "target": "transformer.forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_checkpoint.test_non_ascii_characters_survive": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            69
+          ],
+          "target": "checkpoint.load_checkpoint"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            68
+          ],
+          "target": "checkpoint.save_checkpoint"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            70
+          ],
+          "target": "tokenizer.Tokenizer.decode"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            70
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            65
+          ],
+          "target": "tokenizer.build_tokenizer"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            66
+          ],
+          "target": "transformer.ModelConfig"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            68
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_checkpoint.test_save_creates_the_three_files": {
+      "calls": [
+        {
+          "kind": "fixture",
+          "lines": [
+            24
+          ],
+          "target": "tests.test_checkpoint.saved"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            27
+          ],
+          "text": "open(prefix + ext, \"rb\").read"
+        }
+      ]
+    },
+    "tests.test_checkpoint.test_tok_file_is_plain_json": {
+      "calls": [
+        {
+          "kind": "fixture",
+          "lines": [
+            73
+          ],
+          "target": "tests.test_checkpoint.saved"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_checkpoint.test_tokenizer_round_trips": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            45
+          ],
+          "target": "checkpoint.load_checkpoint"
+        },
+        {
+          "kind": "fixture",
+          "lines": [
+            43
+          ],
+          "target": "tests.test_checkpoint.saved"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            51
+          ],
+          "target": "tokenizer.Tokenizer.decode"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            50,
+            51,
+            52
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_checkpoint.test_weights_round_trip_exactly": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            37
+          ],
+          "target": "checkpoint.load_checkpoint"
+        },
+        {
+          "kind": "fixture",
+          "lines": [
+            35
+          ],
+          "target": "tests.test_checkpoint.saved"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            38
+          ],
+          "text": "loaded.keys"
+        },
+        {
+          "lines": [
+            38
+          ],
+          "text": "params.keys"
+        }
+      ]
+    },
+    "tests.test_data.test_batches_cover_every_window_once": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            52
+          ],
+          "target": "data.iterate_batches"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            49
+          ],
+          "target": "data.make_windows"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            54
+          ],
+          "text": "(yb[:, :-1] == xb[:, 1:]).all"
+        },
+        {
+          "lines": [
+            55
+          ],
+          "text": "seen.extend"
+        },
+        {
+          "lines": [
+            56
+          ],
+          "text": "sizes.append"
+        },
+        {
+          "lines": [
+            55
+          ],
+          "text": "xb[:, 0].tolist"
+        }
+      ]
+    },
+    "tests.test_data.test_load_corpus_joins_rows_and_skips_missing": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            70
+          ],
+          "target": "data.load_corpus"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            69
+          ],
+          "text": "pd.DataFrame({\"text\": [\" hello \", None, \"world\"]}).to_csv"
+        }
+      ]
+    },
+    "tests.test_data.test_load_corpus_respects_max_rows": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            76
+          ],
+          "target": "data.load_corpus"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            75
+          ],
+          "text": "pd.DataFrame({\"text\": [\"a\", \"b\", \"c\"]}).to_csv"
+        }
+      ]
+    },
+    "tests.test_data.test_load_corpus_wrong_column_raises": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            83
+          ],
+          "target": "data.load_corpus"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            81
+          ],
+          "text": "pd.DataFrame({\"body\": [\"a\"]}).to_csv"
+        }
+      ]
+    },
+    "tests.test_data.test_no_shuffle_keeps_order": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            63
+          ],
+          "target": "data.iterate_batches"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            62
+          ],
+          "target": "data.make_windows"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            64
+          ],
+          "text": "first[:, 0].tolist"
+        }
+      ]
+    },
+    "tests.test_data.test_split_is_contiguous_and_disjoint": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            36
+          ],
+          "target": "data.split_ids"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_data.test_stride_skips_windows": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            25
+          ],
+          "target": "data.make_windows"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            26
+          ],
+          "text": "x.to_numpy"
+        },
+        {
+          "lines": [
+            26
+          ],
+          "text": "x.to_numpy()[:, 0].tolist"
+        }
+      ]
+    },
+    "tests.test_data.test_targets_are_inputs_shifted_by_one": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            20
+          ],
+          "target": "data.make_windows"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            21
+          ],
+          "text": "(y.to_numpy()[:, :-1] == x.to_numpy()[:, 1:]).all"
+        },
+        {
+          "lines": [
+            21
+          ],
+          "text": "x.to_numpy"
+        },
+        {
+          "lines": [
+            21
+          ],
+          "text": "y.to_numpy"
+        }
+      ]
+    },
+    "tests.test_data.test_too_few_tokens_raises": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            31
+          ],
+          "target": "data.make_windows"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_data.test_window_counts_for_n_3000": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            44,
+            45
+          ],
+          "target": "data.make_windows"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            43
+          ],
+          "target": "data.split_ids"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_data.test_window_table_matches_hand_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            12
+          ],
+          "target": "data.make_windows"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            13
+          ],
+          "text": "x.to_numpy"
+        },
+        {
+          "lines": [
+            15
+          ],
+          "text": "x[0].tolist"
+        },
+        {
+          "lines": [
+            16
+          ],
+          "text": "x[5].tolist"
+        },
+        {
+          "lines": [
+            13
+          ],
+          "text": "y.to_numpy"
+        },
+        {
+          "lines": [
+            15
+          ],
+          "text": "y[0].tolist"
+        },
+        {
+          "lines": [
+            16
+          ],
+          "text": "y[5].tolist"
+        }
+      ]
+    },
+    "tests.test_generate.SpyRng.choice": {
+      "calls": [],
+      "unresolved": []
+    },
+    "tests.test_generate.probs_used": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            16
+          ],
+          "target": "generate.sample_next"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            15
+          ],
+          "target": "tests.test_generate.SpyRng"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_generate_length_and_range": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            65
+          ],
+          "target": "generate.generate"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            64
+          ],
+          "target": "tests.test_generate.tiny"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_generate_window_keeps_long_sequences_legal": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            73
+          ],
+          "target": "generate.generate"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            72
+          ],
+          "target": "tests.test_generate.tiny"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_greedy_generation_is_deterministic": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            80,
+            81
+          ],
+          "target": "generate.generate"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            79
+          ],
+          "target": "tests.test_generate.tiny"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_temperature_examples": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            22,
+            23,
+            24
+          ],
+          "target": "tests.test_generate.probs_used"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_temperature_zero_is_greedy": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            29
+          ],
+          "target": "generate.sample_next"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_top_k_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            35
+          ],
+          "target": "tests.test_generate.probs_used"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_top_k_one_is_greedy": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            41
+          ],
+          "target": "generate.sample_next"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.test_top_p_adapts_to_confidence": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            53,
+            54
+          ],
+          "target": "tests.test_generate.probs_used"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            53
+          ],
+          "text": "(probs_used(confident, top_p=0.9) > 0).sum"
+        },
+        {
+          "lines": [
+            54
+          ],
+          "text": "(probs_used(unsure, top_p=0.9) > 0).sum"
+        }
+      ]
+    },
+    "tests.test_generate.test_top_p_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            47
+          ],
+          "target": "tests.test_generate.probs_used"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_generate.tiny": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            58
+          ],
+          "target": "transformer.ModelConfig"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            60
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_gradcheck.test_every_tensor_passes": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            26
+          ],
+          "target": "gradcheck.check_params"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            23
+          ],
+          "target": "tests.test_gradcheck.tiny_setup"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            24,
+            25
+          ],
+          "target": "transformer.loss_and_grads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            28
+          ],
+          "text": "name.endswith"
+        },
+        {
+          "lines": [
+            27
+          ],
+          "text": "worst.items"
+        }
+      ]
+    },
+    "tests.test_gradcheck.test_key_bias_gradient_is_zero": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            36
+          ],
+          "target": "tests.test_gradcheck.tiny_setup"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            37
+          ],
+          "target": "transformer.loss_and_grads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            39
+          ],
+          "text": "np.abs(grads[f\"b{l}.bk\"]).max"
+        }
+      ]
+    },
+    "tests.test_gradcheck.test_numerical_grad_on_quadratic": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            18
+          ],
+          "target": "gradcheck.numerical_grad"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            18
+          ],
+          "text": "(v ** 2).sum"
+        }
+      ]
+    },
+    "tests.test_gradcheck.tiny_setup": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            7
+          ],
+          "target": "transformer.ModelConfig"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            10
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            11,
+            12
+          ],
+          "text": "rng.integers"
+        }
+      ]
+    },
+    "tests.test_ops.test_cross_entropy_extreme_logits_no_nan": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            65
+          ],
+          "target": "ops.cross_entropy_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_ops.test_cross_entropy_is_mean_over_positions": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            59
+          ],
+          "target": "ops.cross_entropy_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            57
+          ],
+          "target": "ops.cross_entropy_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_ops.test_cross_entropy_worked_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            50
+          ],
+          "target": "ops.cross_entropy_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            48
+          ],
+          "target": "ops.cross_entropy_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_ops.test_layer_norm_worked_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            75
+          ],
+          "target": "ops.layer_norm_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            73
+          ],
+          "target": "ops.layer_norm_forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            77
+          ],
+          "text": "dx.sum"
+        }
+      ]
+    },
+    "tests.test_ops.test_linear_worked_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            16
+          ],
+          "target": "ops.linear_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            15
+          ],
+          "target": "ops.linear_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_ops.test_perplexity_of_uniform_is_vocab_size": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            88
+          ],
+          "target": "ops.perplexity"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_ops.test_relu": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            25
+          ],
+          "target": "ops.relu_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            24
+          ],
+          "target": "ops.relu_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_ops.test_softmax_backward_rows_sum_to_zero": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            40
+          ],
+          "target": "ops.softmax_backward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            38
+          ],
+          "target": "ops.softmax_forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            41
+          ],
+          "text": "dz.sum"
+        }
+      ]
+    },
+    "tests.test_ops.test_softmax_values_and_stability": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            29,
+            31
+          ],
+          "target": "ops.softmax_forward"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            33
+          ],
+          "text": "big.sum"
+        },
+        {
+          "lines": [
+            32
+          ],
+          "text": "np.isnan(big).any"
+        }
+      ]
+    },
+    "tests.test_ops.test_xavier_bound": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            82
+          ],
+          "target": "ops.xavier_uniform"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            84
+          ],
+          "text": "np.abs(W).max"
+        }
+      ]
+    },
+    "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            20
+          ],
+          "target": "optim.Adam"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            20
+          ],
+          "target": "optim.Adam.__init__"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            20
+          ],
+          "target": "optim.Adam.step"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_optim.test_adam_two_step_hand_trace": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            9
+          ],
+          "target": "optim.Adam"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            9
+          ],
+          "target": "optim.Adam.__init__"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            10,
+            12
+          ],
+          "target": "optim.Adam.step"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_optim.test_clip_leaves_small_gradients_alone": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            48
+          ],
+          "target": "optim.clip_grad_norm"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_optim.test_clip_rescales_all_tensors_together": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            40
+          ],
+          "target": "optim.clip_grad_norm"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            43
+          ],
+          "text": "(g ** 2).sum"
+        },
+        {
+          "lines": [
+            43
+          ],
+          "text": "grads.values"
+        }
+      ]
+    },
+    "tests.test_optim.test_lr_schedule_values": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            34
+          ],
+          "target": "optim.lr_schedule"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_optim.test_weight_decay_only_touches_matrices": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            27
+          ],
+          "target": "optim.Adam"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            27
+          ],
+          "target": "optim.Adam.__init__"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            27
+          ],
+          "target": "optim.Adam.step"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            26
+          ],
+          "text": "params.items"
+        }
+      ]
+    },
+    "tests.test_tokenizer.test_count_words_splits_words_spaces_punctuation": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            11
+          ],
+          "target": "tokenizer.count_words"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.test_first_three_merges_match_hand_trace": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            24
+          ],
+          "target": "tokenizer.train_bpe_on_text"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.test_merge_tokens_overlap_is_left_to_right": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            20
+          ],
+          "target": "tokenizer.merge_tokens"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.test_merge_tokens_simple": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            15
+          ],
+          "target": "tokenizer.merge_tokens"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.test_no_characters_dropped": {
+      "calls": [
+        {
+          "kind": "fixture",
+          "lines": [
+            38
+          ],
+          "target": "tests.test_tokenizer.tok"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            39
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.test_round_trip": {
+      "calls": [
+        {
+          "kind": "fixture",
+          "lines": [
+            49
+          ],
+          "target": "tests.test_tokenizer.tok"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            50
+          ],
+          "target": "tokenizer.Tokenizer.decode"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            50
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.test_unk_is_id_zero": {
+      "calls": [
+        {
+          "kind": "fixture",
+          "lines": [
+            34
+          ],
+          "target": "tests.test_tokenizer.tok"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.test_unseen_character_becomes_unk": {
+      "calls": [
+        {
+          "kind": "fixture",
+          "lines": [
+            44
+          ],
+          "target": "tests.test_tokenizer.tok"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            45
+          ],
+          "target": "tokenizer.Tokenizer.encode"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_tokenizer.tok": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            31
+          ],
+          "target": "tokenizer.build_tokenizer"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_transformer.test_attention_weights_are_causal_and_normalised": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            67
+          ],
+          "target": "tests.test_transformer.tiny_cfg"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            70
+          ],
+          "target": "transformer.attention_forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            68
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            73
+          ],
+          "text": "A.sum"
+        },
+        {
+          "lines": [
+            69
+          ],
+          "text": "np.random.default_rng(1).normal"
+        }
+      ]
+    },
+    "tests.test_transformer.test_embedding_backward_sums_repeated_ids": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            41
+          ],
+          "target": "transformer.embed_backward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_transformer.test_embedding_worked_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            34
+          ],
+          "target": "transformer.embed_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_transformer.test_ffn_worked_example": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            53
+          ],
+          "target": "transformer.ffn_forward"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            78
+          ],
+          "target": "tests.test_transformer.tiny_cfg"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            83,
+            84
+          ],
+          "target": "transformer.forward"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            79
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            81
+          ],
+          "text": "a.copy"
+        }
+      ]
+    },
+    "tests.test_transformer.test_grads_have_the_shape_of_params": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            90
+          ],
+          "target": "tests.test_transformer.tiny_cfg"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            92
+          ],
+          "target": "transformer.init_params"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            93
+          ],
+          "target": "transformer.loss_and_grads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            94
+          ],
+          "text": "grads.keys"
+        },
+        {
+          "lines": [
+            94
+          ],
+          "text": "params.keys"
+        },
+        {
+          "lines": [
+            93
+          ],
+          "text": "rng.integers"
+        }
+      ]
+    },
+    "tests.test_transformer.test_initial_loss_is_close_to_ln_vocab": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            23
+          ],
+          "target": "transformer.ModelConfig"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            25
+          ],
+          "target": "transformer.init_params"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            27
+          ],
+          "target": "transformer.loss_and_grads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            26
+          ],
+          "text": "rng.integers"
+        }
+      ]
+    },
+    "tests.test_transformer.test_overfit_one_window": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            104
+          ],
+          "target": "optim.Adam"
+        },
+        {
+          "kind": "instantiate",
+          "lines": [
+            104
+          ],
+          "target": "optim.Adam.__init__"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            107
+          ],
+          "target": "optim.Adam.step"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            100
+          ],
+          "target": "tests.test_transformer.tiny_cfg"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            102
+          ],
+          "target": "transformer.init_params"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            106
+          ],
+          "target": "transformer.loss_and_grads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            103
+          ],
+          "text": "rng.integers"
+        }
+      ]
+    },
+    "tests.test_transformer.test_param_count_matches_formula": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            17
+          ],
+          "target": "transformer.ModelConfig"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            19
+          ],
+          "target": "transformer.count_params"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            18
+          ],
+          "target": "transformer.init_params"
+        }
+      ],
+      "unresolved": []
+    },
+    "tests.test_transformer.test_split_merge_heads_round_trip": {
+      "calls": [
+        {
+          "kind": "call",
+          "lines": [
+            63
+          ],
+          "target": "transformer.merge_heads"
+        },
+        {
+          "kind": "call",
+          "lines": [
+            61
+          ],
+          "target": "transformer.split_heads"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            60
+          ],
+          "text": "np.arange(24, dtype=float).reshape"
+        }
+      ]
+    },
+    "tests.test_transformer.tiny_cfg": {
+      "calls": [
+        {
+          "kind": "instantiate",
+          "lines": [
+            12
+          ],
+          "target": "transformer.ModelConfig"
+        }
+      ],
+      "unresolved": [
+        {
+          "lines": [
+            11
+          ],
+          "text": "base.update"
+        }
+      ]
+    }
+  },
+  "usedBy": {
+    "checkpoint.load_checkpoint": {
+      "production": [
+        "talk.main"
+      ],
+      "tests": [
+        "tests.test_checkpoint.test_config_round_trips",
+        "tests.test_checkpoint.test_loaded_model_gives_identical_logits",
+        "tests.test_checkpoint.test_non_ascii_characters_survive",
+        "tests.test_checkpoint.test_tokenizer_round_trips",
+        "tests.test_checkpoint.test_weights_round_trip_exactly"
+      ]
+    },
+    "checkpoint.save_checkpoint": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_checkpoint.saved",
+        "tests.test_checkpoint.test_non_ascii_characters_survive"
+      ]
+    },
+    "data.encode_corpus": {
+      "production": [
+        "train.main"
+      ],
+      "tests": []
+    },
+    "data.iterate_batches": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_data.test_batches_cover_every_window_once",
+        "tests.test_data.test_no_shuffle_keeps_order"
+      ]
+    },
+    "data.load_corpus": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_data.test_load_corpus_joins_rows_and_skips_missing",
+        "tests.test_data.test_load_corpus_respects_max_rows",
+        "tests.test_data.test_load_corpus_wrong_column_raises"
+      ]
+    },
+    "data.make_windows": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_data.test_batches_cover_every_window_once",
+        "tests.test_data.test_no_shuffle_keeps_order",
+        "tests.test_data.test_stride_skips_windows",
+        "tests.test_data.test_targets_are_inputs_shifted_by_one",
+        "tests.test_data.test_too_few_tokens_raises",
+        "tests.test_data.test_window_counts_for_n_3000",
+        "tests.test_data.test_window_table_matches_hand_example"
+      ]
+    },
+    "data.split_ids": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_data.test_split_is_contiguous_and_disjoint",
+        "tests.test_data.test_window_counts_for_n_3000"
+      ]
+    },
+    "generate.generate": {
+      "production": [
+        "talk.main",
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_generate.test_generate_length_and_range",
+        "tests.test_generate.test_generate_window_keeps_long_sequences_legal",
+        "tests.test_generate.test_greedy_generation_is_deterministic"
+      ]
+    },
+    "generate.sample_next": {
+      "production": [
+        "generate.generate"
+      ],
+      "tests": [
+        "tests.test_generate.probs_used",
+        "tests.test_generate.test_temperature_zero_is_greedy",
+        "tests.test_generate.test_top_k_one_is_greedy"
+      ]
+    },
+    "gradcheck.check_params": {
+      "production": [],
+      "tests": [
+        "tests.test_gradcheck.test_every_tensor_passes"
+      ]
+    },
+    "gradcheck.numerical_grad": {
+      "production": [],
+      "tests": [
+        "tests.test_gradcheck.test_numerical_grad_on_quadratic"
+      ]
+    },
+    "gradcheck.relative_error": {
+      "production": [
+        "gradcheck.check_params"
+      ],
+      "tests": []
+    },
+    "ops.cross_entropy_backward": {
+      "production": [
+        "transformer.loss_and_grads"
+      ],
+      "tests": [
+        "tests.test_ops.test_cross_entropy_is_mean_over_positions",
+        "tests.test_ops.test_cross_entropy_worked_example"
+      ]
+    },
+    "ops.cross_entropy_forward": {
+      "production": [
+        "train.validation_loss",
+        "transformer.loss_and_grads"
+      ],
+      "tests": [
+        "tests.test_ops.test_cross_entropy_extreme_logits_no_nan",
+        "tests.test_ops.test_cross_entropy_is_mean_over_positions",
+        "tests.test_ops.test_cross_entropy_worked_example"
+      ]
+    },
+    "ops.layer_norm_backward": {
+      "production": [
+        "transformer.block_backward",
+        "transformer.loss_and_grads"
+      ],
+      "tests": [
+        "tests.test_ops.test_layer_norm_worked_example"
+      ]
+    },
+    "ops.layer_norm_forward": {
+      "production": [
+        "transformer.block_forward",
+        "transformer.forward"
+      ],
+      "tests": [
+        "tests.test_ops.test_layer_norm_worked_example"
+      ]
+    },
+    "ops.linear_backward": {
+      "production": [
+        "transformer.ffn_backward",
+        "transformer.loss_and_grads"
+      ],
+      "tests": [
+        "tests.test_ops.test_linear_worked_example"
+      ]
+    },
+    "ops.linear_forward": {
+      "production": [],
+      "tests": [
+        "tests.test_ops.test_linear_worked_example"
+      ]
+    },
+    "ops.perplexity": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_ops.test_perplexity_of_uniform_is_vocab_size"
+      ]
+    },
+    "ops.relu_backward": {
+      "production": [
+        "transformer.ffn_backward"
+      ],
+      "tests": [
+        "tests.test_ops.test_relu"
+      ]
+    },
+    "ops.relu_forward": {
+      "production": [
+        "transformer.ffn_forward"
+      ],
+      "tests": [
+        "tests.test_ops.test_relu"
+      ]
+    },
+    "ops.softmax_backward": {
+      "production": [
+        "transformer.attention_backward"
+      ],
+      "tests": [
+        "tests.test_ops.test_softmax_backward_rows_sum_to_zero"
+      ]
+    },
+    "ops.softmax_forward": {
+      "production": [
+        "generate.sample_next",
+        "transformer.attention_forward"
+      ],
+      "tests": [
+        "tests.test_ops.test_softmax_backward_rows_sum_to_zero",
+        "tests.test_ops.test_softmax_values_and_stability"
+      ]
+    },
+    "ops.xavier_uniform": {
+      "production": [
+        "transformer.init_params"
+      ],
+      "tests": [
+        "tests.test_ops.test_xavier_bound"
+      ]
+    },
+    "optim.Adam": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient",
+        "tests.test_optim.test_adam_two_step_hand_trace",
+        "tests.test_optim.test_weight_decay_only_touches_matrices",
+        "tests.test_transformer.test_overfit_one_window"
+      ]
+    },
+    "optim.Adam.__init__": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient",
+        "tests.test_optim.test_adam_two_step_hand_trace",
+        "tests.test_optim.test_weight_decay_only_touches_matrices",
+        "tests.test_transformer.test_overfit_one_window"
+      ]
+    },
+    "optim.Adam.step": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient",
+        "tests.test_optim.test_adam_two_step_hand_trace",
+        "tests.test_optim.test_weight_decay_only_touches_matrices",
+        "tests.test_transformer.test_overfit_one_window"
+      ]
+    },
+    "optim.clip_grad_norm": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_optim.test_clip_leaves_small_gradients_alone",
+        "tests.test_optim.test_clip_rescales_all_tensors_together"
+      ]
+    },
+    "optim.lr_schedule": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_optim.test_lr_schedule_values"
+      ]
+    },
+    "talk.main": {
+      "production": [
+        "talk.<module>"
+      ],
+      "tests": []
+    },
+    "tests.test_checkpoint.saved": {
+      "production": [],
+      "tests": [
+        "tests.test_checkpoint.test_config_round_trips",
+        "tests.test_checkpoint.test_loaded_model_gives_identical_logits",
+        "tests.test_checkpoint.test_save_creates_the_three_files",
+        "tests.test_checkpoint.test_tok_file_is_plain_json",
+        "tests.test_checkpoint.test_tokenizer_round_trips",
+        "tests.test_checkpoint.test_weights_round_trip_exactly"
+      ]
+    },
+    "tests.test_checkpoint.test_config_round_trips": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_checkpoint.test_loaded_model_gives_identical_logits": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_checkpoint.test_non_ascii_characters_survive": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_checkpoint.test_save_creates_the_three_files": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_checkpoint.test_tok_file_is_plain_json": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_checkpoint.test_tokenizer_round_trips": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_checkpoint.test_weights_round_trip_exactly": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_batches_cover_every_window_once": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_load_corpus_joins_rows_and_skips_missing": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_load_corpus_respects_max_rows": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_load_corpus_wrong_column_raises": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_no_shuffle_keeps_order": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_split_is_contiguous_and_disjoint": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_stride_skips_windows": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_targets_are_inputs_shifted_by_one": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_too_few_tokens_raises": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_window_counts_for_n_3000": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_data.test_window_table_matches_hand_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.SpyRng": {
+      "production": [],
+      "tests": [
+        "tests.test_generate.probs_used"
+      ]
+    },
+    "tests.test_generate.SpyRng.choice": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.probs_used": {
+      "production": [],
+      "tests": [
+        "tests.test_generate.test_temperature_examples",
+        "tests.test_generate.test_top_k_example",
+        "tests.test_generate.test_top_p_adapts_to_confidence",
+        "tests.test_generate.test_top_p_example"
+      ]
+    },
+    "tests.test_generate.test_generate_length_and_range": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_generate_window_keeps_long_sequences_legal": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_greedy_generation_is_deterministic": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_temperature_examples": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_temperature_zero_is_greedy": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_top_k_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_top_k_one_is_greedy": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_top_p_adapts_to_confidence": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.test_top_p_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_generate.tiny": {
+      "production": [],
+      "tests": [
+        "tests.test_generate.test_generate_length_and_range",
+        "tests.test_generate.test_generate_window_keeps_long_sequences_legal",
+        "tests.test_generate.test_greedy_generation_is_deterministic"
+      ]
+    },
+    "tests.test_gradcheck.test_every_tensor_passes": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_gradcheck.test_key_bias_gradient_is_zero": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_gradcheck.test_numerical_grad_on_quadratic": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_gradcheck.tiny_setup": {
+      "production": [],
+      "tests": [
+        "tests.test_gradcheck.test_every_tensor_passes",
+        "tests.test_gradcheck.test_key_bias_gradient_is_zero"
+      ]
+    },
+    "tests.test_ops.test_cross_entropy_extreme_logits_no_nan": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_cross_entropy_is_mean_over_positions": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_cross_entropy_worked_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_layer_norm_worked_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_linear_worked_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_perplexity_of_uniform_is_vocab_size": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_relu": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_softmax_backward_rows_sum_to_zero": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_softmax_values_and_stability": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_ops.test_xavier_bound": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_optim.test_adam_two_step_hand_trace": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_optim.test_clip_leaves_small_gradients_alone": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_optim.test_clip_rescales_all_tensors_together": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_optim.test_lr_schedule_values": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_optim.test_weight_decay_only_touches_matrices": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_count_words_splits_words_spaces_punctuation": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_first_three_merges_match_hand_trace": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_merge_tokens_overlap_is_left_to_right": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_merge_tokens_simple": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_no_characters_dropped": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_round_trip": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_unk_is_id_zero": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.test_unseen_character_becomes_unk": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_tokenizer.tok": {
+      "production": [],
+      "tests": [
+        "tests.test_tokenizer.test_no_characters_dropped",
+        "tests.test_tokenizer.test_round_trip",
+        "tests.test_tokenizer.test_unk_is_id_zero",
+        "tests.test_tokenizer.test_unseen_character_becomes_unk"
+      ]
+    },
+    "tests.test_transformer.test_attention_weights_are_causal_and_normalised": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_embedding_backward_sums_repeated_ids": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_embedding_worked_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_ffn_worked_example": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_grads_have_the_shape_of_params": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_initial_loss_is_close_to_ln_vocab": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_overfit_one_window": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_param_count_matches_formula": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.test_split_merge_heads_round_trip": {
+      "production": [],
+      "tests": []
+    },
+    "tests.test_transformer.tiny_cfg": {
+      "production": [],
+      "tests": [
+        "tests.test_transformer.test_attention_weights_are_causal_and_normalised",
+        "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits",
+        "tests.test_transformer.test_grads_have_the_shape_of_params",
+        "tests.test_transformer.test_overfit_one_window"
+      ]
+    },
+    "tokenizer.Tokenizer": {
+      "production": [
+        "checkpoint.load_checkpoint",
+        "tokenizer.build_tokenizer"
+      ],
+      "tests": []
+    },
+    "tokenizer.Tokenizer.__init__": {
+      "production": [
+        "checkpoint.load_checkpoint",
+        "tokenizer.build_tokenizer"
+      ],
+      "tests": []
+    },
+    "tokenizer.Tokenizer.decode": {
+      "production": [
+        "talk.main",
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_checkpoint.test_non_ascii_characters_survive",
+        "tests.test_checkpoint.test_tokenizer_round_trips",
+        "tests.test_tokenizer.test_round_trip"
+      ]
+    },
+    "tokenizer.Tokenizer.encode": {
+      "production": [
+        "data.encode_corpus",
+        "talk.main"
+      ],
+      "tests": [
+        "tests.test_checkpoint.test_loaded_model_gives_identical_logits",
+        "tests.test_checkpoint.test_non_ascii_characters_survive",
+        "tests.test_checkpoint.test_tokenizer_round_trips",
+        "tests.test_tokenizer.test_no_characters_dropped",
+        "tests.test_tokenizer.test_round_trip",
+        "tests.test_tokenizer.test_unseen_character_becomes_unk"
+      ]
+    },
+    "tokenizer.apply_merges": {
+      "production": [
+        "tokenizer.Tokenizer.encode"
+      ],
+      "tests": []
+    },
+    "tokenizer.build_tokenizer": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_checkpoint.saved",
+        "tests.test_checkpoint.test_non_ascii_characters_survive",
+        "tests.test_tokenizer.tok"
+      ]
+    },
+    "tokenizer.count_words": {
+      "production": [
+        "tokenizer.train_bpe_on_text"
+      ],
+      "tests": [
+        "tests.test_tokenizer.test_count_words_splits_words_spaces_punctuation"
+      ]
+    },
+    "tokenizer.merge_tokens": {
+      "production": [
+        "tokenizer.apply_merges",
+        "tokenizer.train_bpe"
+      ],
+      "tests": [
+        "tests.test_tokenizer.test_merge_tokens_overlap_is_left_to_right",
+        "tests.test_tokenizer.test_merge_tokens_simple"
+      ]
+    },
+    "tokenizer.train_bpe": {
+      "production": [
+        "tokenizer.train_bpe_on_text"
+      ],
+      "tests": []
+    },
+    "tokenizer.train_bpe_on_text": {
+      "production": [
+        "tokenizer.build_tokenizer"
+      ],
+      "tests": [
+        "tests.test_tokenizer.test_first_three_merges_match_hand_trace"
+      ]
+    },
+    "train.batch_loss_and_grads": {
+      "production": [
+        "train.main"
+      ],
+      "tests": []
+    },
+    "train.main": {
+      "production": [
+        "train.<module>"
+      ],
+      "tests": []
+    },
+    "train.validation_loss": {
+      "production": [
+        "train.main"
+      ],
+      "tests": []
+    },
+    "transformer.ModelConfig": {
+      "production": [
+        "checkpoint.load_checkpoint",
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_checkpoint.saved",
+        "tests.test_checkpoint.test_non_ascii_characters_survive",
+        "tests.test_generate.tiny",
+        "tests.test_gradcheck.tiny_setup",
+        "tests.test_transformer.test_initial_loss_is_close_to_ln_vocab",
+        "tests.test_transformer.test_param_count_matches_formula",
+        "tests.test_transformer.tiny_cfg"
+      ]
+    },
+    "transformer.attention_backward": {
+      "production": [
+        "transformer.block_backward"
+      ],
+      "tests": []
+    },
+    "transformer.attention_forward": {
+      "production": [
+        "transformer.block_forward"
+      ],
+      "tests": [
+        "tests.test_transformer.test_attention_weights_are_causal_and_normalised"
+      ]
+    },
+    "transformer.block_backward": {
+      "production": [
+        "transformer.loss_and_grads"
+      ],
+      "tests": []
+    },
+    "transformer.block_forward": {
+      "production": [
+        "transformer.forward"
+      ],
+      "tests": []
+    },
+    "transformer.count_params": {
+      "production": [],
+      "tests": [
+        "tests.test_transformer.test_param_count_matches_formula"
+      ]
+    },
+    "transformer.embed_backward": {
+      "production": [
+        "transformer.loss_and_grads"
+      ],
+      "tests": [
+        "tests.test_transformer.test_embedding_backward_sums_repeated_ids"
+      ]
+    },
+    "transformer.embed_forward": {
+      "production": [
+        "transformer.forward"
+      ],
+      "tests": [
+        "tests.test_transformer.test_embedding_worked_example"
+      ]
+    },
+    "transformer.ffn_backward": {
+      "production": [
+        "transformer.block_backward"
+      ],
+      "tests": []
+    },
+    "transformer.ffn_forward": {
+      "production": [
+        "transformer.block_forward"
+      ],
+      "tests": [
+        "tests.test_transformer.test_ffn_worked_example"
+      ]
+    },
+    "transformer.forward": {
+      "production": [
+        "generate.generate",
+        "train.validation_loss",
+        "transformer.loss_and_grads"
+      ],
+      "tests": [
+        "tests.test_checkpoint.test_loaded_model_gives_identical_logits",
+        "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits"
+      ]
+    },
+    "transformer.init_params": {
+      "production": [
+        "train.main"
+      ],
+      "tests": [
+        "tests.test_checkpoint.saved",
+        "tests.test_checkpoint.test_non_ascii_characters_survive",
+        "tests.test_generate.tiny",
+        "tests.test_gradcheck.tiny_setup",
+        "tests.test_transformer.test_attention_weights_are_causal_and_normalised",
+        "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits",
+        "tests.test_transformer.test_grads_have_the_shape_of_params",
+        "tests.test_transformer.test_initial_loss_is_close_to_ln_vocab",
+        "tests.test_transformer.test_overfit_one_window",
+        "tests.test_transformer.test_param_count_matches_formula"
+      ]
+    },
+    "transformer.loss_and_grads": {
+      "production": [
+        "train.batch_loss_and_grads"
+      ],
+      "tests": [
+        "tests.test_gradcheck.test_every_tensor_passes",
+        "tests.test_gradcheck.test_key_bias_gradient_is_zero",
+        "tests.test_transformer.test_grads_have_the_shape_of_params",
+        "tests.test_transformer.test_initial_loss_is_close_to_ln_vocab",
+        "tests.test_transformer.test_overfit_one_window"
+      ]
+    },
+    "transformer.merge_heads": {
+      "production": [
+        "transformer.attention_backward",
+        "transformer.attention_forward"
+      ],
+      "tests": [
+        "tests.test_transformer.test_split_merge_heads_round_trip"
+      ]
+    },
+    "transformer.split_heads": {
+      "production": [
+        "transformer.attention_backward",
+        "transformer.attention_forward"
+      ],
+      "tests": [
+        "tests.test_transformer.test_split_merge_heads_round_trip"
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "branch": "main",
+  "commitDate": "2026-11-03T16:04:10+05:45",
+  "dirty": true,
+  "dirtyFiles": [
+    "data/corpus.csv"
+  ],
+  "githubBaseUrl": "https://github.com/upahar-khatiwada/Lazy-Language-Model-LLM-",
+  "sha": "c17aa75afd287dc623009168f50c4544fc1d4a32",
+  "shortSha": "c17aa75"
+}

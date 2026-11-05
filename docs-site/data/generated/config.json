@@ -1,0 +1,470 @@
+{
+  "constants": [
+    {
+      "comment": "suppose 5 tokens then theres 5x32 rows, the model can look 32 texts at once",
+      "derived": false,
+      "line": 2,
+      "name": "context_len",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 48
+        }
+      ],
+      "section": "model shape",
+      "value": 32,
+      "valueText": "32"
+    },
+    {
+      "comment": "size of the vector that flows through the entire model with same width at each layer",
+      "derived": false,
+      "line": 3,
+      "name": "emb_dim",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 48
+        }
+      ],
+      "section": "model shape",
+      "value": 32,
+      "valueText": "32"
+    },
+    {
+      "comment": "emb_dim must be divisible by this, model splits each vector into 2 halves of 16 numbers and runs attention separately",
+      "derived": false,
+      "line": 4,
+      "name": "num_heads",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 49
+        }
+      ],
+      "section": "model shape",
+      "value": 2,
+      "valueText": "2"
+    },
+    {
+      "comment": "in the feed forward step, vector is stretched from 32 to 128 temporarily to allow model compute richer things",
+      "derived": false,
+      "line": 5,
+      "name": "ff_dim",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 49
+        }
+      ],
+      "section": "model shape",
+      "value": 128,
+      "valueText": "128"
+    },
+    {
+      "comment": "number of layers of the LLM",
+      "derived": false,
+      "line": 6,
+      "name": "num_layers",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 49
+        }
+      ],
+      "section": "model shape",
+      "value": 2,
+      "valueText": "2"
+    },
+    {
+      "comment": "each training example is a 16 rows table, we cut the input corpus into pieces of 16 tokens",
+      "derived": false,
+      "line": 7,
+      "name": "seq_len",
+      "readBy": [
+        {
+          "file": "talk.py",
+          "line": 24
+        },
+        {
+          "file": "train.py",
+          "line": 44
+        },
+        {
+          "file": "train.py",
+          "line": 45
+        },
+        {
+          "file": "train.py",
+          "line": 73
+        }
+      ],
+      "section": "model shape",
+      "value": 16,
+      "valueText": "16"
+    },
+    {
+      "comment": "tiny number added inside layer norm so we never divide by zero",
+      "derived": false,
+      "line": 8,
+      "name": "ln_eps",
+      "readBy": [],
+      "section": "model shape",
+      "value": 1e-05,
+      "valueText": "1e-5"
+    },
+    {
+      "comment": "file the text is read from",
+      "derived": false,
+      "line": 11,
+      "name": "corpus_path",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 40
+        }
+      ],
+      "section": "data",
+      "value": "data/corpus.csv",
+      "valueText": "\"data/corpus.csv\""
+    },
+    {
+      "comment": "which column of the csv holds the text",
+      "derived": false,
+      "line": 12,
+      "name": "corpus_column",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 40
+        }
+      ],
+      "section": "data",
+      "value": "text",
+      "valueText": "\"text\""
+    },
+    {
+      "comment": "only read this many rows, keeps training fast",
+      "derived": false,
+      "line": 13,
+      "name": "max_rows",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 40
+        }
+      ],
+      "section": "data",
+      "value": 2000,
+      "valueText": "2000"
+    },
+    {
+      "comment": "how many times BPE glues the most common pair into a new token, more merges = bigger vocab",
+      "derived": false,
+      "line": 14,
+      "name": "num_merges",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 41
+        }
+      ],
+      "section": "data",
+      "value": 500,
+      "valueText": "500"
+    },
+    {
+      "comment": "last 10% of the token stream is kept aside to test the model on text it never trained on",
+      "derived": false,
+      "line": 15,
+      "name": "val_fraction",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 43
+        }
+      ],
+      "section": "data",
+      "value": 0.1,
+      "valueText": "0.1"
+    },
+    {
+      "comment": "how far the window slides each time, 1 = every possible window (neighbours overlap by 15 tokens)",
+      "derived": false,
+      "line": 16,
+      "name": "stride",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 44
+        },
+        {
+          "file": "train.py",
+          "line": 45
+        }
+      ],
+      "section": "data",
+      "value": 1,
+      "valueText": "1"
+    },
+    {
+      "comment": "how many windows we average the gradient over before one update",
+      "derived": false,
+      "line": 19,
+      "name": "batch_size",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 54
+        },
+        {
+          "file": "train.py",
+          "line": 60
+        }
+      ],
+      "section": "training",
+      "value": 16,
+      "valueText": "16"
+    },
+    {
+      "comment": "how many full passes over the training windows",
+      "derived": false,
+      "line": 20,
+      "name": "epochs",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 55
+        },
+        {
+          "file": "train.py",
+          "line": 59
+        }
+      ],
+      "section": "training",
+      "value": 20,
+      "valueText": "20"
+    },
+    {
+      "comment": "if the whole gradient is longer than this, shrink it to this length so one bad batch cant blow up the model",
+      "derived": false,
+      "line": 21,
+      "name": "grad_clip",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 62
+        }
+      ],
+      "section": "training",
+      "value": 1.0,
+      "valueText": "1.0"
+    },
+    {
+      "comment": "biggest learning rate, reached right after warmup",
+      "derived": false,
+      "line": 24,
+      "name": "lr_max",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 65
+        }
+      ],
+      "section": "optimizer (AdamW)",
+      "value": 0.001,
+      "valueText": "1e-3"
+    },
+    {
+      "comment": "smallest learning rate, where the cosine decay ends",
+      "derived": false,
+      "line": 25,
+      "name": "lr_min",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 65
+        }
+      ],
+      "section": "optimizer (AdamW)",
+      "value": 0.0001,
+      "valueText": "1e-4"
+    },
+    {
+      "comment": "number of steps spent ramping the learning rate up from near 0, a fresh model is fragile",
+      "derived": false,
+      "line": 26,
+      "name": "warmup_steps",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 64
+        }
+      ],
+      "section": "optimizer (AdamW)",
+      "value": 50,
+      "valueText": "50"
+    },
+    {
+      "comment": "how much of the old gradient direction Adam keeps (momentum)",
+      "derived": false,
+      "line": 27,
+      "name": "beta1",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 51
+        }
+      ],
+      "section": "optimizer (AdamW)",
+      "value": 0.9,
+      "valueText": "0.9"
+    },
+    {
+      "comment": "how much of the old squared gradient Adam keeps (typical gradient size)",
+      "derived": false,
+      "line": 28,
+      "name": "beta2",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 51
+        }
+      ],
+      "section": "optimizer (AdamW)",
+      "value": 0.999,
+      "valueText": "0.999"
+    },
+    {
+      "comment": "tiny number so Adam never divides by zero",
+      "derived": false,
+      "line": 29,
+      "name": "adam_eps",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 51
+        }
+      ],
+      "section": "optimizer (AdamW)",
+      "value": 1e-08,
+      "valueText": "1e-8"
+    },
+    {
+      "comment": "each step shrinks the weight matrices slightly, only matrices, not biases or layer norm",
+      "derived": false,
+      "line": 30,
+      "name": "weight_decay",
+      "readBy": [
+        {
+          "file": "train.py",
+          "line": 51
+        }
+      ],
+      "section": "optimizer (AdamW)",
+      "value": 0.01,
+      "valueText": "0.01"
+    },
+    {
+      "comment": "below 1 = safer and more repetitive, above 1 = more random, 0 = always pick the top token",
+      "derived": false,
+      "line": 33,
+      "name": "temperature",
+      "readBy": [
+        {
+          "file": "talk.py",
+          "line": 25
+        },
+        {
+          "file": "train.py",
+          "line": 74
+        }
+      ],
+      "section": "generation",
+      "value": 0.8,
+      "valueText": "0.8"
+    },
+    {
+      "comment": "only sample from the k most likely tokens, 0 = turned off",
+      "derived": false,
+      "line": 34,
+      "name": "top_k",
+      "readBy": [
+        {
+          "file": "talk.py",
+          "line": 25
+        },
+        {
+          "file": "train.py",
+          "line": 74
+        }
+      ],
+      "section": "generation",
+      "value": 0,
+      "valueText": "0"
+    },
+    {
+      "comment": "only sample from the smallest group of tokens whose probabilities add up to 0.9",
+      "derived": false,
+      "line": 35,
+      "name": "top_p",
+      "readBy": [
+        {
+          "file": "talk.py",
+          "line": 25
+        },
+        {
+          "file": "train.py",
+          "line": 74
+        }
+      ],
+      "section": "generation",
+      "value": 0.9,
+      "valueText": "0.9"
+    },
+    {
+      "comment": "how many tokens talk.py writes after your prompt",
+      "derived": false,
+      "line": 36,
+      "name": "max_new_tokens",
+      "readBy": [
+        {
+          "file": "talk.py",
+          "line": 24
+        }
+      ],
+      "section": "generation",
+      "value": 50,
+      "valueText": "50"
+    },
+    {
+      "comment": "fixes the random numbers so a run can be repeated exactly",
+      "derived": false,
+      "line": 39,
+      "name": "seed",
+      "readBy": [
+        {
+          "file": "talk.py",
+          "line": 9
+        },
+        {
+          "file": "train.py",
+          "line": 37
+        }
+      ],
+      "section": "misc",
+      "value": 42,
+      "valueText": "42"
+    },
+    {
+      "comment": "width of one head, 32 / 2 = 16",
+      "derived": true,
+      "line": 44,
+      "name": "head_dim",
+      "readBy": [],
+      "section": "sanity checks",
+      "value": 16,
+      "valueText": "emb_dim // num_heads"
+    }
+  ],
+  "path": "config.py"
+}
