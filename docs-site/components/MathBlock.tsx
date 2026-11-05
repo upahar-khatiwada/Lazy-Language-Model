@@ -1,17 +1,24 @@
-import katex from "katex";
+import { equationAnchor, getEquation } from "@/lib/concepts";
+import { CopyButton } from "./CopyButton";
 import styles from "./MathBlock.module.css";
+import { TexDisplay } from "./TexDisplay";
 
-// Rendered at build time, so no KaTeX JavaScript reaches the browser. `tabIndex` lets keyboard
-// users scroll a wide equation.
-export function MathBlock({ tex, label }: { tex: string; label: string }) {
-  const html = katex.renderToString(tex, { displayMode: true, throwOnError: true });
+// Takes an equation id. The equation itself lives in data/concepts.
+export function MathBlock({ id }: { id: string }) {
+  const { equation } = getEquation(id);
+  const anchor = equationAnchor(id);
   return (
-    <div
-      className={styles.math}
-      role="group"
-      aria-label={label}
-      tabIndex={0}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <figure className={styles.block} id={anchor} data-equation={id}>
+      <figcaption className={styles.chrome}>
+        <span>{equation.label}</span>
+        <span className={styles.actions}>
+          <a className={styles.anchor} href={`#${anchor}`}>
+            #<span className="visually-hidden">Link to equation: {equation.label}</span>
+          </a>
+          <CopyButton text={equation.latex} label="Copy LaTeX" />
+        </span>
+      </figcaption>
+      <TexDisplay tex={equation.latex} label={equation.label} />
+    </figure>
   );
 }

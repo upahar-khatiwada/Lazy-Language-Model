@@ -22,3 +22,8 @@
   background: var(--badge-violet-bg);
   color: var(--badge-violet-text);
 }
+
+.implemented {
+  background: var(--surface);
+  color: var(--text);
+}

@@ -1,0 +1,20 @@
+/* minmax(0, 1fr): a long code line must scroll inside its block, not widen the track. */
+.link {
+  align-items: start;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.code {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+@media (max-width: 859px) {
+  .link {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

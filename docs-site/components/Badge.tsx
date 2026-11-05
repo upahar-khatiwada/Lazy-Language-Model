@@ -4,6 +4,7 @@ const LABELS = {
   illustrative: "Illustrative Example",
   actual: "Actual Model Output",
   derived: "Derived from implementation",
+  implemented: "Implemented",
 } as const;
 
 export type BadgeKind = keyof typeof LABELS;

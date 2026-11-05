@@ -9,9 +9,18 @@ type Props = {
   // Both come from data/generated. Never pass hand-written values.
   startLine: number;
   permalink: string;
+  // Real line numbers in the file, from resolved links.
+  highlightLines?: ReadonlySet<number>;
 };
 
-export async function CodeBlock({ source, filePath, functionName, startLine, permalink }: Props) {
+export async function CodeBlock({
+  source,
+  filePath,
+  functionName,
+  startLine,
+  permalink,
+  highlightLines,
+}: Props) {
   const lines = await highlightPython(source);
   return (
     <figure className={styles.block}>
@@ -26,19 +35,28 @@ export async function CodeBlock({ source, filePath, functionName, startLine, per
         </span>
       </figcaption>
       <pre className={styles.pre} tabIndex={0} aria-label={`Source of ${filePath}`}>
-        <code>
-          {lines.map((tokens, index) => (
-            <span className={styles.line} key={index}>
-              <span className={styles.number} aria-hidden="true">
-                {startLine + index}
-              </span>
-              {tokens.map((token, tokenIndex) => (
-                <span key={tokenIndex} style={{ color: token.color }}>
-                  {token.content}
+        <code className={styles.code}>
+          {lines.map((tokens, index) => {
+            const lineNumber = startLine + index;
+            const highlighted = highlightLines?.has(lineNumber) ?? false;
+            return (
+              <span
+                className={highlighted ? `${styles.line} ${styles.highlighted}` : styles.line}
+                data-line={lineNumber}
+                data-highlighted={highlighted ? "true" : undefined}
+                key={index}
+              >
+                <span className={styles.number} aria-hidden="true">
+                  {lineNumber}
                 </span>
-              ))}
-            </span>
-          ))}
+                {tokens.map((token, tokenIndex) => (
+                  <span key={tokenIndex} style={{ color: token.color }}>
+                    {token.content}
+                  </span>
+                ))}
+              </span>
+            );
+          })}
         </code>
       </pre>
     </figure>

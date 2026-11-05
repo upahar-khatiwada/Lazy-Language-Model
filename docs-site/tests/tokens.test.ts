@@ -48,6 +48,11 @@ const TEXT_PAIRS: [string, string][] = [
   ["--syntax-number", "--code-bg"],
   ["--syntax-comment", "--code-bg"],
   ["--syntax-function", "--code-bg"],
+  // Highlighted code lines. --syntax-comment is replaced by --text there, in CodeBlock.module.css.
+  ["--syntax-keyword", "--highlight"],
+  ["--syntax-string", "--highlight"],
+  ["--syntax-number", "--highlight"],
+  ["--syntax-function", "--highlight"],
   ["--badge-amber-text", "--badge-amber-bg"],
   ["--badge-green-text", "--badge-green-bg"],
   ["--badge-violet-text", "--badge-violet-bg"],

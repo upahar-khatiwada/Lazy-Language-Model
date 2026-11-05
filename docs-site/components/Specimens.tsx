@@ -5,10 +5,10 @@ import { Button, buttonClass } from "./Button";
 import { Callout } from "./Callout";
 import { CodeBlock } from "./CodeBlock";
 import { DataTable } from "./DataTable";
-import { MathBlock } from "./MathBlock";
 import { SearchField } from "./SearchField";
 import { SidebarItem } from "./SidebarItem";
 import styles from "./Specimens.module.css";
+import { TexDisplay } from "./TexDisplay";
 
 const COLOUR_TOKENS = [
   "--bg",
@@ -117,6 +117,7 @@ export function Specimens({ theme }: { theme: "light" | "dark" }) {
           <Badge kind="illustrative" />
           <Badge kind="actual" />
           <Badge kind="derived" />
+          <Badge kind="implemented" />
         </div>
       </Section>
 
@@ -165,7 +166,7 @@ export function Specimens({ theme }: { theme: "light" | "dark" }) {
 
       <Section title="Math block">
         <p className={styles.muted}>Typography specimen only. This is not model mathematics.</p>
-        <MathBlock
+        <TexDisplay
           label="Typography specimen"
           tex={String.raw`\sum_{i=1}^{n} \frac{a_i^2}{\sqrt{b_i}} = \begin{bmatrix} x & y \\ z & w \end{bmatrix}`}
         />

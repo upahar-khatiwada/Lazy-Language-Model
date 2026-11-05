@@ -2,7 +2,6 @@
   background: var(--code-bg);
   border: var(--border-width) solid var(--line);
   border-radius: var(--radius);
-  margin: 0;
 
   --shiki-foreground: var(--text);
   --shiki-background: var(--code-bg);
@@ -54,11 +53,30 @@
   padding: var(--space-3) 0;
 }
 
+/* Every line takes the width of the longest one, so a highlight still fills it while scrolling. */
+.code {
+  display: inline-block;
+  min-width: 100%;
+}
+
 .line {
   display: block;
   min-height: 1.65em;
   min-width: max-content;
   padding-right: var(--space-4);
+}
+
+/* The inset bar is the non-colour cue for a highlighted line. */
+.highlighted {
+  background: var(--highlight);
+  box-shadow: inset 3px 0 0 var(--highlight-line);
+
+  /* --syntax-comment does not reach AA on --highlight in the dark theme (3.03:1). */
+  --shiki-token-comment: var(--text);
+}
+
+.highlighted .number {
+  color: var(--text);
 }
 
 .number {

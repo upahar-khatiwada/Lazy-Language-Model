@@ -18,6 +18,9 @@ Requires Bun, Node.js and Python 3 on `PATH`. Next.js does not build on Bun's `n
 | `bun run test:e2e`         | Run Playwright against `out/`. Needs a build and `bunx playwright install chromium` |
 | `bun run sync:repo`        | Regenerate `data/generated/` from the repository                                    |
 | `bun run verify:generated` | Fail if `data/generated/` is stale or was edited by hand                            |
+| `bun run verify:links`     | Fail if concepts, links or pipelines no longer match the code. `build` runs this    |
+| `bun run sync:examples`    | Run repository functions and write `data/golden/examples.json`. Needs NumPy         |
+| `bun run verify:examples`  | Fail if the stored example numbers differ from a fresh run. Needs NumPy             |
 | `bun run verify:content`   | Stub: not implemented yet                                                           |
 
 To build for GitHub Pages, set the base path first:
@@ -30,25 +33,36 @@ Git Bash on Windows rewrites a value starting with `/` into a Windows path, whic
 
 ## Folders
 
-| Path              | Contents                                                      |
-| ----------------- | ------------------------------------------------------------- |
-| `app/`            | Next.js routes                                                |
-| `components/`     | React components                                              |
-| `styles/`         | `tokens.css` holds every colour literal; `base.css` is global |
-| `content/`        | MDX pages at `content/<slug>.mdx`, with frontmatter           |
-| `data/nav.ts`     | Navigation tree. A page is disabled until its MDX file exists |
-| `data/concepts/`  | Hand-written structured concept data                          |
-| `data/links/`     | Hand-written structured link data                             |
-| `data/generated/` | Machine-generated repository facts. Never edit by hand        |
-| `data/golden/`    | Golden reference data                                         |
-| `lib/`            | Shared code. `lib/repo.ts` loads and validates generated data |
-| `scripts/`        | Extraction and verification scripts                           |
-| `tests/`          | Vitest tests; Playwright tests are in `tests/e2e/`            |
-| `contract/`       | Repository inventories, architecture and discrepancies        |
+| Path              | Contents                                                       |
+| ----------------- | -------------------------------------------------------------- |
+| `app/`            | Next.js routes                                                 |
+| `components/`     | React components                                               |
+| `styles/`         | `tokens.css` holds every colour literal; `base.css` is global  |
+| `content/`        | MDX pages at `content/<slug>.mdx`, with frontmatter            |
+| `data/nav.ts`     | Navigation tree. A page is disabled until its MDX file exists  |
+| `data/concepts/`  | Hand-written structured concept data                           |
+| `data/links/`     | Hand-written structured link data                              |
+| `data/generated/` | Machine-generated repository facts. Never edit by hand         |
+| `data/pipelines/` | Hand-written data for pipeline diagrams                        |
+| `data/golden/`    | Numbers computed by running the repository. Never edit by hand |
+| `lib/`            | Shared code. `lib/repo.ts` loads and validates generated data  |
+| `scripts/`        | Extraction and verification scripts                            |
+| `tests/`          | Vitest tests; Playwright tests are in `tests/e2e/`             |
+| `contract/`       | Repository inventories, architecture and discrepancies         |
 
 ## Design system
 
 `/design` is a hidden style guide that renders every element in both themes. It is not in the navigation and is marked `noindex`. Components take colours from the tokens in `styles/tokens.css` only; `tests/tokens.test.ts` enforces that and checks WCAG AA contrast.
+
+The hidden page `/design/components/` renders every documentation component from the sample concept `ops.softmax_forward`. Its source is `content/_samples/softmax-forward.mdx`. Folders in `content/` starting with `_` get no route of their own.
+
+## Concepts and links
+
+Pages reference data by id, for example `<MathBlock id="softmax.shift" />`. Equations, symbols, shapes and examples live in `data/concepts/*.yaml`. `data/links/*.yaml` ties each equation to code by `file`, `symbol` and `match`, with `regex` and `occurrence` when needed.
+
+Never store a line number. Lines are resolved at build time from `code-index.json`, and the schemas reject line-number keys. `verify:links` fails if a symbol does not exist, a match is not found, a match is ambiguous without an `occurrence`, or an equation has no link to code.
+
+An example declares its input and which local variables to capture. `sync:examples` runs the real function and stores the values. Every `<NumericExample>` needs a `kind` that agrees with the data.
 
 ## Generated data
 

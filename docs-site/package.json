@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bun run verify:links && next build",
     "start": "python -m http.server 3000 --bind 127.0.0.1 --directory out",
     "lint": "eslint . && prettier --check .",
     "typecheck": "tsc --noEmit",
@@ -12,6 +12,9 @@
     "test:e2e": "playwright test",
     "sync:repo": "python -B scripts/extract_repo.py",
     "verify:generated": "python -B scripts/verify_generated.py",
+    "verify:links": "bun scripts/verify_links.ts",
+    "sync:examples": "bun scripts/sync_examples.ts",
+    "verify:examples": "bun scripts/sync_examples.ts --check",
     "verify:content": "bun scripts/verify_content.ts"
   },
   "dependencies": {
@@ -26,6 +29,7 @@
     "remark-gfm": "4.0.1",
     "shiki": "4.6.0",
     "unist-util-visit": "5.2.0",
+    "yaml": "2.9.1",
     "zod": "4.6.7"
   },
   "devDependencies": {

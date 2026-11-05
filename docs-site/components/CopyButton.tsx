@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "./Button";
 
-export function CopyButton({ text }: { text: string }) {
+export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   async function copy() {
@@ -18,7 +18,7 @@ export function CopyButton({ text }: { text: string }) {
 
   return (
     <Button onClick={copy} aria-live="polite">
-      {status === "idle" ? "Copy" : status === "copied" ? "Copied" : "Copy failed"}
+      {status === "idle" ? label : status === "copied" ? "Copied" : "Copy failed"}
     </Button>
   );
 }

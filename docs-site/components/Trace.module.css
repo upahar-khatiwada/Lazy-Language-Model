@@ -1,0 +1,43 @@
+.trace {
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+}
+
+.row {
+  display: grid;
+  gap: var(--space-1) var(--space-4);
+  grid-template-columns: 130px minmax(0, 1fr);
+  padding: var(--space-2) var(--space-3);
+}
+
+.row + .row {
+  border-top: var(--border-width) solid var(--line);
+}
+
+.row dt {
+  font-weight: 600;
+}
+
+.row dd {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.row dd p {
+  max-width: none;
+}
+
+@media (max-width: 859px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .row dd a {
+    display: inline-block;
+    padding: var(--space-3) 0;
+  }
+}

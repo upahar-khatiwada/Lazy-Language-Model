@@ -26,9 +26,10 @@ export type LoadedPage = {
 };
 
 // Slugs use forward slashes on every platform: mathematics/tokenization.
+// Folders starting with "_" hold samples that get no route of their own and stay out of the nav.
 export function listContentSlugs(): string[] {
   return readdirSync(CONTENT_DIR, { recursive: true, encoding: "utf-8" })
-    .filter((path) => path.endsWith(".mdx"))
+    .filter((path) => path.endsWith(".mdx") && !path.split(/[\\/]/).some((p) => p.startsWith("_")))
     .map((path) =>
       relative(CONTENT_DIR, join(CONTENT_DIR, path))
         .split(sep)

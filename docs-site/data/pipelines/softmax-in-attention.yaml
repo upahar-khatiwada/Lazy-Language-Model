@@ -1,0 +1,27 @@
+id: softmax-in-attention
+title: Where softmax runs inside attention
+steps:
+  - label: Scores
+    dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: S = (Qh @ Kh.transpose(0, 2, 1)) / np.sqrt(dh)
+  - label: Causal mask
+    dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: S = np.where(np.triu(np.ones((T, T), dtype=bool), 1), -np.inf, S)
+  - label: Weights
+    dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: A = softmax_forward(S)
+  - label: Combine
+    dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: O = merge_heads(A @ Vh)

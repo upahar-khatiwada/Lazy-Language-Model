@@ -1,0 +1,21 @@
+links:
+  - equationId: softmax.shift
+    file: ops.py
+    symbol: ops.softmax_forward
+    match: e = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    role: implements
+  - equationId: softmax.normalize
+    file: ops.py
+    symbol: ops.softmax_forward
+    match: return e / e.sum(axis=-1, keepdims=True)
+    role: implements
+  - equationId: softmax.normalize
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: A = softmax_forward(S)
+    role: call
+  - equationId: softmax.normalize
+    file: generate.py
+    symbol: generate.sample_next
+    match: p = softmax_forward(logits / temperature)
+    role: call

@@ -1,0 +1,7 @@
+.math {
+  background: var(--surface);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  padding: var(--space-2) var(--space-4);
+}
