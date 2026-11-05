@@ -1,4 +1,4 @@
-import { linearForward, softmaxRows } from "./ops";
+import { linearForward, softmaxBackwardRows, softmaxRows } from "./ops";
 import { matmul, transpose, type Matrix, type Tensor3, type Vector } from "./tensor";
 
 // attention_forward computes these steps inline. They are separate here so that a page can show
@@ -74,4 +74,63 @@ export function attentionForward(Xn: Matrix, params: AttentionParams, H: number)
   const O = weightedValues(A, Vh);
   const out = linearForward(O, params.wo, params.bo);
   return { Q, K, V, Qh, Kh, Vh, raw, scaled, masked, A, O, out };
+}
+
+// Mirrors transformer.attention_backward, the sum over rows in grads[p + "bo"] and the other biases.
+function sumRows(m: Matrix): Vector {
+  return transpose(m).map((column) => column.reduce((total, value) => total + value, 0));
+}
+
+// Mirrors transformer.attention_backward. Python fills grads in place and keeps the intermediates
+// local; they are returned here so that a page can show each one. Only A, Xn, Qh, Kh, Vh and O are
+// read from the forward pass, the same entries Python reads from its cache.
+export function attentionBackward(
+  dOut: Matrix,
+  cache: { Xn: Matrix; Qh: Tensor3; Kh: Tensor3; Vh: Tensor3; A: Tensor3; O: Matrix },
+  params: AttentionParams,
+  H: number,
+) {
+  const { Xn, Qh, Kh, Vh, A, O } = cache;
+  const d = dOut[0]?.length ?? 0;
+  const root = Math.sqrt(Math.floor(d / H));
+  const divide = (m: Matrix) => m.map((row) => row.map((value) => value / root));
+
+  const wo = matmul(transpose(O), dOut);
+  const bo = sumRows(dOut);
+  const dOh = splitHeads(matmul(dOut, transpose(params.wo)), H);
+  const dVh = A.map((head, h) => matmul(transpose(head), dOh[h]!));
+  const dA = dOh.map((head, h) => matmul(head, transpose(Vh[h]!)));
+  const dS = A.map((head, h) => softmaxBackwardRows(head, dA[h]!));
+  const dQh = dS.map((head, h) => divide(matmul(head, Kh[h]!)));
+  const dKh = dS.map((head, h) => divide(matmul(transpose(head), Qh[h]!)));
+  const dQ = mergeHeads(dQh);
+  const dK = mergeHeads(dKh);
+  const dV = mergeHeads(dVh);
+
+  const dXn: Matrix = Xn.map((row) => row.map(() => 0));
+  const fromInput = (dM: Matrix, W: Matrix) => {
+    matmul(dM, transpose(W)).forEach((row, t) =>
+      row.forEach((value, c) => {
+        dXn[t]![c]! += value;
+      }),
+    );
+    return { w: matmul(transpose(Xn), dM), b: sumRows(dM) };
+  };
+  const q = fromInput(dQ, params.wq);
+  const k = fromInput(dK, params.wk);
+  const v = fromInput(dV, params.wv);
+
+  return {
+    dOh,
+    dVh,
+    dA,
+    dS,
+    dQh,
+    dKh,
+    dQ,
+    dK,
+    dV,
+    dXn,
+    grads: { wo, bo, wq: q.w, bq: q.b, wk: k.w, bk: k.b, wv: v.w, bv: v.b },
+  };
 }

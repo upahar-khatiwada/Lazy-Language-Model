@@ -1,0 +1,11 @@
+links:
+  - equationId: attention.weighted
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: A @ Vh
+    role: implements
+  - equationId: attention.weighted-row
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: A @ Vh
+    role: implements

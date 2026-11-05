@@ -1,0 +1,16 @@
+links:
+  - equationId: attention.q
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: Q = Xn @ params[p+"wq"] + params[p+"bq"]
+    role: implements
+  - equationId: attention.k
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: K = Xn @ params[p+"wk"] + params[p+"bk"]
+    role: implements
+  - equationId: attention.v
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: V = Xn @ params[p+"wv"] + params[p+"bv"]
+    role: implements

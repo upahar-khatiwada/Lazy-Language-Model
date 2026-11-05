@@ -1,0 +1,48 @@
+id: attention.scale
+title: Scaling by sqrt(d_h)
+category: attention
+inventory: [M32]
+status: implemented
+summary: >-
+  The code divides every score by the square root of d_h, on the same line as the product. S is the
+  scaled result.
+why: >-
+  In general, a dot product of d_h terms grows as d_h grows, and softmax turns large gaps between
+  scores into weights close to 0 or 1. Dividing by sqrt(d_h) keeps the size of the scores from growing
+  with the head width. This is a general explanation. Nothing in this repository measures that effect.
+equations:
+  - id: attention.scale
+    latex: S = \frac{Q_h K_h^\top}{\sqrt{d_h}}
+    role: forward
+    label: Scaled scores
+symbols:
+  - symbol: S
+    meaning: Scaled scores. The next line of code overwrites S with its masked version
+    codeName: S
+    shape: (H, T, T)
+  - symbol: \sqrt{d_h}
+    meaning: The scale. A single number, the same for every entry
+    codeName: np.sqrt(dh)
+    shape: scalar
+example: null
+shapes:
+  - id: attention-scale
+    label: Scaling divides by one number, so the shape does not change
+    stages:
+      - name: Qh @ Kh^T
+        dims: [H, T, T]
+      - name: S
+        dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: S = (Qh @ Kh.transpose(0, 2, 1)) / np.sqrt(dh)
+source:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["42"]
+  page: 10
+notes: []

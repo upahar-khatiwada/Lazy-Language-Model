@@ -1,5 +1,20 @@
 import type { MDXComponents } from "mdx/types";
 import { InitialValues, ParameterCount, ParameterTable, RepoMap } from "./ArchitectureTables";
+import {
+  ActualModelOutputSlot,
+  AttentionBackwardExample,
+  AttentionLabExample,
+  AttentionMaskExample,
+  AttentionMergeExample,
+  AttentionOutputExample,
+  AttentionProjectionExample,
+  AttentionScaleExample,
+  AttentionScoresExample,
+  AttentionShapes,
+  AttentionSoftmaxExample,
+  AttentionSplitExample,
+  AttentionWeightedExample,
+} from "./AttentionExamples";
 import { Badge } from "./Badge";
 import { BpeExample } from "./BpeExample";
 import { Callout } from "./Callout";
@@ -72,6 +87,19 @@ import { Trace } from "./Trace";
 // Only id-based components are offered for equations and code, so a page cannot inline either.
 export const mdxComponents: MDXComponents = {
   table: (props) => <DataTable {...props} />,
+  ActualModelOutputSlot,
+  AttentionBackwardExample,
+  AttentionLabExample,
+  AttentionMaskExample,
+  AttentionMergeExample,
+  AttentionOutputExample,
+  AttentionProjectionExample,
+  AttentionScaleExample,
+  AttentionScoresExample,
+  AttentionShapes,
+  AttentionSoftmaxExample,
+  AttentionSplitExample,
+  AttentionWeightedExample,
   Badge,
   BatchExample,
   BpeExample,

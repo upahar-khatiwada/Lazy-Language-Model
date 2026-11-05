@@ -1,0 +1,53 @@
+id: attention.split
+title: Splitting into heads
+category: attention
+inventory: [M30]
+status: implemented
+summary: >-
+  split_heads cuts the columns of Q, K and V into H equal blocks, one block per head. It reshapes
+  (T, d) to (T, H, d_h), then swaps the first two axes to get (H, T, d_h).
+why: >-
+  Each head computes its own scores and weights from its own block of columns. NumPy's @ works on the
+  last two axes, so with the head on the first axis, one @ runs every head at once.
+equations:
+  - id: attention.split-qkv
+    latex: Q_h,\ K_h,\ V_h = \operatorname{split}(Q, H),\ \operatorname{split}(K, H),\ \operatorname{split}(V, H)
+    role: forward
+    label: Split each matrix into heads
+symbols:
+  - symbol: H
+    meaning: Number of heads
+    codeName: H
+    shape: scalar
+  - symbol: d_h
+    meaning: Width of one head
+    codeName: dh
+    shape: scalar
+  - symbol: Q_h, K_h, V_h
+    meaning: The split matrices. One head of each has the shape (T, d_h)
+    codeName: Qh, Kh, Vh
+    shape: (H, T, d_h)
+example: null
+shapes:
+  - id: attention-split
+    label: The reshape, then the transpose, in split_heads
+    stages:
+      - name: Q
+        dims: [T, d]
+      - name: reshape
+        dims: [T, H, dh]
+      - name: transpose
+        dims: [H, T, dh]
+    target:
+      file: transformer.py
+      symbol: transformer.split_heads
+      match: return M.reshape(T, H, d // H).transpose(1, 0, 2)
+source:
+  - file: transformer.py
+    symbol: transformer.split_heads
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: []
+  page: 10
+notes: []

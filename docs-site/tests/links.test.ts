@@ -261,9 +261,9 @@ describe("real links against the pinned commit", () => {
   });
 
   test("highlighted lines hold exactly the linked code", () => {
-    const lines = [...highlightedLines("ops.softmax_forward")].map((line) =>
-      lineAt("ops.py", line),
-    );
+    const lines = [...highlightedLines("ops.softmax_forward")]
+      .sort((a, b) => a - b)
+      .map((line) => lineAt("ops.py", line));
     expect(lines).toEqual([
       "e = np.exp(x - np.max(x, axis=-1, keepdims=True))",
       "return e / e.sum(axis=-1, keepdims=True)",

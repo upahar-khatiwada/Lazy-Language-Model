@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { GOLDEN_FILES, loadGolden, type GoldenCase } from "@/lib/golden";
 import {
+  attentionBackward,
   attentionForward,
   attentionScores,
   mergeHeads,
@@ -66,7 +67,7 @@ import {
 import { embedBackward, embedForward, overwritingBackward } from "@/lib/math/embeddings";
 import { blockParameterCount, parameterCount, type ParameterDims } from "@/lib/math/params";
 import { sampleNextDistribution, type SampleResult } from "@/lib/math/sampling";
-import type { Matrix, Tensor3, Vector } from "@/lib/math/tensor";
+import { matmul, type Matrix, type Tensor3, type Vector } from "@/lib/math/tensor";
 import { shapeOf } from "@/lib/viz/shape";
 
 const TOLERANCE = 1e-9;
@@ -372,7 +373,60 @@ const RUNNERS: Record<string, Runner> = {
     check(item, { Mh: splitHeads(item.inputs.M as Matrix, item.inputs.H as number) });
   },
   "transformer.merge_heads": (item) => check(item, { M: mergeHeads(item.inputs.Mh as Tensor3) }),
+  "transformer.attention_backward": (item) => {
+    const { Xn, dOut, H, ...params } = item.inputs as {
+      Xn: Matrix;
+      dOut: Matrix;
+      H: number;
+    } & AttentionParams;
+    check(item, attentionBackward(dOut, { Xn, ...attentionForward(Xn, params, H) }, params, H));
+  },
   "transformer.attention_forward": (item) => {
+    if (item.inputs.problem === "config_shapes") {
+      // The engine, run on zeros at the sizes in config.py, has the shapes of the real functions.
+      const { seq_len, emb_dim, num_heads } = item.inputs as Record<string, number>;
+      const T = seq_len!;
+      const d = emb_dim!;
+      const H = num_heads!;
+      const zeros = (rows: number, cols: number): Matrix =>
+        Array.from({ length: rows }, () => new Array<number>(cols).fill(0));
+      const params: AttentionParams = {
+        wq: zeros(d, d),
+        bq: new Array<number>(d).fill(0),
+        wk: zeros(d, d),
+        bk: new Array<number>(d).fill(0),
+        wv: zeros(d, d),
+        bv: new Array<number>(d).fill(0),
+        wo: zeros(d, d),
+        bo: new Array<number>(d).fill(0),
+      };
+      const Xn = zeros(T, d);
+      const forward = attentionForward(Xn, params, H);
+      const backward = attentionBackward(zeros(T, d), { Xn, ...forward }, params, H);
+      const sized = (values: Record<string, unknown>) =>
+        Object.fromEntries(Object.entries(values).map(([key, value]) => [key, shapeOf(value)]));
+      const { Q, K, V, Qh, Kh, Vh, scaled, A, O, out } = forward;
+      const { grads, ...locals } = backward;
+      check(item, {
+        forward: sized({
+          Xn,
+          Q,
+          K,
+          V,
+          Qh,
+          Kh,
+          Vh,
+          S: scaled,
+          A,
+          AVh: A.map((head, h) => matmul(head, Vh[h]!)),
+          O,
+          out,
+        }),
+        backward: sized({ dOut: Xn, ...locals }),
+        grads: sized(grads),
+      });
+      return;
+    }
     const { Xn, H, ...params } = item.inputs as { Xn: Matrix; H: number } & AttentionParams;
     const { raw, ...result } = attentionForward(Xn, params, H);
     check(item, result);
@@ -574,6 +628,7 @@ const REQUIRED = [
   "transformer.split_heads",
   "transformer.merge_heads",
   "transformer.attention_forward",
+  "transformer.attention_backward",
   "optim.lr_schedule",
   "optim.clip_grad_norm",
   "optim.Adam.step",

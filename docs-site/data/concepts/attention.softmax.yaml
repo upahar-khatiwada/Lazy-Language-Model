@@ -1,0 +1,54 @@
+id: attention.softmax
+title: Softmax per row
+category: attention
+inventory: [M32]
+status: implemented
+summary: >-
+  softmax_forward turns each row of masked scores into weights that are not negative and add up to 1.
+  It works along the last axis, so each row of each head is computed on its own.
+why: >-
+  The output of a position is a weighted average of value rows, so its weights need to add up to 1.
+  Masked cells get a weight of exactly 0, so their values contribute nothing.
+equations:
+  - id: attention.softmax
+    latex: A = \operatorname{softmax}(S), \qquad \sum_{j} A_{ij} = 1
+    role: forward
+    label: Weights, one row at a time
+  - id: attention.masked-zero
+    latex: >-
+      \exp(-\infty) = 0 \quad\Rightarrow\quad A_{ij} = 0 \text{ for } j > i
+    role: forward
+    label: A masked cell has a weight of exactly 0
+symbols:
+  - symbol: A
+    meaning: Attention weights, one matrix per head
+    codeName: A
+    shape: (H, T, T)
+  - symbol: A_{ij}
+    meaning: How much of position j's value position i receives
+    codeName: A[h, i, j]
+    shape: scalar
+example: null
+shapes:
+  - id: attention-softmax
+    label: Softmax keeps the shape. It normalizes along the last axis
+    stages:
+      - name: S
+        dims: [H, T, T]
+      - name: A
+        dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: A = softmax_forward(S)
+source:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+  - file: ops.py
+    symbol: ops.softmax_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["43"]
+  page: 10
+notes: []

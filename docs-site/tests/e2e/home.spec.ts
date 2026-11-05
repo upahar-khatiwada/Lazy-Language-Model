@@ -60,9 +60,10 @@ test("the pipeline draws every node, and each links to real lines", async ({ pag
   }
   // A written page is a link. A page that is not written yet is not.
   await expect(diagram.getByTestId("node-tokenizer").getByRole("link")).toHaveCount(2);
-  const attention = diagram.getByTestId("node-attention");
-  await expect(attention.getByRole("link")).toHaveCount(1);
-  await expect(attention.locator('[aria-disabled="true"]')).toContainText("Attention");
+  await expect(diagram.getByTestId("node-attention").getByRole("link")).toHaveCount(2);
+  const residual = diagram.getByTestId("node-residual1");
+  await expect(residual.getByRole("link")).toHaveCount(1);
+  await expect(residual.locator('[aria-disabled="true"]')).toContainText("Residual add");
 });
 
 test("questions link to their pages or show as disabled", async ({ page }) => {
@@ -71,8 +72,12 @@ test("questions link to their pages or show as disabled", async ({ page }) => {
     "href",
     "/reference/mathematics/",
   );
-  await expect(page.getByRole("link", { name: "How does attention work?" })).toHaveCount(0);
-  await expect(page.getByText("How does attention work?")).toBeVisible();
+  await expect(page.getByRole("link", { name: "How does attention work?" })).toHaveAttribute(
+    "href",
+    "/mathematics/attention/",
+  );
+  await expect(page.getByRole("link", { name: "Where is it implemented?" })).toHaveCount(0);
+  await expect(page.getByText("Where is it implemented?")).toBeVisible();
 });
 
 for (const width of [1280, 1000, 390]) {

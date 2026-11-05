@@ -1,0 +1,58 @@
+id: attention.weighted
+title: Weighted values
+category: attention
+inventory: [M32]
+status: implemented
+summary: >-
+  Multiplying A by V_h gives each position a weighted sum of value rows, separately in each head. The
+  weights of a row can only be non-zero up to that row, so the sum uses that position and earlier ones.
+why: >-
+  This is the step where information moves between positions. Before it, each row was computed from
+  its own input row alone. After it, a row also holds parts of the values of earlier rows.
+equations:
+  - id: attention.weighted
+    latex: A V_h
+    role: forward
+    label: Weighted values, one matrix per head
+  - id: attention.weighted-row
+    latex: (A V_h)_{i} = \sum_{j \le i} A_{ij} (V_h)_{j}
+    role: forward
+    label: The same product, for one row
+    derived: true
+symbols:
+  - symbol: V_h
+    meaning: The values of one head
+    codeName: Vh
+    shape: (T, d_h) per head
+  - symbol: (V_h)_{j}
+    meaning: Row j of the values of one head
+    codeName: Vh[h, j]
+    shape: (d_h,)
+  - symbol: A_{ij}
+    meaning: The weight of position j, for position i
+    codeName: A[h, i, j]
+    shape: scalar
+example: null
+shapes:
+  - id: attention-weighted
+    label: Weighted values have the shape of the values
+    stages:
+      - name: A
+        dims: [H, T, T]
+      - name: Vh
+        dims: [H, T, dh]
+      - name: A @ Vh
+        dims: [H, T, dh]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: O = merge_heads(A @ Vh)
+source:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["44"]
+  page: 10
+notes: []

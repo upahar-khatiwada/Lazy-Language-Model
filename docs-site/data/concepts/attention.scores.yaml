@@ -1,0 +1,57 @@
+id: attention.scores
+title: Scores
+category: attention
+inventory: [M32]
+status: implemented
+summary: >-
+  In each head, the product of Q_h and the transpose of K_h gives one number for every pair of
+  positions. Entry (i, j) is the dot product of row i's query with row j's key.
+why: >-
+  The weights have to come from somewhere. A score is the raw number that decides how much of position
+  j's value row i receives, once the next steps have scaled, masked and normalized it.
+equations:
+  - id: attention.scores
+    latex: Q_h K_h^\top, \qquad (Q_h K_h^\top)_{ij} = \sum_{c} (Q_h)_{ic} (K_h)_{jc}
+    role: forward
+    label: Scores, one matrix per head
+symbols:
+  - symbol: Q_h
+    meaning: The queries of one head
+    codeName: Qh
+    shape: (T, d_h) per head
+  - symbol: K_h^\top
+    meaning: The keys of one head, transposed. The code swaps the last two axes
+    codeName: Kh.transpose(0, 2, 1)
+    shape: (d_h, T) per head
+  - symbol: i, j
+    meaning: Row and column of the score matrix. i is the position reading, j the position read
+    codeName: null
+    shape: scalar
+  - symbol: c
+    meaning: Column index inside a head
+    codeName: null
+    shape: scalar
+example: null
+shapes:
+  - id: attention-scores
+    label: Scores, before scaling. Both this step and the next are on one line of code
+    stages:
+      - name: Qh
+        dims: [H, T, dh]
+      - name: Kh.transpose(0, 2, 1)
+        dims: [H, dh, T]
+      - name: Qh @ Kh^T
+        dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: S = (Qh @ Kh.transpose(0, 2, 1)) / np.sqrt(dh)
+source:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["42"]
+  page: 10
+notes: []

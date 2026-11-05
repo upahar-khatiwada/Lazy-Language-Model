@@ -1,0 +1,536 @@
+---
+title: Attention
+description: Multi-head causal self-attention as transformer.py implements it, with a step-through lab, every equation tied to its lines, the tensor shapes at the real config, and the hand-written backward pass.
+sourceFile: transformer.py
+status: published
+---
+
+Attention is the part of a block where positions exchange information. This page goes through `attention_forward` line by line, then `attention_backward`. Every equation links to the code that computes it, and every number is computed from that code's mirror.
+
+## Why attention?
+
+A linear layer treats each row on its own: row `t` of its output depends only on row `t` of its input. A model that predicts the next token also needs earlier tokens to affect the current one. Attention does this by building each output row from a weighted mix of rows at that position and earlier ones. The weights are computed from the input, so they differ from one sequence to the next.
+
+In general, these three names are explained with a question for each one:
+
+- **Query:** what am I looking for?
+- **Key:** what do I contain?
+- **Value:** what do I hand over?
+
+Those questions are a way to remember the roles. They are not something this project computes. In the code, a query, a key and a value are three linear projections of one input. A query times a key gives a score, and the scores decide how the values are mixed.
+
+**The example on this page.** The sentence is "The cat sat on the mat", with one row per word and hand-picked numbers: `T = 6`, `d = 4` and `H = 2`, so `d_h = 2`. Every number on this page is labelled Illustrative Example. The real model works differently: it reads sub-word tokens, not words, and it has `H =` <ConfigValue name="num_heads" /> heads of width `d_h =` <ConfigValue name="head_dim" />, inside rows of width `d =` <ConfigValue name="emb_dim" />. Nothing on this page says what the trained model attends to.
+
+### Attention lab
+
+Pick a token and a head, then step through the computation. The code under the matrix marks the lines of `attention_forward` for the current step. Each step links to its section below.
+
+<AttentionLabExample />
+
+### Actual Model Output
+
+<ActualModelOutputSlot />
+
+## Q, K, V projections
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.projections" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.projections" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.q" />
+
+<MathBlock id="attention.k" />
+
+<MathBlock id="attention.v" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.projections" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionProjectionExample concept="attention.projections" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.projections" shape="attention-projection" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="attention.qkv" />
+
+Inside this function `V` is the value matrix, not the vocabulary size. This page uses `V` only for the value matrix.
+
+`init_params` creates these parameters, one loop per block, for `q`, `k`, `v` and `o`:
+
+<CodeStep id="attention.params" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.projections" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.projections" />
+
+## Splitting into heads
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.split" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.split" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.split-qkv" />
+
+<MathBlock id="notation.head-width" />
+
+<MathBlock id="notation.split" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.split" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionSplitExample concept="attention.split" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.split" shape="attention-split" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.split_heads" />
+
+The function that calls it computes the width first (<CodeLine id="attention.width" />), then splits all three matrices:
+
+<CodeStep id="attention.split" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.split" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.split" />
+
+## Scores
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.scores" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.scores" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.scores" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.scores" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionScoresExample concept="attention.scores" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.scores" shape="attention-scores" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+The product is the part of this line in brackets. Python never stores it on its own.
+
+<CodeStep id="attention.scores" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.scores" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.scores" />
+
+## Scaling by sqrt(d_h)
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.scale" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.scale" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.scale" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.scale" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionScaleExample concept="attention.scale" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.scale" shape="attention-scale" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+The same line as the scores. The division happens before the mask, which is on the next line.
+
+<CodeStep id="attention.scores" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.scale" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.scale" />
+
+## Causal mask
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.mask" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.mask" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.mask" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.mask" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionMaskExample concept="attention.mask" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.mask" shape="attention-mask" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="attention.mask" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.mask" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.mask" />
+
+## Softmax per row
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.softmax" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.softmax" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.softmax" />
+
+<MathBlock id="softmax.safe" />
+
+<MathBlock id="attention.masked-zero" />
+
+A row always has one finite score, because the diagonal is never masked. So its largest score is finite, and a masked cell stays at minus infinity after the shift. The first row has only its own cell, so its weight there is 1.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.softmax" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionSoftmaxExample concept="attention.softmax" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.softmax" shape="attention-softmax" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="inside.attention-softmax" />
+
+<CodeReference symbol="ops.softmax_forward" />
+
+<PageLink page="mathematics/softmax-cross-entropy">Softmax & Cross-Entropy</PageLink> explains the
+shift by the largest value.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.softmax" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.softmax" />
+
+## Weighted values
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.weighted" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.weighted" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.weighted" />
+
+<MathBlock id="attention.weighted-row" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.weighted" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionWeightedExample concept="attention.weighted" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.weighted" shape="attention-weighted" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+The product is the argument of `merge_heads` on this line. Like the scores, it is not stored on its own.
+
+<CodeStep id="attention.weighted" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.weighted" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.weighted" />
+
+## Merging heads
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.merge" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.merge" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.merge" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.merge" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionMergeExample concept="attention.merge" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.merge" shape="attention-merge" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.merge_heads" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.merge" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.merge" />
+
+## Output projection
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="attention.output" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="attention.output" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="attention.output" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="attention.output" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionOutputExample concept="attention.output" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="attention.output" shape="attention-output" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="linear.out" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="attention.output" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="attention.output" />
+
+## The transformer.py implementation
+
+This is the whole function, with its real line numbers. Highlighted lines have a link record behind them.
+
+<CodeReference symbol="transformer.attention_forward" />
+
+Two things to note when reading it:
+
+- `S` is assigned twice. The first assignment holds the scaled scores, and the second overwrites them with the masked scores.
+- The returned dictionary is the cache that the backward pass reads. It holds `Xn`, `Qh`, `Kh`, `Vh`, `A` and `O`. It does not hold `S`, `Q`, `K` or `V`.
+
+## Tensor shapes with the real config
+
+These are the shapes from running the real functions at the values in `config.py`: `T =` <ConfigValue name="seq_len" />, `d =` <ConfigValue name="emb_dim" />, `H =` <ConfigValue name="num_heads" /> and `d_h =` <ConfigValue name="head_dim" />. `T` can be smaller during generation, for a short prompt.
+
+<AttentionShapes />
+
+The model has no batch axis here. `H` is the only axis attention adds, and it comes and goes inside this function. `config.head_dim` is not read by this code, which computes the width again with `d // H` (<CodeLine id="attention.width" />).
+
+## Backward pass
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.attention_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.attention_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+First the gradient goes through the output projection, and is split into heads the way the merged values were:
+
+<MathBlock id="attention.back.wo" />
+
+<MathBlock id="attention.back.bo" />
+
+<MathBlock id="attention.back.do" />
+
+The product `A V_h` depends on both factors, so the gradient goes to each of them:
+
+<MathBlock id="attention.back.dv" />
+
+<MathBlock id="attention.back.da" />
+
+Then it goes back through softmax, to the scores:
+
+<MathBlock id="attention.back.ds" />
+
+**Why masked positions get no gradient.** `softmax_backward` multiplies its result by the weights. A masked position has a weight of exactly 0, so whatever `dA` holds in that cell, `dS` is exactly 0 there. Its contribution to `dVh` is also 0, because `A^T` carries the same 0. The rest of the backward pass adds nothing from that cell, so the output at a position sends no gradient to any later position.
+
+<MathBlock id="attention.back.masked" />
+
+From the scores, the gradient goes to the queries and keys. The scale appears again here, because the forward pass divided by it:
+
+<MathBlock id="attention.back.dq" />
+
+<MathBlock id="attention.back.dk" />
+
+<MathBlock id="attention.back.merge" />
+
+Each of the three projections is a linear layer of the same input. So each gets a parameter gradient, and the gradients on the input add up:
+
+<MathBlock id="attention.back.dw" />
+
+<MathBlock id="attention.back.db" />
+
+<MathBlock id="attention.back.dxn" />
+
+**The key bias gets a gradient of zero.** Each row of `dS` adds up to 0, because softmax ignores a constant added to a row. Adding `b_k` to every key adds the same amount to every score in a row of `S`, so it cannot change the weights.
+
+<MathBlock id="attention.back.dbk" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.attention_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AttentionBackwardExample concept="transformer.attention_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="transformer.attention_backward" shape="attention-back-values" />
+
+<TensorShape concept="transformer.attention_backward" shape="attention-back-queries" />
+
+<TensorShape concept="transformer.attention_backward" shape="attention-back-input" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.attention_backward" />
+
+This function writes the linear layer's gradient formulas in place and does not call `linear_backward`.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.attention_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`block_backward` calls it with the gradient after the residual (<CodeLine id="attention.back-residual" />, <CodeLine id="attention.back-call" />).
+
+<Trace concept="transformer.attention_backward" />
+
+**How this reaches a parameter update.** `grads` is filled in place. `batch_loss_and_grads` averages the gradients over the batch (<CodeLine id="train.gradient" />), `clip_grad_norm` may scale them (<CodeLine id="train.clip" />), and `opt.step` uses them (<CodeLine id="train.adamw" />). The weight matrices also get weight decay, and the biases do not. `dXn` goes on to the first LayerNorm's backward (<CodeLine id="attention.back-next" />).
+
+## Role in the model
+
+Attention is the first branch of each block. `block_forward` normalizes its input, runs attention on that copy, and adds the result to the unnormalized input:
+
+<CodeStep id="attention.call" />
+
+<CodeStep id="attention.residual" />
+
+The model has <ConfigValue name="num_layers" /> blocks, and each has its own eight attention parameters:
+
+<ParameterTable
+  names={["b{l}.wq", "b{l}.bq", "b{l}.wk", "b{l}.bk", "b{l}.wv", "b{l}.bv", "b{l}.wo", "b{l}.bo"]}
+/>
+
+Attention is the only step in a block that moves information between positions. The feed-forward layer that follows works on each row alone. Because the mask is applied in every block, the output at a position depends only on that position and earlier ones, all the way through the model. A test checks this on the whole model, by changing only the last token and comparing the earlier logits (<CodeLine id="attention.future-test" />).
+
+Next: <PageLink page="mathematics/transformer-block">Transformer Block</PageLink> shows how the branches fit together.

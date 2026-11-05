@@ -1,0 +1,6 @@
+links:
+  - equationId: attention.scale
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: / np.sqrt(dh)
+    role: implements

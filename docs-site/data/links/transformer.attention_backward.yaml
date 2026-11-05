@@ -1,0 +1,86 @@
+links:
+  - equationId: attention.back.wo
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "wo"] += c["O"].T @ dOut
+    role: implements
+  - equationId: attention.back.bo
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "bo"] += dOut.sum(axis=0)
+    role: implements
+  - equationId: attention.back.do
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dOh = split_heads(dOut @ params[p + "wo"].T, H)
+    role: implements
+  - equationId: attention.back.dv
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dVh = c["A"].transpose(0, 2, 1) @ dOh
+    role: implements
+  - equationId: attention.back.da
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dA = dOh @ c["Vh"].transpose(0, 2, 1)
+    role: implements
+  - equationId: attention.back.ds
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dS = softmax_backward(c["A"], dA)
+    role: call
+  - equationId: attention.back.ds
+    file: ops.py
+    symbol: ops.softmax_backward
+    match: return y * (dY - np.sum(y * dY, axis=-1, keepdims=True))
+    role: implements
+  - equationId: attention.back.masked
+    file: ops.py
+    symbol: ops.softmax_backward
+    match: return y * (dY - np.sum(y * dY, axis=-1, keepdims=True))
+    role: implements
+  - equationId: attention.back.dq
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dQh = dS @ c["Kh"] / np.sqrt(dh)
+    role: implements
+  - equationId: attention.back.dk
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dKh = dS.transpose(0, 2, 1) @ c["Qh"] / np.sqrt(dh)
+    role: implements
+  - equationId: attention.back.merge
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dQ, dK, dV = merge_heads(dQh), merge_heads(dKh), merge_heads(dVh)
+    role: implements
+  - equationId: attention.back.dw
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "w" + n] += c["Xn"].T @ dM
+    role: implements
+  - equationId: attention.back.db
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "b" + n] += dM.sum(axis=0)
+    role: implements
+  - equationId: attention.back.dxn
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: dXn += dM @ params[p + "w" + n].T
+    role: implements
+  - equationId: attention.back.dxn
+    file: transformer.py
+    symbol: transformer.block_backward
+    match: dXn = attention_backward(dX1, c["att"], params, p, cfg, grads)
+    role: call
+  - equationId: attention.back.dbk
+    file: transformer.py
+    symbol: transformer.attention_backward
+    match: grads[p + "b" + n] += dM.sum(axis=0)
+    role: implements
+  - equationId: attention.back.dbk
+    file: tests/test_gradcheck.py
+    symbol: tests.test_gradcheck.test_key_bias_gradient_is_zero
+    match: assert np.abs(grads[f"b{l}.bk"]).max() < 1e-12
+    role: test

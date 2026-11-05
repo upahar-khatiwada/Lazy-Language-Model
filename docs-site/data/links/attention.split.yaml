@@ -1,0 +1,16 @@
+links:
+  - equationId: attention.split-qkv
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: Qh, Kh, Vh = split_heads(Q, H), split_heads(K, H), split_heads(V, H)
+    role: call
+  - equationId: attention.split-qkv
+    file: transformer.py
+    symbol: transformer.split_heads
+    match: return M.reshape(T, H, d // H).transpose(1, 0, 2)
+    role: implements
+  - equationId: attention.split-qkv
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_split_merge_heads_round_trip
+    match: assert Mh.shape == (2, 3, 4)
+    role: test

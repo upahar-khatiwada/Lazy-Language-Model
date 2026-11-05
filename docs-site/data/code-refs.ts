@@ -167,6 +167,51 @@ export const CODE_REFS: Record<string, CodeTarget> = {
     match: 'dQh = dS @ c["Kh"] / np.sqrt(dh)',
   },
 
+  "attention.qkv": {
+    ...ATTENTION,
+    match:
+      'Q = Xn @ params\\[p\\+"wq"\\][\\s\\S]*?V = Xn @ params\\[p\\+"wv"\\] \\+ params\\[p\\+"bv"\\]',
+    regex: true,
+  },
+  "attention.split": {
+    ...ATTENTION,
+    match: "Qh, Kh, Vh = split_heads(Q, H), split_heads(K, H), split_heads(V, H)",
+  },
+  "attention.scores": { ...ATTENTION, match: "S = (Qh @ Kh.transpose(0, 2, 1)) / np.sqrt(dh)" },
+  "attention.mask": {
+    ...ATTENTION,
+    match: "S = np.where(np.triu(np.ones((T, T), dtype=bool), 1), -np.inf, S)",
+  },
+  "attention.weighted": { ...ATTENTION, match: "O = merge_heads(A @ Vh)" },
+  "attention.width": { ...ATTENTION, match: "dh = d // H" },
+  "attention.call": { ...BLOCK, match: "att, c_att = attention_forward(Xn, params, p, cfg)" },
+  "attention.residual": { ...BLOCK, match: "X1 = X + att" },
+  "attention.back-call": {
+    file: "transformer.py",
+    symbol: "transformer.block_backward",
+    match: 'dXn = attention_backward(dX1, c["att"], params, p, cfg, grads)',
+  },
+  "attention.back-next": {
+    file: "transformer.py",
+    symbol: "transformer.block_backward",
+    match: 'dX_branch, dg, db = layer_norm_backward(dXn, c["ln1"], params[p + "ln1_g"])',
+  },
+  "attention.back-residual": {
+    file: "transformer.py",
+    symbol: "transformer.block_backward",
+    match: "dX1 = dY + dX1_branch",
+  },
+  "attention.future-test": {
+    file: "tests/test_transformer.py",
+    symbol: "tests.test_transformer.test_future_tokens_do_not_change_earlier_logits",
+    match: "assert np.allclose(la[:4], lb[:4])",
+  },
+  "attention.params": {
+    ...INIT,
+    match: 'for n in "qkvo":[\\s\\S]*?p\\[b \\+ "b" \\+ n\\] = np\\.zeros\\(d\\)',
+    regex: true,
+  },
+
   "xavier.tok": { ...INIT, match: '"tok_emb": xavier_uniform(V, d, rng)' },
   "xavier.head": {
     ...INIT,

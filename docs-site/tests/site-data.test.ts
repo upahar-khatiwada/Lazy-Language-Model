@@ -141,7 +141,7 @@ describe("the pipeline", () => {
 
 test("writtenHref is null until the page exists, and unknown pages fail", () => {
   expect(writtenHref("mathematics/tokenization")).toBe("/mathematics/tokenization/");
-  expect(writtenHref("mathematics/attention")).toBeNull();
+  expect(writtenHref("mathematics/transformer-block")).toBeNull();
   expect(() => writtenHref("nope/nope")).toThrow("not in the navigation");
 });
 

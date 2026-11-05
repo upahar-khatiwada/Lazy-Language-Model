@@ -508,3 +508,61 @@ Append one entry per finished task. Newest at the bottom.
 - Decisions needed from the human:
   - Still open from Task 07: `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while that task labelled them Derived.
 - Status: Task 09 finished. Task 08's e2e item is closed by the full run above. Nothing was committed.
+
+### Task 10: Attention Documentation (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Page: new `content/mathematics/attention.mdx`.
+  - Concepts and links, one file each in `data/concepts/` and `data/links/`: `attention.projections`, `attention.split`, `attention.scores`, `attention.scale`, `attention.mask`, `attention.softmax`, `attention.weighted`, `attention.merge`, `attention.output`, `transformer.attention_backward`. Changed: `data/code-refs.ts`.
+  - Engine: `lib/math/attention.ts` gains `attentionBackward`, closing the open item from Task 05. New `lib/attention-lab.ts`.
+  - Golden: `scripts/make_golden.py`; `data/golden/attention.json` gains 5 cases. 197 cases in 9 files.
+  - New components: `AttentionLab` with its CSS module, `AttentionExamples`, `CodeFrame`. Changed: `CodeBlock` (now a thin server wrapper around `CodeFrame`, same props), `mdx.tsx`.
+  - Tests: new `tests/attention.test.ts`, `tests/e2e/attention.spec.ts`. Changed: `tests/math.golden.test.ts` (new runner and shape case), `tests/site-data.test.ts` and `tests/e2e/home.spec.ts` (assumed this page was unwritten), `tests/links.test.ts` (relied on link load order), `tests/e2e/components.spec.ts` (assumed one link per line).
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added. `contract/` was not changed.
+- Commands run and results (Node v26.13.0 prepended to PATH for each process, Bun 1.3.13; `.next`, `out` and `test-results` deleted before the final build; HEAD `a944939`, `sha` `66da45b`):
+  - `bun install --frozen-lockfile`: `Checked 528 installs across 596 packages (no changes)`.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 197 golden cases match a fresh run.`
+  - `bun run verify:links`: `OK: 229 links, 43 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `verify:content: not implemented yet`, exit 0. It is still the stub from Task 02, so this run checks nothing.
+  - `bun run lint`: `All matched files use Prettier code style!`, exit 0. `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files 17 passed (17)`, `Tests 1048 passed (1048)`.
+  - `bun run build`: `Compiled successfully`, exit 0.
+  - **`bun run test:e2e`: `1 failed`, `278 passed (14.2m)`, on the final build.** The failure was `components.spec.ts` `highlighted lines come from links`: `Expected length: 12`, `Received length: 10`. The test assumed one link per line, and this task deliberately links two parts of line 81 and of line 84. Only that test changed, no page or build output: it now checks both ways that highlighted lines and linked matches agree. `bunx playwright test tests/e2e/components.spec.ts`: `23 passed (22.5s)`. **The full suite was not rerun after that test-only fix.**
+  - The 279 tests include all of `tests/e2e/attention.spec.ts`: displayed lines against `transformer.py`, line and number, for `attention_forward`, `attention_backward`, `split_heads`, `merge_heads`; highlight per step; lab and backward values against golden; axe at 1280 light and dark, 1000 light, 390 light and dark, with no findings and no sideways page scroll; the heatmap scrolling inside its own container at 390.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.74s`.
+  - Acceptance, tamper: a scratchpad script applied 14 changes one at a time, ran `bun run test -- tests/attention tests/math.golden`, restored and compared hashes. All 14 were caught, including `mask and scale links swapped: 3 failed`, `engine drops the division by sqrt(dh): 11 failed`, `mask also hides the diagonal: 20 failed`, `dQh drops the division: 3 failed`, `lab mask step highlights the scale line: 1 failed`, `page claims what the model attends to: 1 failed`, and an edited golden value (`1 failed`, `verify:golden` exit 1).
+  - Screenshots reviewed by eye: lab Scores at 1280, Scale, Mask, Output at 390 dark, the backward examples at 1280, the slot at 1280, shapes at 390 dark, one section at 1280, all on the final build's content. Softmax and Output at 1280 and Softmax at 390 dark were viewed only before the label fixes.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files, the same as before. No state-changing git command was run.
+  - Failures seen on the way:
+    - A long Git Bash heredoc failed with `unexpected EOF` before running anything. Files went through the Write tool instead.
+    - Screenshots and an overflow probe found what no test had yet: a 29px sideways page scroll at 390 from one long inline test name, the `position` label colliding with the first column heading, bars saying "removed" for masked cells, and `O` and `out` stacking. All fixed.
+    - Unit tests: my own assertion banned a string that `<Badge kind="actual" />` contains, and my link comparison did not allow for trailing comments on lines 75-77. Both were test mistakes, and both were fixed.
+    - `tests/links.test.ts` failed in the full run because a new link changed the order of a set. The lines were the same. It now sorts them.
+    - One sentence on the backward pass was ambiguous about the direction of gradient flow. Reworded.
+- Findings: no PDF-versus-code difference beyond those logged, so `contract/DISCREPANCIES.md` was not changed. The PDF was not reopened (D4), so this rests on `contract/PDF_VS_CODE.md`, which says Eq. 38-60 match the code.
+- Assumptions:
+  - The lab and the Actual Model Output slot sit as h3s at the end of "Why attention?", because the task's section list does not place them, and a page this long would bury them at the end.
+  - The lab has a head selector, because `A` differs per head.
+  - Scores and Scale highlight the same line, because Python computes both on line 81. The page says so.
+  - The backward pass is one concept with one set of nine steps, because it is one function. It names M34, M35, M37 and M38.
+  - `attention.split` has `pdfRef` section 4.5, p. 10, with no equation number, from row M30 and E062. `attention.weighted-row`, `attention.back.masked` and `attention.back.merge` carry `derived: true`.
+  - The traceability block is per concept using `Trace`, as in Tasks 08 and 09. It prints "Not stated in the PDF" where the task says "None", though every concept here has a `pdfRef`.
+  - The real-config shape figures carry the Illustrative Example badge, because their inputs are random draws, and their caption says only the shapes are shown.
+  - The Actual Model Output option is disabled in the component itself. Nothing reads a data file yet, because the format prompt 15 will provide is not known. That prompt needs to connect it. The slot's text states what is planned and D1's disclosure.
+  - The sizes of the example (`T = 6`, `d = 4`, `H = 2`) are typed in one sentence of prose. A test compares them with the golden case.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the approved plan.
+- Open issues:
+  - `verify:content` is still a stub. The task's final check therefore verifies nothing by itself; the checks live in the tests above.
+  - `/reference/sources` does not exist (the nav slug is `reference/sources-discrepancies`).
+  - The page is long, by the protocol: about 43,000px at 1280 and 60,000px at 390. Nine forward sections and the backward pass each have nine steps.
+  - At 390px the gradient-check table is tall, because `GradientCheck` prints each whole matrix in one narrow cell.
+  - `verify:golden` on another machine was not tried for the new cases.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 still appears in server logs.
+  - Links to unwritten pages (Transformer Block) show as disabled text until those pages exist.
+  - GitHub links were not opened, because the working rules allow no requests to other sites.
+- LLM observations, reported only and nothing changed: no new issues. `config.head_dim` is still never read (already in `contract/DISCREPANCIES.md` section 8), and the page states this.
+- Decisions needed from the human:
+  - Still open from Task 07: `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while that task labelled them Derived.
+- Status: Task 10 finished, with one test-only fix after the last full e2e run. Nothing was committed.

@@ -169,9 +169,15 @@ test.describe("code references match the file at the pinned commit", () => {
     const shown = attention.map((line) => realLines("transformer.py")[line - 1]!.trim());
     const declared = linkedMatches("transformer.attention_forward");
     expect(shown).toContain("A = softmax_forward(S)");
-    expect(shown).toHaveLength(declared.length);
+    // Several links can point at parts of one line, so this compares both ways, not the counts.
     for (const match of declared) {
       expect(shown.some((line) => line.includes(match))).toBe(true);
+    }
+    for (const line of shown) {
+      expect(
+        declared.some((match) => line.includes(match)),
+        line,
+      ).toBe(true);
     }
   });
 

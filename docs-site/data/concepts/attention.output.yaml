@@ -1,0 +1,53 @@
+id: attention.output
+title: Output projection
+category: attention
+inventory: [M33]
+status: implemented
+summary: >-
+  A last linear layer turns the merged values into the output of attention. It has its own weight
+  matrix W_o and bias b_o, and it keeps the shape.
+why: >-
+  Until this point each head's columns have stayed apart. W_o multiplies across all d columns, so each
+  output number can draw on every head.
+equations:
+  - id: attention.output
+    latex: \mathrm{out} = O W_o + \mathbf{1} b_o^\top
+    role: forward
+    label: Output projection
+symbols:
+  - symbol: W_o
+    meaning: Output weight matrix
+    codeName: params[p + "wo"]
+    shape: (d, d)
+  - symbol: b_o
+    meaning: Output bias, added to every row
+    codeName: params[p + "bo"]
+    shape: (d,)
+  - symbol: \mathrm{out}
+    meaning: The output of attention, added to the block's input by the residual
+    codeName: out
+    shape: (T, d)
+example: null
+shapes:
+  - id: attention-output
+    label: The output has the shape of the input Xn
+    stages:
+      - name: O
+        dims: [T, d]
+      - name: wo
+        dims: [d, d]
+      - name: out
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: out = O @ params[p + "wo"] + params[p + "bo"]
+source:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["45"]
+  page: 10
+notes: []

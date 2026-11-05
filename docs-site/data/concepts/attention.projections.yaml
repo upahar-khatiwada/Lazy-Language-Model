@@ -1,0 +1,65 @@
+id: attention.projections
+title: Q, K, V projections
+category: attention
+inventory: [M31]
+status: implemented
+summary: >-
+  Attention makes three new matrices from its input Xn: the query Q, the key K and the value V. Each is
+  a linear layer with its own weight matrix and bias. All three have the same shape as Xn.
+why: >-
+  The later steps need three different views of each row. Scores compare queries with keys, and the
+  output is built from values. Separate weights let the three views differ.
+equations:
+  - id: attention.q
+    latex: Q = X_n W_q + \mathbf{1} b_q^\top
+    role: forward
+    label: Query projection
+  - id: attention.k
+    latex: K = X_n W_k + \mathbf{1} b_k^\top
+    role: forward
+    label: Key projection
+  - id: attention.v
+    latex: V = X_n W_v + \mathbf{1} b_v^\top
+    role: forward
+    label: Value projection
+symbols:
+  - symbol: X_n
+    meaning: The input, a layer-normalized copy of the block's input
+    codeName: Xn
+    shape: (T, d)
+  - symbol: W_q, W_k, W_v
+    meaning: Weight matrices, one per projection
+    codeName: params[p+"wq"], params[p+"wk"], params[p+"wv"]
+    shape: (d, d)
+  - symbol: b_q, b_k, b_v
+    meaning: Biases, added to every row
+    codeName: params[p+"bq"], params[p+"bk"], params[p+"bv"]
+    shape: (d,)
+  - symbol: Q, K, V
+    meaning: Query, key and value matrices. On this page V is always the value matrix
+    codeName: Q, K, V
+    shape: (T, d)
+example: null
+shapes:
+  - id: attention-projection
+    label: One projection. Q, K and V all have this shape
+    stages:
+      - name: Xn
+        dims: [T, d]
+      - name: wq
+        dims: [d, d]
+      - name: Q
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: Q = Xn @ params[p+"wq"] + params[p+"bq"]
+source:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["41"]
+  page: 10
+notes: []

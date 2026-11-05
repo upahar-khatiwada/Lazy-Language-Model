@@ -1,0 +1,51 @@
+id: attention.mask
+title: Causal mask
+category: attention
+inventory: [M32]
+status: implemented
+summary: >-
+  Every score above the diagonal is replaced with minus infinity. np.triu with k = 1 selects those
+  positions, where the column j is greater than the row i. The diagonal is kept, so a position can
+  read itself.
+why: >-
+  Training asks each position to predict the next token. If a position could read later positions, it
+  could read the answer. The mask rules that out, and it applies in the same way during generation.
+equations:
+  - id: attention.mask
+    latex: >-
+      S_{ij} \leftarrow \begin{cases} S_{ij} & j \le i \\ -\infty & j > i \end{cases}
+    role: forward
+    label: Causal mask
+symbols:
+  - symbol: S_{ij}
+    meaning: The score of position i reading position j
+    codeName: S
+    shape: (H, T, T)
+  - symbol: -\infty
+    meaning: The value written above the diagonal
+    codeName: -np.inf
+    shape: scalar
+example: null
+shapes:
+  - id: attention-mask
+    label: The mask has one layer of shape (T, T). NumPy applies it to every head
+    stages:
+      - name: S, scaled
+        dims: [H, T, T]
+      - name: np.triu(..., 1)
+        dims: [T, T]
+      - name: S, masked
+        dims: [H, T, T]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: S = np.where(np.triu(np.ones((T, T), dtype=bool), 1), -np.inf, S)
+source:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["43"]
+  page: 10
+notes: []

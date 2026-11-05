@@ -1,0 +1,31 @@
+links:
+  - equationId: attention.softmax
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: A = softmax_forward(S)
+    role: call
+  - equationId: attention.softmax
+    file: ops.py
+    symbol: ops.softmax_forward
+    match: return e / e.sum(axis=-1, keepdims=True)
+    role: implements
+  - equationId: attention.softmax
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_attention_weights_are_causal_and_normalised
+    match: assert np.allclose(A.sum(axis=-1), 1.0)
+    role: test
+  - equationId: attention.masked-zero
+    file: ops.py
+    symbol: ops.softmax_forward
+    match: e = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    role: implements
+  - equationId: attention.masked-zero
+    file: transformer.py
+    symbol: transformer.attention_forward
+    match: A = softmax_forward(S)
+    role: call
+  - equationId: attention.masked-zero
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_attention_weights_are_causal_and_normalised
+    match: assert np.allclose(np.triu(A[0], 1), 0.0)
+    role: test

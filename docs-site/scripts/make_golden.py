@@ -507,6 +507,98 @@ def attention_case(case_id, Xn, num_heads, params=None):
     )
 
 
+# The Attention page's running example: one row per word of "The cat sat on the mat". Hand-picked. These
+# numbers do not encode the words, and the real model reads sub-word tokens at much larger sizes.
+CAT_SAT_XN = arr(
+    [
+        [0.5, -1.0, 1.5, 0.25],
+        [1.0, 0.0, -0.5, 2.0],
+        [-1.5, 0.75, 0.5, -0.25],
+        [0.25, 1.25, -1.0, 0.5],
+        [0.75, -0.5, 1.0, -1.0],
+        [-0.5, 1.5, 0.25, 0.75],
+    ]
+)
+CAT_SAT_DOUT = arr(
+    [
+        [0.1, -0.2, 0.3, 0.05],
+        [-0.1, 0.25, 0.15, -0.3],
+        [0.2, 0.1, -0.25, 0.15],
+        [-0.05, 0.3, 0.1, -0.2],
+        [0.15, -0.1, 0.2, 0.25],
+        [0.3, -0.15, -0.1, 0.1],
+    ]
+)
+
+
+def attention_cfg(T, d, num_heads):
+    return transformer.ModelConfig(vocab_size=1, context_len=T, emb_dim=d, num_heads=num_heads, ff_dim=1, num_layers=1)
+
+
+def attention_backward_run(Xn, dOut, params, cfg):
+    """One real forward and one real backward. Returns the cache, grads without their prefix, and the
+    last value of each local of attention_backward."""
+    prefixed = {f"b0.{name}": value for name, value in params.items()}
+    out, cache = transformer.attention_forward(Xn, prefixed, "b0.", cfg)
+    grads = {name: np.zeros_like(value) for name, value in prefixed.items()}
+    names = ["dOh", "dVh", "dA", "dS", "dQh", "dKh", "dQ", "dK", "dV", "dXn"]
+    dXn, history = traced(transformer.attention_backward, names, dOut, cache, prefixed, "b0.", cfg, grads)
+    local = {name: history[name][-1] for name in names}
+    assert np.array_equal(local["dXn"], dXn)
+    return out, cache, {name[3:]: value for name, value in grads.items()}, local
+
+
+def attention_backward_case(case_id, Xn, dOut, num_heads):
+    cfg = attention_cfg(len(Xn), Xn.shape[1], num_heads)
+    _, _, grads, local = attention_backward_run(Xn, dOut, ATTENTION_PARAMS, cfg)
+    return case(
+        case_id,
+        "transformer.attention_backward",
+        {"Xn": Xn, "dOut": dOut, "H": num_heads, **ATTENTION_PARAMS},
+        {**local, "grads": grads},
+    )
+
+
+def attention_config_shapes_case():
+    """The real attention_forward and attention_backward at the sizes in config.py. Only shapes are
+    stored: the inputs are random draws, not model values."""
+    rng = np.random.default_rng(config.seed)
+    T, d, H = config.seq_len, config.emb_dim, config.num_heads
+    params = {}
+    for name in "qkvo":
+        params[f"w{name}"] = ops.xavier_uniform(d, d, rng)
+        params[f"b{name}"] = np.zeros(d)
+    Xn, dOut = rng.normal(size=(T, d)), rng.normal(size=(T, d))
+    cfg = attention_cfg(T, d, H)
+    prefixed = {f"b0.{name}": value for name, value in params.items()}
+    (_, _), history = traced(transformer.attention_forward, ["Q", "K", "V", "S"], Xn, prefixed, "b0.", cfg)
+    out, cache, grads, local = attention_backward_run(Xn, dOut, params, cfg)
+    size = lambda value: list(value.shape)  # noqa: E731
+    return case(
+        "attention_forward.config_shapes",
+        "transformer.attention_forward",
+        {"problem": "config_shapes", "seq_len": T, "emb_dim": d, "num_heads": H, "head_dim": config.head_dim},
+        {
+            "forward": {
+                "Xn": size(Xn),
+                "Q": size(history["Q"][-1]),
+                "K": size(history["K"][-1]),
+                "V": size(history["V"][-1]),
+                "Qh": size(cache["Qh"]),
+                "Kh": size(cache["Kh"]),
+                "Vh": size(cache["Vh"]),
+                "S": size(history["S"][-1]),
+                "A": size(cache["A"]),
+                "AVh": size(cache["A"] @ cache["Vh"]),
+                "O": size(cache["O"]),
+                "out": size(out),
+            },
+            "backward": {name: size(value) for name, value in {"dOut": dOut, **local}.items()},
+            "grads": {name: size(value) for name, value in grads.items()},
+        },
+    )
+
+
 def attention_cases():
     M = arr([[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0]])
     Mh = transformer.split_heads(M, 2)
@@ -520,6 +612,11 @@ def attention_cases():
         attention_case("attention_forward.t3_d4_h1", ATTENTION_XN, 1),
         attention_case("attention_forward.t1_one_token", ATTENTION_XN[:1], 2),
         attention_case("attention_forward.large_scores", ATTENTION_XN, 2, large),
+        attention_case("attention_forward.cat_sat", CAT_SAT_XN, 2),
+        attention_config_shapes_case(),
+        attention_backward_case("attention_backward.cat_sat", CAT_SAT_XN, CAT_SAT_DOUT, 2),
+        attention_backward_case("attention_backward.t3_d4_h2", ATTENTION_XN, CAT_SAT_DOUT[:3], 2),
+        attention_backward_case("attention_backward.t3_d4_h1", ATTENTION_XN, CAT_SAT_DOUT[:3], 1),
     ]
 
 

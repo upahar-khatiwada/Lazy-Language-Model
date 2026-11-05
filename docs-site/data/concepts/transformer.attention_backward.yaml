@@ -1,0 +1,173 @@
+id: transformer.attention_backward
+title: Attention backward
+category: attention
+inventory: [M34, M35, M37, M38]
+status: implemented
+summary: >-
+  attention_backward receives dOut, the gradient of the loss on the output of attention. It fills the
+  gradients of all eight attention parameters and returns dXn, the gradient on the input. It runs the
+  forward steps in reverse, reading the values the forward pass left in its cache.
+why: >-
+  W_q, W_k, W_v, W_o and their biases are parameters, so the optimizer needs a gradient for each. Earlier
+  layers also need the gradient to continue, so dXn goes on to the first LayerNorm's backward.
+equations:
+  - id: attention.back.wo
+    latex: dW_o = O^\top\, d\mathrm{Out}
+    role: backward
+    label: Gradient on the output weights
+  - id: attention.back.bo
+    latex: db_o = \mathbf{1}^\top d\mathrm{Out}
+    role: backward
+    label: Gradient on the output bias
+  - id: attention.back.do
+    latex: dO_h = \operatorname{split}(d\mathrm{Out}\, W_o^\top, H)
+    role: backward
+    label: Through the output projection, then the head split
+  - id: attention.back.dv
+    latex: dV_h = A^\top dO_h
+    role: backward
+    label: Gradient on the values
+  - id: attention.back.da
+    latex: dA = dO_h V_h^\top
+    role: backward
+    label: Gradient on the weights
+  - id: attention.back.ds
+    latex: dS_{ij} = A_{ij}\Big(dA_{ij} - \sum_{k} A_{ik}\, dA_{ik}\Big)
+    role: backward
+    label: Through softmax, softmax_backward(A, dA)
+  - id: attention.back.masked
+    latex: A_{ij} = 0 \quad\Rightarrow\quad dS_{ij} = 0
+    role: backward
+    label: A masked cell gets no gradient
+    derived: true
+  - id: attention.back.dq
+    latex: dQ_h = \frac{dS\, K_h}{\sqrt{d_h}}
+    role: backward
+    label: Gradient on the queries
+  - id: attention.back.dk
+    latex: dK_h = \frac{dS^\top Q_h}{\sqrt{d_h}}
+    role: backward
+    label: Gradient on the keys
+  - id: attention.back.merge
+    latex: dQ,\ dK,\ dV = \operatorname{merge}(dQ_h),\ \operatorname{merge}(dK_h),\ \operatorname{merge}(dV_h)
+    role: backward
+    label: Heads side by side again
+    derived: true
+  - id: attention.back.dw
+    latex: dW_n = X_n^\top dM_n, \qquad n \in \{q, k, v\}
+    role: backward
+    label: Gradient on the three weight matrices
+  - id: attention.back.db
+    latex: db_n = \mathbf{1}^\top dM_n, \qquad n \in \{q, k, v\}
+    role: backward
+    label: Gradient on the three biases
+  - id: attention.back.dxn
+    latex: dX_n = dQ\, W_q^\top + dK\, W_k^\top + dV\, W_v^\top
+    role: backward
+    label: Gradient on the input, summed over q, k and v
+  - id: attention.back.dbk
+    latex: db_k = \mathbf{1}^\top dK = 0
+    role: backward
+    label: The key bias has a gradient of zero
+symbols:
+  - symbol: d\mathrm{Out}
+    meaning: Gradient of the loss on the output of attention
+    codeName: dOut
+    shape: (T, d)
+  - symbol: dO_h
+    meaning: Gradient on the merged values, split into heads
+    codeName: dOh
+    shape: (H, T, d_h)
+  - symbol: dV_h
+    meaning: Gradient on the values, per head
+    codeName: dVh
+    shape: (H, T, d_h)
+  - symbol: dA
+    meaning: Gradient on the weights
+    codeName: dA
+    shape: (H, T, T)
+  - symbol: dS
+    meaning: Gradient on the scaled, masked scores
+    codeName: dS
+    shape: (H, T, T)
+  - symbol: dQ_h, dK_h
+    meaning: Gradient on the queries and keys, per head
+    codeName: dQh, dKh
+    shape: (H, T, d_h)
+  - symbol: dQ, dK, dV
+    meaning: The same three gradients after merging
+    codeName: dQ, dK, dV
+    shape: (T, d)
+  - symbol: dM_n
+    meaning: One of dQ, dK or dV, as the loop in the code takes them in turn
+    codeName: dM
+    shape: (T, d)
+  - symbol: n
+    meaning: The name of a projection, q, k or v
+    codeName: n
+    shape: scalar
+  - symbol: dX_n
+    meaning: Gradient on the input of attention
+    codeName: dXn
+    shape: (T, d)
+  - symbol: dW_o, db_o, dW_n, db_n
+    meaning: Parameter gradients, stored in grads
+    codeName: grads[p + "w" + n], grads[p + "b" + n]
+    shape: (d, d) and (d,)
+example: null
+shapes:
+  - id: attention-back-values
+    label: From dOut to the values
+    stages:
+      - name: dOut
+        dims: [T, d]
+      - name: dOh
+        dims: [H, T, dh]
+      - name: dVh
+        dims: [H, T, dh]
+      - name: dV
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_backward
+      match: dVh = c["A"].transpose(0, 2, 1) @ dOh
+  - id: attention-back-queries
+    label: From dOh through the weights and scores to the queries. Keys go the same way
+    stages:
+      - name: dOh
+        dims: [H, T, dh]
+      - name: dA
+        dims: [H, T, T]
+      - name: dS
+        dims: [H, T, T]
+      - name: dQh
+        dims: [H, T, dh]
+      - name: dQ
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_backward
+      match: dQh = dS @ c["Kh"] / np.sqrt(dh)
+  - id: attention-back-input
+    label: Parameter gradient and input gradient, for one projection
+    stages:
+      - name: dM
+        dims: [T, d]
+      - name: grads wn
+        dims: [d, d]
+      - name: dXn
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_backward
+      match: dXn += dM @ params[p + "w" + n].T
+source:
+  - file: transformer.py
+    symbol: transformer.attention_backward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["46", "47", "48", "49", "50"]
+  page: 10
+notes:
+  - The PDF also labels the steps from dV to dS "(step 1-2)", with no equation number.
