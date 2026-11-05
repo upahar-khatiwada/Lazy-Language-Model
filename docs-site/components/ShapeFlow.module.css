@@ -1,0 +1,28 @@
+.chart {
+  display: block;
+}
+
+.chart text {
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+
+.box {
+  fill: var(--code-bg);
+  stroke: var(--line);
+}
+
+.name {
+  fill: var(--text);
+  font-weight: 600;
+}
+
+.shape {
+  fill: var(--text);
+}
+
+.arrow {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}

@@ -56,6 +56,12 @@ const TEXT_PAIRS: [string, string][] = [
   ["--badge-amber-text", "--badge-amber-bg"],
   ["--badge-green-text", "--badge-green-bg"],
   ["--badge-violet-text", "--badge-violet-bg"],
+  ["--seq-ink-0", "--seq-0"],
+  ["--seq-ink-1", "--seq-1"],
+  ["--seq-ink-2", "--seq-2"],
+  ["--seq-ink-3", "--seq-3"],
+  ["--seq-ink-4", "--seq-4"],
+  ["--seq-ink-5", "--seq-5"],
 ];
 
 describe.each([

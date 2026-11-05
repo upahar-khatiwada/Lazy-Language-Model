@@ -15,6 +15,8 @@
     "verify:links": "bun scripts/verify_links.ts",
     "sync:examples": "bun scripts/sync_examples.ts",
     "verify:examples": "bun scripts/sync_examples.ts --check",
+    "sync:golden": "python -B scripts/make_golden.py",
+    "verify:golden": "python -B scripts/make_golden.py --check",
     "verify:content": "bun scripts/verify_content.ts"
   },
   "dependencies": {

@@ -21,6 +21,8 @@ Requires Bun, Node.js and Python 3 on `PATH`. Next.js does not build on Bun's `n
 | `bun run verify:links`     | Fail if concepts, links or pipelines no longer match the code. `build` runs this    |
 | `bun run sync:examples`    | Run repository functions and write `data/golden/examples.json`. Needs NumPy         |
 | `bun run verify:examples`  | Fail if the stored example numbers differ from a fresh run. Needs NumPy             |
+| `bun run sync:golden`      | Run repository functions and write the golden files for `lib/math`. Needs NumPy     |
+| `bun run verify:golden`    | Fail if the stored golden numbers differ from a fresh run. Needs NumPy              |
 | `bun run verify:content`   | Stub: not implemented yet                                                           |
 
 To build for GitHub Pages, set the base path first:
@@ -63,6 +65,16 @@ Pages reference data by id, for example `<MathBlock id="softmax.shift" />`. Equa
 Never store a line number. Lines are resolved at build time from `code-index.json`, and the schemas reject line-number keys. `verify:links` fails if a symbol does not exist, a match is not found, a match is ambiguous without an `occurrence`, or an equation has no link to code.
 
 An example declares its input and which local variables to capture. `sync:examples` runs the real function and stores the values. Every `<NumericExample>` needs a `kind` that agrees with the data.
+
+## Math engine and interactive kit
+
+`lib/math/` is a pure TypeScript copy of the repository's NumPy operations, for interactive pages. Each function names the Python function it mirrors, and `tests/math.golden.test.ts` compares it with the real Python to within 1e-9, using `data/golden/{ops,attention,optim,sampling,bpe}.json`. No number in an example may be typed into JSX: take inputs from data and values from `lib/math`.
+
+`np.argsort` in `generate.sample_next` is not stable. When the top-p cutoff falls inside a group of equal probabilities, Python may keep different token ids from the engine. The kept count and the probabilities still match, and `applyTopP` sets `tieDependent` so a page can say so.
+
+`rng.choice`, `attention_backward`, `apply_merges` and `count_words` are not mirrored.
+
+`Heatmap`, `BarChart`, `ProbabilityBars`, `LineChart` and `ShapeFlow` require a `kind`, and `actual` also requires a `provenance`. `MatrixInput` and `StepPlayer` are controls. The hidden page `/design/interactive/` shows them all.
 
 ## Generated data
 

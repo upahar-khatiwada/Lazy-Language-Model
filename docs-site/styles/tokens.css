@@ -77,6 +77,20 @@
   --badge-green-text: #1c5a38;
   --badge-violet-bg: #ece6fb;
   --badge-violet-text: #4c2f94;
+
+  /* One-hue ramp for heatmaps, low to high, each with the ink that reaches AA on it. */
+  --seq-0: #eef6f8;
+  --seq-1: #cfe6eb;
+  --seq-2: #a3d0d9;
+  --seq-3: #6bafbc;
+  --seq-4: #1f7a8b;
+  --seq-5: #0a5563;
+  --seq-ink-0: #151b26;
+  --seq-ink-1: #151b26;
+  --seq-ink-2: #151b26;
+  --seq-ink-3: #151b26;
+  --seq-ink-4: #ffffff;
+  --seq-ink-5: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -109,6 +123,20 @@
     --badge-green-text: #a5e8bf;
     --badge-violet-bg: #2e2455;
     --badge-violet-text: #cfc0ff;
+
+    /* One-hue ramp for heatmaps, low to high, each with the ink that reaches AA on it. */
+    --seq-0: #1a2a33;
+    --seq-1: #1d3d49;
+    --seq-2: #1f5563;
+    --seq-3: #256a79;
+    --seq-4: #4fb0c3;
+    --seq-5: #8fdbe8;
+    --seq-ink-0: #e7eaf0;
+    --seq-ink-1: #e7eaf0;
+    --seq-ink-2: #e7eaf0;
+    --seq-ink-3: #e7eaf0;
+    --seq-ink-4: #0f131a;
+    --seq-ink-5: #0f131a;
   }
 }
 
@@ -141,4 +169,18 @@
   --badge-green-text: #a5e8bf;
   --badge-violet-bg: #2e2455;
   --badge-violet-text: #cfc0ff;
+
+  /* One-hue ramp for heatmaps, low to high, each with the ink that reaches AA on it. */
+  --seq-0: #1a2a33;
+  --seq-1: #1d3d49;
+  --seq-2: #1f5563;
+  --seq-3: #256a79;
+  --seq-4: #4fb0c3;
+  --seq-5: #8fdbe8;
+  --seq-ink-0: #e7eaf0;
+  --seq-ink-1: #e7eaf0;
+  --seq-ink-2: #e7eaf0;
+  --seq-ink-3: #e7eaf0;
+  --seq-ink-4: #0f131a;
+  --seq-ink-5: #0f131a;
 }

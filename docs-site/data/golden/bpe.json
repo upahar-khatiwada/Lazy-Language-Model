@@ -1,0 +1,1430 @@
+{
+ "cases": [
+  {
+   "id": "merge_tokens.simple",
+   "mirrors": "tokenizer.merge_tokens",
+   "kind": "illustrative",
+   "inputs": {
+    "tokens": [
+     "a",
+     "b",
+     "c",
+     "a",
+     "b"
+    ],
+    "pair": [
+     "a",
+     "b"
+    ],
+    "merged": "ab"
+   },
+   "outputs": {
+    "tokens": [
+     "ab",
+     "c",
+     "ab"
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "merge_tokens.overlap_left_to_right",
+   "mirrors": "tokenizer.merge_tokens",
+   "kind": "illustrative",
+   "inputs": {
+    "tokens": [
+     "a",
+     "a",
+     "a"
+    ],
+    "pair": [
+     "a",
+     "a"
+    ],
+    "merged": "aa"
+   },
+   "outputs": {
+    "tokens": [
+     "aa",
+     "a"
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "merge_tokens.no_match",
+   "mirrors": "tokenizer.merge_tokens",
+   "kind": "illustrative",
+   "inputs": {
+    "tokens": [
+     "a",
+     "b"
+    ],
+    "pair": [
+     "b",
+     "a"
+    ],
+    "merged": "ba"
+   },
+   "outputs": {
+    "tokens": [
+     "a",
+     "b"
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.words",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "low",
+      5
+     ],
+     [
+      "lower",
+      2
+     ],
+     [
+      "newest",
+      6
+     ],
+     [
+      "widest",
+      3
+     ]
+    ]
+   },
+   "outputs": {
+    "merges": [
+     {
+      "pair": [
+       "e",
+       "s"
+      ],
+      "merged": "es",
+      "frequency": 9
+     },
+     {
+      "pair": [
+       "es",
+       "t"
+      ],
+      "merged": "est",
+      "frequency": 9
+     },
+     {
+      "pair": [
+       "l",
+       "o"
+      ],
+      "merged": "lo",
+      "frequency": 7
+     },
+     {
+      "pair": [
+       "lo",
+       "w"
+      ],
+      "merged": "low",
+      "frequency": 7
+     },
+     {
+      "pair": [
+       "n",
+       "e"
+      ],
+      "merged": "ne",
+      "frequency": 6
+     },
+     {
+      "pair": [
+       "ne",
+       "w"
+      ],
+      "merged": "new",
+      "frequency": 6
+     },
+     {
+      "pair": [
+       "new",
+       "est"
+      ],
+      "merged": "newest",
+      "frequency": 6
+     },
+     {
+      "pair": [
+       "w",
+       "i"
+      ],
+      "merged": "wi",
+      "frequency": 3
+     },
+     {
+      "pair": [
+       "wi",
+       "d"
+      ],
+      "merged": "wid",
+      "frequency": 3
+     },
+     {
+      "pair": [
+       "wid",
+       "est"
+      ],
+      "merged": "widest",
+      "frequency": 3
+     },
+     {
+      "pair": [
+       "low",
+       "e"
+      ],
+      "merged": "lowe",
+      "frequency": 2
+     },
+     {
+      "pair": [
+       "lowe",
+       "r"
+      ],
+      "merged": "lower",
+      "frequency": 2
+     }
+    ],
+    "pair_counts": [
+     [
+      {
+       "pair": [
+        "l",
+        "o"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "o",
+        "w"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "w",
+        "e"
+       ],
+       "count": 8
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "n",
+        "e"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "s"
+       ],
+       "count": 9
+      },
+      {
+       "pair": [
+        "s",
+        "t"
+       ],
+       "count": 9
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "e"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "l",
+        "o"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "o",
+        "w"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "w",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "n",
+        "e"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "es"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "es",
+        "t"
+       ],
+       "count": 9
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "es"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "l",
+        "o"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "o",
+        "w"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "w",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "n",
+        "e"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "est"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "lo",
+        "w"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "w",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "n",
+        "e"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "est"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "low",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "n",
+        "e"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "est"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "low",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "ne",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "est"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "low",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "new",
+        "est"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "low",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "low",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "wi",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "low",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "wid",
+        "est"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "low",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      }
+     ],
+     [
+      {
+       "pair": [
+        "lowe",
+        "r"
+       ],
+       "count": 2
+      }
+     ],
+     []
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.merge_limit",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "low",
+      5
+     ],
+     [
+      "lower",
+      2
+     ],
+     [
+      "newest",
+      6
+     ],
+     [
+      "widest",
+      3
+     ]
+    ],
+    "max_merges": 2
+   },
+   "outputs": {
+    "merges": [
+     {
+      "pair": [
+       "e",
+       "s"
+      ],
+      "merged": "es",
+      "frequency": 9
+     },
+     {
+      "pair": [
+       "es",
+       "t"
+      ],
+      "merged": "est",
+      "frequency": 9
+     }
+    ],
+    "pair_counts": [
+     [
+      {
+       "pair": [
+        "l",
+        "o"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "o",
+        "w"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "w",
+        "e"
+       ],
+       "count": 8
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "n",
+        "e"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "s"
+       ],
+       "count": 9
+      },
+      {
+       "pair": [
+        "s",
+        "t"
+       ],
+       "count": 9
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "e"
+       ],
+       "count": 3
+      }
+     ],
+     [
+      {
+       "pair": [
+        "l",
+        "o"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "o",
+        "w"
+       ],
+       "count": 7
+      },
+      {
+       "pair": [
+        "w",
+        "e"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "e",
+        "r"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "n",
+        "e"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "e",
+        "w"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "w",
+        "es"
+       ],
+       "count": 6
+      },
+      {
+       "pair": [
+        "es",
+        "t"
+       ],
+       "count": 9
+      },
+      {
+       "pair": [
+        "w",
+        "i"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "i",
+        "d"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "d",
+        "es"
+       ],
+       "count": 3
+      }
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.tie_goes_to_first_seen",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "ab",
+      1
+     ],
+     [
+      "cd",
+      1
+     ]
+    ]
+   },
+   "outputs": {
+    "merges": [
+     {
+      "pair": [
+       "a",
+       "b"
+      ],
+      "merged": "ab",
+      "frequency": 1
+     },
+     {
+      "pair": [
+       "c",
+       "d"
+      ],
+      "merged": "cd",
+      "frequency": 1
+     }
+    ],
+    "pair_counts": [
+     [
+      {
+       "pair": [
+        "a",
+        "b"
+       ],
+       "count": 1
+      },
+      {
+       "pair": [
+        "c",
+        "d"
+       ],
+       "count": 1
+      }
+     ],
+     [
+      {
+       "pair": [
+        "c",
+        "d"
+       ],
+       "count": 1
+      }
+     ],
+     []
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.numeric_word_keeps_its_place",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "ab",
+      2
+     ],
+     [
+      "10",
+      2
+     ]
+    ]
+   },
+   "outputs": {
+    "merges": [
+     {
+      "pair": [
+       "a",
+       "b"
+      ],
+      "merged": "ab",
+      "frequency": 2
+     },
+     {
+      "pair": [
+       "1",
+       "0"
+      ],
+      "merged": "10",
+      "frequency": 2
+     }
+    ],
+    "pair_counts": [
+     [
+      {
+       "pair": [
+        "a",
+        "b"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "1",
+        "0"
+       ],
+       "count": 2
+      }
+     ],
+     [
+      {
+       "pair": [
+        "1",
+        "0"
+       ],
+       "count": 2
+      }
+     ],
+     []
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.counts_add_across_words",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "ab",
+      1
+     ],
+     [
+      "cd",
+      2
+     ],
+     [
+      "xab",
+      2
+     ]
+    ]
+   },
+   "outputs": {
+    "merges": [
+     {
+      "pair": [
+       "a",
+       "b"
+      ],
+      "merged": "ab",
+      "frequency": 3
+     },
+     {
+      "pair": [
+       "c",
+       "d"
+      ],
+      "merged": "cd",
+      "frequency": 2
+     },
+     {
+      "pair": [
+       "x",
+       "ab"
+      ],
+      "merged": "xab",
+      "frequency": 2
+     }
+    ],
+    "pair_counts": [
+     [
+      {
+       "pair": [
+        "a",
+        "b"
+       ],
+       "count": 3
+      },
+      {
+       "pair": [
+        "c",
+        "d"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "x",
+        "a"
+       ],
+       "count": 2
+      }
+     ],
+     [
+      {
+       "pair": [
+        "c",
+        "d"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "x",
+        "ab"
+       ],
+       "count": 2
+      }
+     ],
+     [
+      {
+       "pair": [
+        "x",
+        "ab"
+       ],
+       "count": 2
+      }
+     ],
+     []
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.code_points",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "\ud83d\ude00\ud83d\ude00a",
+      2
+     ],
+     [
+      "\u00e9t\u00e9",
+      1
+     ]
+    ]
+   },
+   "outputs": {
+    "merges": [
+     {
+      "pair": [
+       "\ud83d\ude00",
+       "\ud83d\ude00"
+      ],
+      "merged": "\ud83d\ude00\ud83d\ude00",
+      "frequency": 2
+     },
+     {
+      "pair": [
+       "\ud83d\ude00\ud83d\ude00",
+       "a"
+      ],
+      "merged": "\ud83d\ude00\ud83d\ude00a",
+      "frequency": 2
+     },
+     {
+      "pair": [
+       "\u00e9",
+       "t"
+      ],
+      "merged": "\u00e9t",
+      "frequency": 1
+     },
+     {
+      "pair": [
+       "\u00e9t",
+       "\u00e9"
+      ],
+      "merged": "\u00e9t\u00e9",
+      "frequency": 1
+     }
+    ],
+    "pair_counts": [
+     [
+      {
+       "pair": [
+        "\ud83d\ude00",
+        "\ud83d\ude00"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "\ud83d\ude00",
+        "a"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "\u00e9",
+        "t"
+       ],
+       "count": 1
+      },
+      {
+       "pair": [
+        "t",
+        "\u00e9"
+       ],
+       "count": 1
+      }
+     ],
+     [
+      {
+       "pair": [
+        "\ud83d\ude00\ud83d\ude00",
+        "a"
+       ],
+       "count": 2
+      },
+      {
+       "pair": [
+        "\u00e9",
+        "t"
+       ],
+       "count": 1
+      },
+      {
+       "pair": [
+        "t",
+        "\u00e9"
+       ],
+       "count": 1
+      }
+     ],
+     [
+      {
+       "pair": [
+        "\u00e9",
+        "t"
+       ],
+       "count": 1
+      },
+      {
+       "pair": [
+        "t",
+        "\u00e9"
+       ],
+       "count": 1
+      }
+     ],
+     [
+      {
+       "pair": [
+        "\u00e9t",
+        "\u00e9"
+       ],
+       "count": 1
+      }
+     ],
+     []
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.single_characters_stop_at_once",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "a",
+      3
+     ],
+     [
+      "b",
+      1
+     ]
+    ]
+   },
+   "outputs": {
+    "merges": [],
+    "pair_counts": [
+     []
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "train_bpe.zero_weight_is_never_chosen",
+   "mirrors": "tokenizer.train_bpe",
+   "kind": "illustrative",
+   "inputs": {
+    "word_freqs": [
+     [
+      "ab",
+      0
+     ]
+    ]
+   },
+   "outputs": {
+    "merges": [],
+    "pair_counts": [
+     [
+      {
+       "pair": [
+        "a",
+        "b"
+       ],
+       "count": 0
+      }
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  }
+ ]
+}

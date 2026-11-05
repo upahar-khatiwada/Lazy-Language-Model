@@ -197,3 +197,70 @@ Append one entry per finished task. Newest at the bottom.
   - Commit `66da45b`, pushed directly to `origin/main`, with no co-author line: added `/data/` and `docs-site/contract/` to the root `.gitignore` and untracked `data/corpus.csv` and the 6 contract files. The human chose root `data/` only, so `docs-site/data/` stays tracked. Local files were kept, and history was not rewritten, so older commits still contain these files.
   - A fresh clone now has no `data/corpus.csv` or `docs-site/contract/`. Training needs a corpus supplied locally, and a new machine needs the contract restored before starting a task.
   - That commit touched files outside `docs-site/`, so the pin moved to `66da45b`. `bun run sync:repo` regenerated `data/generated/`; the change is uncommitted, with the rest of Task 04. Line numbers in this entry still hold, because no `.py` file changed; the SHAs quoted above are the old pin.
+
+### Task 05: Math Engine & Interactive Kit (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Engine: `lib/math/` `tensor.ts`, `ops.ts`, `attention.ts`, `optim.ts`, `sampling.ts`, `bpe.ts`.
+  - Golden: `scripts/make_golden.py`, `lib/golden.ts`, `data/golden/` `ops.json`, `attention.json`, `optim.json`, `sampling.json`, `bpe.json` (72 cases, generated). `examples.json` was not touched.
+  - Visual helpers: `lib/viz/scale.ts`, `lib/viz/shape.ts`. `formatShape` moved there from `lib/dimensions.ts`, which re-exports it, because `lib/dimensions.ts` reads files and cannot load in the browser.
+  - Components, with CSS modules: `VizFigure`, `Heatmap`, `BarChart`, `ProbabilityBars` (no CSS of its own), `LineChart`, `ShapeFlow`, `MatrixInput`, `StepPlayer`, `VizSpecimens`.
+  - Hidden, noindex route: `app/(docs)/design/interactive/page.tsx`, at `/design/interactive/`.
+  - Tests: `tests/math.golden.test.ts`, `tests/math.mirrors.test.ts`, `tests/viz.test.ts`, `tests/e2e/interactive.spec.ts`; changed `tests/tokens.test.ts` (AA pairs for the new ramp).
+  - Changed: `styles/tokens.css` (`--seq-0..5`, `--seq-ink-0..5`), `package.json` (`sync:golden`, `verify:golden`), `README.md`, this entry.
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added.
+- Commands run and results (Node v26.13.0 prepended to PATH for each process, Bun 1.3.13; `.next`, `out` and `test-results` deleted before the final run; HEAD `8778696`, `sha` `66da45b`):
+  - `bun install --frozen-lockfile`: exit 0.
+  - `bun run sync:golden` twice, with `sha256sum` compared: `Wrote 72 cases to data/golden/ in 5 files.`, `IDENTICAL`.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`, exit 0.
+  - `bun run verify:links`: `OK: 4 links, 1 concepts and 1 pipelines match the code.`, exit 0.
+  - `bun run verify:examples`: `OK: 1 example(s) match a fresh run.`, exit 0.
+  - `bun run verify:golden`: `OK: 72 golden cases match a fresh run.`, exit 0.
+  - `bun run typecheck`: exit 0.
+  - `bun run lint`: `All matched files use Prettier code style!`, exit 0.
+  - `bun run test`: `Test Files 10 passed (10)`, `Tests 387 passed (387)`, exit 0.
+  - `bun run build`: `Compiled successfully`, `/design/interactive` listed, exit 0.
+  - `bun run test:e2e`: `72 passed (1.1m)`, exit 0. Includes axe at 1280 and 390 in both themes, with no findings.
+  - Acceptance, tamper: with one stored value in `ops.json` edited, `verify:golden` printed `stored 0.7652409557748218, computed 0.6652409557748218` and `script "verify:golden" exited with code 1`, and `bun run test -- tests/math.golden` printed `Tests 1 failed | 168 passed (169)`. Restored: `OK`.
+  - Acceptance, formula changes: a scratchpad script (not kept) applied 35 changes to `lib/math` one at a time, ran `bun run test -- tests/math.golden`, restored the file and compared hashes. `sha256sum -c` afterwards: all 6 engine files `OK`. 33 of 35 failed tests, including `drop max shift (softmax): Tests 5 failed | 164 passed (169)` and `drop sqrt(dh) scaling: Tests 4 failed | 165 passed (169)`. The 2 survivors do not change results: top-k running at `k = V` keeps every token and divides by a sum of about 1; clipping with `>=` at `norm == max` multiplies by exactly 1.
+  - Spot checks on inputs not in the golden files, direct Python call against engine, digit for digit:
+    - `ops.softmax_forward([800, 803, 799])`: `[0.0466126225779739, 0.9362395518765058, 0.01714782554552039]` in both.
+    - `transformer.attention_forward`, `A` for T=2, d=4, H=2: head 0 row 1 `[0.22860169831451824, 0.7713983016854818]`, head 1 row 1 `[0.475271454339683, 0.524728545660317]` in both.
+    - `generate.sample_next([1.2, -0.4, 1.6, 0.7, 0.5], 1.5, 4, 0.8)` with a spy rng: `[0.3308917402455836, 0, 0.43201396745820664, 0.23709429229620982, 0]` in both.
+  - Screenshots reviewed by eye: 1280 light and dark, 390 light and dark; after the halo fix, the line chart at 390 light and a heatmap at 900 dark.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. No state-changing git command was run. Root `__pycache__` has 9 files, the same as before this task.
+  - Failures seen on the way:
+    - A long multi-file heredoc in Git Bash failed with `unexpected EOF while looking for matching`. Those files were written with the Write tool instead.
+    - ESLint warned about an unused variable in `MatrixInput`. Fixed.
+    - The first third spot check used logits that collapse to `[0, 0, 1, 0, 0]`. It matched but proved little, so it was redone with the inputs above.
+    - Screenshots showed labels colliding with the line in `LineChart` and `-inf` hard to read on the hatching, which the tests had missed. Fixed with a surface-coloured halo.
+    - One command wrote a hash list to `/tmp/g1`, outside the scratchpad. It was removed straight away.
+- Finding: `np.argsort(-p)` in `generate.sample_next` is not stable. NumPy 2.5.2 here gives `[4,1,3,2,0]` for `[.1,.2,.2,.2,.3]`, so at `top_p=0.6` Python keeps ids {4,1,3} and a stable sort keeps {4,1,2}. `NPY_DISABLE_CPU_FEATURES` had no effect in this environment, so whether the order varies by CPU is unknown. This is not an LLM bug, since the choice among equal probabilities is arbitrary, but it limits what "exact" can mean:
+  - Exact to 1e-9: `cum`, kept count, sorted kept probabilities, and the whole distribution when the cutoff does not split a tie.
+  - When the cutoff splits a tie, the token ids may differ. `applyTopP` sets `tieDependent`, and passing Python's `order` reproduces its tokens exactly, which the tests also check.
+  - `verify:golden` ignores `order`, and compares tie-split distributions as sorted values, so it should not fail on another machine because of tie order.
+- Assumptions:
+  - "Labelled values only" means no interpolated ticks: only the requested points and the two ends of each axis are printed.
+  - Golden and specimen data are Illustrative Example because the inputs are hand-picked (Task 04's rule), even where settings come from `config.py`.
+  - Comments on functions for inline steps name the enclosing Python function, for example `scaleScores` names `transformer.attention_forward`. `matmul` and `transpose` name the function where the operator is used.
+  - `raw` (`Qh @ Kh^T` before scaling) has no golden value of its own, because Python computes it inside one expression. It is checked through `scaled`.
+  - Tooltips are the native SVG `<title>`, plus a data table on every numeric chart. There is no custom crosshair, in keeping with the restrained design. This differs from the default of the dataviz guidance.
+  - `verify:golden` was not requested. It was added, as stated in the approved plan, so the files cannot go stale silently.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the approved plan.
+- Open issues:
+  - Not mirrored, because they are not in the requirement list: `rng.choice`, `transformer.attention_backward`, `tokenizer.apply_merges`, `tokenizer.count_words`. A page on attention gradients or on tokenizing free text will need them. The last two need care, because Python's Unicode `\w` and `\s` differ from JavaScript's.
+  - Probabilities that differ only in their last bits could sort differently under `Math.exp` and `np.exp`. Only exact ties are handled and flagged. Not observed in any fixture.
+  - `verify:golden`, like `verify:examples`, needs NumPy and is not part of `build`, so a change to a repository function needs a manual run or a later CI step.
+  - `verify:golden` on a machine with another CPU was not tried.
+  - `/design/interactive/` is the only page using these components. Real pages come in later tasks.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 from Task 04 still appears in server logs, with no visible effect. The Python server also logs `ConnectionAbortedError` when a test closes a page mid-response, which does not fail any test.
+  - No new LLM issues found.
+- Decisions needed from the human:
+  - Still open from Task 03: should the local `contract/` and D1 be updated? They still pin `c17aa75` and say the corpus is uncommitted.
+- Status: Task 05 finished. Nothing was committed.
+- Follow-up after Task 05, at the human's request (2026-11-05): the open question from Tasks 03 and 04 is closed. The human said yes to updating `contract/` and D1.
+  - Changed all 6 files in `contract/`. The pin is now `66da45b`, with a note that the files were first written at `c17aa75`. `DISCREPANCIES.md` section 1 now records D1 to D5 as decided, and the replacement rule in the Task 01 entry no longer applies to it. Corpus and `.gitignore` facts were corrected in `DISCREPANCIES.md` section 7, `REPO_INVENTORY.md` and `HYPERPARAMETERS.md`.
+  - D1's substance is unchanged: no training-history output, checkpoint values disclose their source, no retraining for now. Its old clause "the corpus will not be committed" is replaced by the facts: the corpus was tracked in `1995594` and `69aef17`, and is ignored since `66da45b`.
+  - Evidence: `git diff --stat c17aa75 HEAD -- ':(exclude)docs-site'` lists only `.gitignore` and `data/corpus.csv`. `git hash-object data/corpus.csv` equals `git rev-parse 1995594:data/corpus.csv` (`325f58d`). `git ls-files data` is empty. `build_tokenizer` on the local corpus: `V 575 checkpoint V 575 itos identical True`.
+  - `contract/` is git-ignored, so these edits exist only on this machine.
+  - `docs-site/CLAUDE.md` was not changed. It still says the repository was last inspected at `c17aa75`, and also says to pin to the real HEAD.
+  - Earlier entries in this file were left as written.

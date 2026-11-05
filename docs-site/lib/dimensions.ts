@@ -41,7 +41,4 @@ export function resolveDimension(
   return { name, configName, value, note };
 }
 
-// (H, T, T), and (V,) for one dimension, as Python prints a tuple.
-export function formatShape(parts: (string | number)[]): string {
-  return parts.length === 1 ? `(${parts[0]},)` : `(${parts.join(", ")})`;
-}
+export { formatShape } from "./viz/shape";

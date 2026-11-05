@@ -1,0 +1,1645 @@
+{
+ "cases": [
+  {
+   "id": "sample_next.config_defaults",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 0.8,
+    "top_k": 0,
+    "top_p": 0.9
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5713985702531746,
+     0.30173675284006996,
+     0.12686467690675546,
+     0.0
+    ],
+    "after_temperature": [
+     0.5536099193467469,
+     0.29234315257338944,
+     0.12291515451146647,
+     0.031131773568397202
+    ],
+    "after_top_k": [
+     0.5536099193467469,
+     0.29234315257338944,
+     0.12291515451146647,
+     0.031131773568397202
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.5536099193467469,
+     0.8459530719201362,
+     0.9688682264316028,
+     1.0
+    ],
+    "keep_count": 3,
+    "tie_split": false
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "temperature.half",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     2.0,
+     1.0,
+     0.0
+    ],
+    "temperature": 0.5,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.8668133321973347,
+     0.11731042782619835,
+     0.015876239976466762
+    ],
+    "after_temperature": [
+     0.8668133321973347,
+     0.11731042782619835,
+     0.015876239976466762
+    ],
+    "after_top_k": [
+     0.8668133321973347,
+     0.11731042782619835,
+     0.015876239976466762
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      3
+     ]
+    },
+    "outputs": {
+     "p": [
+      3
+     ],
+     "after_temperature": [
+      3
+     ],
+     "after_top_k": [
+      3
+     ]
+    }
+   }
+  },
+  {
+   "id": "temperature.one",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     2.0,
+     1.0,
+     0.0
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.6652409557748218,
+     0.24472847105479764,
+     0.09003057317038046
+    ],
+    "after_temperature": [
+     0.6652409557748218,
+     0.24472847105479764,
+     0.09003057317038046
+    ],
+    "after_top_k": [
+     0.6652409557748218,
+     0.24472847105479764,
+     0.09003057317038046
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      3
+     ]
+    },
+    "outputs": {
+     "p": [
+      3
+     ],
+     "after_temperature": [
+      3
+     ],
+     "after_top_k": [
+      3
+     ]
+    }
+   }
+  },
+  {
+   "id": "temperature.two",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     2.0,
+     1.0,
+     0.0
+    ],
+    "temperature": 2.0,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.506480391055654,
+     0.3071958857184984,
+     0.1863237232258476
+    ],
+    "after_temperature": [
+     0.506480391055654,
+     0.3071958857184984,
+     0.1863237232258476
+    ],
+    "after_top_k": [
+     0.506480391055654,
+     0.3071958857184984,
+     0.1863237232258476
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      3
+     ]
+    },
+    "outputs": {
+     "p": [
+      3
+     ],
+     "after_temperature": [
+      3
+     ],
+     "after_top_k": [
+      3
+     ]
+    }
+   }
+  },
+  {
+   "id": "temperature.large_logits",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     1000.0,
+     1001.0,
+     999.0
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.24472847105479764,
+     0.6652409557748218,
+     0.09003057317038046
+    ],
+    "after_temperature": [
+     0.24472847105479764,
+     0.6652409557748218,
+     0.09003057317038046
+    ],
+    "after_top_k": [
+     0.24472847105479764,
+     0.6652409557748218,
+     0.09003057317038046
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      3
+     ]
+    },
+    "outputs": {
+     "p": [
+      3
+     ],
+     "after_temperature": [
+      3
+     ],
+     "after_top_k": [
+      3
+     ]
+    }
+   }
+  },
+  {
+   "id": "greedy.zero",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     0.1,
+     2.0,
+     1.0
+    ],
+    "temperature": 0.0,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "greedy",
+    "index": 1
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      3
+     ]
+    },
+    "outputs": {}
+   }
+  },
+  {
+   "id": "greedy.below_guard",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     0.1,
+     2.0,
+     1.0
+    ],
+    "temperature": 5e-07,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "greedy",
+    "index": 1
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      3
+     ]
+    },
+    "outputs": {}
+   }
+  },
+  {
+   "id": "greedy.at_guard_is_not_greedy",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     0.1,
+     2.0,
+     1.0
+    ],
+    "temperature": 1e-06,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "after_top_k": [
+     0.0,
+     1.0,
+     0.0
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      3
+     ]
+    },
+    "outputs": {
+     "p": [
+      3
+     ],
+     "after_temperature": [
+      3
+     ],
+     "after_top_k": [
+      3
+     ]
+    }
+   }
+  },
+  {
+   "id": "greedy.tie_goes_to_first",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     1.0,
+     3.0,
+     3.0,
+     2.0
+    ],
+    "temperature": 0.0,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "greedy",
+    "index": 1
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {}
+   }
+  },
+  {
+   "id": "top_k.two",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 2,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.625,
+     0.37499999999999994,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.625,
+     0.37499999999999994,
+     0.0,
+     0.0
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_k.one",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 1,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_k.equal_to_v_is_skipped",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 4,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_k.above_v_is_skipped",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 9,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_k.negative_is_skipped",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": -1,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_k.ties_are_all_kept",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     2.0,
+     2.0,
+     2.0,
+     1.0,
+     0.0
+    ],
+    "temperature": 1.0,
+    "top_k": 2,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.3333333333333333,
+     0.3333333333333333,
+     0.3333333333333333,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.28545210004761323,
+     0.28545210004761323,
+     0.28545210004761323,
+     0.10501195904673061,
+     0.038631740810429645
+    ],
+    "after_top_k": [
+     0.3333333333333333,
+     0.3333333333333333,
+     0.3333333333333333,
+     0.0,
+     0.0
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      5
+     ]
+    },
+    "outputs": {
+     "p": [
+      5
+     ],
+     "after_temperature": [
+      5
+     ],
+     "after_top_k": [
+      5
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.keeps_crossing_token",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.9
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5263157894736842,
+     0.31578947368421045,
+     0.15789473684210528,
+     0.0
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.5,
+     0.7999999999999999,
+     0.95,
+     1.0
+    ],
+    "keep_count": 3,
+    "tie_split": false
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.one_is_skipped",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 1.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.zero_keeps_one",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.0
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.5,
+     0.7999999999999999,
+     0.95,
+     1.0
+    ],
+    "keep_count": 1,
+    "tie_split": false
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.exact_boundary",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.5
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5,
+     0.5,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    "after_top_k": [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.25,
+     0.5,
+     0.75,
+     1.0
+    ],
+    "keep_count": 2,
+    "tie_split": true
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.just_past_boundary",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.5000001
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.3333333333333333,
+     0.3333333333333333,
+     0.3333333333333333,
+     0.0
+    ],
+    "after_temperature": [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    "after_top_k": [
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.25,
+     0.5,
+     0.75,
+     1.0
+    ],
+    "keep_count": 3,
+    "tie_split": true
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.tie_split_by_cutoff",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -2.3025850929940455,
+     -1.6094379124341003,
+     -1.6094379124341003,
+     -1.6094379124341003,
+     -1.2039728043259361
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.6
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.0,
+     0.28571428571428575,
+     0.0,
+     0.28571428571428575,
+     0.4285714285714285
+    ],
+    "after_temperature": [
+     0.1,
+     0.2,
+     0.2,
+     0.2,
+     0.29999999999999993
+    ],
+    "after_top_k": [
+     0.1,
+     0.2,
+     0.2,
+     0.2,
+     0.29999999999999993
+    ],
+    "order": [
+     4,
+     1,
+     3,
+     2,
+     0
+    ],
+    "cum": [
+     0.29999999999999993,
+     0.49999999999999994,
+     0.7,
+     0.8999999999999999,
+     0.9999999999999999
+    ],
+    "keep_count": 3,
+    "tie_split": true
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      5
+     ]
+    },
+    "outputs": {
+     "p": [
+      5
+     ],
+     "after_temperature": [
+      5
+     ],
+     "after_top_k": [
+      5
+     ],
+     "order": [
+      5
+     ],
+     "cum": [
+      5
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.tie_fully_kept",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -2.3025850929940455,
+     -1.6094379124341003,
+     -1.6094379124341003,
+     -1.6094379124341003,
+     -1.2039728043259361
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.85
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.0,
+     0.22222222222222224,
+     0.22222222222222224,
+     0.22222222222222224,
+     0.33333333333333326
+    ],
+    "after_temperature": [
+     0.1,
+     0.2,
+     0.2,
+     0.2,
+     0.29999999999999993
+    ],
+    "after_top_k": [
+     0.1,
+     0.2,
+     0.2,
+     0.2,
+     0.29999999999999993
+    ],
+    "order": [
+     4,
+     1,
+     3,
+     2,
+     0
+    ],
+    "cum": [
+     0.29999999999999993,
+     0.49999999999999994,
+     0.7,
+     0.8999999999999999,
+     0.9999999999999999
+    ],
+    "keep_count": 4,
+    "tie_split": false
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      5
+     ]
+    },
+    "outputs": {
+     "p": [
+      5
+     ],
+     "after_temperature": [
+      5
+     ],
+     "after_top_k": [
+      5
+     ],
+     "order": [
+      5
+     ],
+     "cum": [
+      5
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.tie_fully_dropped",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.35667494393873245,
+     -2.3025850929940455,
+     -2.3025850929940455,
+     -2.3025850929940455
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.6
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.7000000000000001,
+     0.10000000000000005,
+     0.10000000000000005,
+     0.10000000000000005
+    ],
+    "after_top_k": [
+     0.7000000000000001,
+     0.10000000000000005,
+     0.10000000000000005,
+     0.10000000000000005
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.7000000000000001,
+     0.8000000000000002,
+     0.9000000000000002,
+     1.0000000000000002
+    ],
+    "keep_count": 1,
+    "tie_split": false
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_p.many_ties_split",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -2.995732273553991,
+     -2.3025850929940455,
+     -2.3025850929940455,
+     -2.995732273553991,
+     -2.3025850929940455,
+     -2.995732273553991,
+     -2.3025850929940455,
+     -2.995732273553991,
+     -2.3025850929940455,
+     -2.995732273553991,
+     -2.3025850929940455,
+     -2.995732273553991,
+     -2.995732273553991,
+     -2.995732273553991,
+     -2.995732273553991,
+     -2.3025850929940455,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 0,
+    "top_p": 0.3
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.0,
+     0.25,
+     0.25,
+     0.0,
+     0.25,
+     0.0,
+     0.25,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.041666666666666664,
+     0.08333333333333333,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.041666666666666664,
+     0.041666666666666664,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664
+    ],
+    "after_top_k": [
+     0.041666666666666664,
+     0.08333333333333333,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664,
+     0.041666666666666664,
+     0.041666666666666664,
+     0.041666666666666664,
+     0.08333333333333333,
+     0.041666666666666664
+    ],
+    "order": [
+     1,
+     2,
+     6,
+     4,
+     10,
+     15,
+     8,
+     3,
+     7,
+     5,
+     0,
+     9,
+     11,
+     12,
+     13,
+     14,
+     16
+    ],
+    "cum": [
+     0.08333333333333333,
+     0.16666666666666666,
+     0.25,
+     0.3333333333333333,
+     0.41666666666666663,
+     0.49999999999999994,
+     0.5833333333333333,
+     0.6249999999999999,
+     0.6666666666666665,
+     0.7083333333333331,
+     0.7499999999999998,
+     0.7916666666666664,
+     0.833333333333333,
+     0.8749999999999997,
+     0.9166666666666663,
+     0.9583333333333329,
+     0.9999999999999996
+    ],
+    "keep_count": 4,
+    "tie_split": true
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      17
+     ]
+    },
+    "outputs": {
+     "p": [
+      17
+     ],
+     "after_temperature": [
+      17
+     ],
+     "after_top_k": [
+      17
+     ],
+     "order": [
+      17
+     ],
+     "cum": [
+      17
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_k_then_top_p",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 1.0,
+    "top_k": 3,
+    "top_p": 0.5
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "after_temperature": [
+     0.5,
+     0.29999999999999993,
+     0.15000000000000002,
+     0.05000000000000001
+    ],
+    "after_top_k": [
+     0.5263157894736842,
+     0.31578947368421045,
+     0.15789473684210528,
+     0.0
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.5263157894736842,
+     0.8421052631578947,
+     1.0,
+     1.0
+    ],
+    "keep_count": 1,
+    "tie_split": false
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "id": "top_k_then_top_p_with_temperature",
+   "mirrors": "generate.sample_next",
+   "kind": "illustrative",
+   "inputs": {
+    "logits": [
+     -0.6931471805599453,
+     -1.2039728043259361,
+     -1.8971199848858813,
+     -2.995732273553991
+    ],
+    "temperature": 0.8,
+    "top_k": 3,
+    "top_p": 0.9
+   },
+   "outputs": {
+    "kind": "distribution",
+    "p": [
+     0.5713985702531746,
+     0.30173675284006996,
+     0.12686467690675546,
+     0.0
+    ],
+    "after_temperature": [
+     0.5536099193467469,
+     0.29234315257338944,
+     0.12291515451146647,
+     0.031131773568397202
+    ],
+    "after_top_k": [
+     0.5713985702531746,
+     0.30173675284006996,
+     0.12686467690675546,
+     0.0
+    ],
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "cum": [
+     0.5713985702531746,
+     0.8731353230932446,
+     1.0,
+     1.0
+    ],
+    "keep_count": 3,
+    "tie_split": false
+   },
+   "shapes": {
+    "inputs": {
+     "logits": [
+      4
+     ]
+    },
+    "outputs": {
+     "p": [
+      4
+     ],
+     "after_temperature": [
+      4
+     ],
+     "after_top_k": [
+      4
+     ],
+     "order": [
+      4
+     ],
+     "cum": [
+      4
+     ]
+    }
+   }
+  }
+ ]
+}

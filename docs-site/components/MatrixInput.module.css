@@ -1,0 +1,71 @@
+.wrapper {
+  min-width: 0;
+}
+
+.scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: var(--focus-width);
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: var(--space-1);
+  width: auto;
+}
+
+.table th,
+.table td {
+  background: none;
+  border: 0;
+  font-family: var(--font-code);
+  font-weight: 400;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.caption {
+  caption-side: top;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  padding-bottom: var(--space-1);
+  text-align: left;
+}
+
+.corner {
+  min-width: var(--space-5);
+}
+
+.input {
+  background: var(--surface);
+  border: var(--border-width) solid var(--muted);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+  height: var(--control-height);
+  padding: 0 var(--space-1);
+  text-align: right;
+  transition: var(--transition-colors);
+  width: 68px;
+}
+
+.input[aria-invalid="true"] {
+  background: var(--highlight);
+  border-color: var(--highlight-line);
+  border-width: var(--focus-width);
+}
+
+.status {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  min-height: 1.65em;
+}
+
+@media (max-width: 859px) {
+  .input {
+    height: var(--touch-target);
+  }
+}

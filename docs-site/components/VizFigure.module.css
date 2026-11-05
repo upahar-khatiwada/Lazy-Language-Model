@@ -1,0 +1,46 @@
+.figure {
+  background: var(--surface);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+.caption {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.title {
+  font-weight: 600;
+}
+
+.note {
+  color: var(--muted);
+  flex-basis: 100%;
+  font-size: var(--fs-sm);
+}
+
+.summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+}
+
+.tableScroll {
+  margin-top: var(--space-2);
+  max-height: 320px;
+  overflow: auto;
+}
+
+@media (max-width: 859px) {
+  .summary {
+    align-content: center;
+    min-height: var(--touch-target);
+  }
+}

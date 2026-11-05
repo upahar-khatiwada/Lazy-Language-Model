@@ -1,0 +1,65 @@
+.yTitle {
+  color: var(--muted);
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+
+/* The left padding holds the y-axis numbers, which the chart draws outside its own box. */
+.plot {
+  min-width: 0;
+  padding-left: 56px;
+  padding-right: var(--space-1);
+}
+
+.chart {
+  display: block;
+  overflow: visible;
+}
+
+.chart text {
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+
+.axis {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.marker {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.tick {
+  fill: var(--muted);
+}
+
+/* A halo keeps the label readable where it crosses the line. */
+.pointLabel {
+  fill: var(--text);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+
+.xAxis {
+  color: var(--muted);
+  display: flex;
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+  justify-content: space-between;
+  margin-top: var(--space-1);
+}
+
+.xTitle {
+  text-align: center;
+}

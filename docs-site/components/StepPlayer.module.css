@@ -1,0 +1,66 @@
+.player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  max-width: none;
+  padding: 0;
+}
+
+.stepButton {
+  background: var(--surface);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+  transition: var(--transition-colors);
+}
+
+.stepButton:hover {
+  background: var(--hover);
+}
+
+.stepButton[aria-current="step"] {
+  background: var(--active-bg);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.control[aria-disabled="true"] {
+  background: var(--code-bg);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.status {
+  font-size: var(--fs-sm);
+}
+
+.panel {
+  min-width: 0;
+}
+
+@media (max-width: 859px) {
+  .stepButton {
+    min-height: var(--touch-target);
+  }
+}
