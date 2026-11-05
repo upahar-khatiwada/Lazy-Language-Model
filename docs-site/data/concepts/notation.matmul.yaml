@@ -1,0 +1,114 @@
+id: notation.matmul
+title: Matrix multiplication
+category: basic-operations
+inventory: [M16, M17]
+status: derived
+summary: >-
+  The code writes every linear layer as X @ W + b, where X has one row per token. The @ operator
+  multiplies each row of X by the matrix W, and b is added to every row of the result.
+why: >-
+  It is how the model changes the width of token vectors and mixes their features. Query, key and
+  value, both feed-forward layers, the attention output and the head are all this one formula.
+equations:
+  - id: matmul.entry
+    latex: (XW)_{tj} = \sum_{k} X_{tk} W_{kj}
+    role: forward
+    label: One entry of the product
+  - id: matmul.shape
+    latex: X \in \mathbb{R}^{T \times a},\; W \in \mathbb{R}^{a \times c} \;\Rightarrow\; XW \in \mathbb{R}^{T \times c}
+    role: forward
+    label: The shape rule
+  - id: matmul.linear
+    latex: Y_{tj} = (XW)_{tj} + b_j
+    role: forward
+    label: A linear layer, with b added to every row
+symbols:
+  - symbol: X
+    meaning: Input, one row per token
+    codeName: X
+    shape: (T, a)
+  - symbol: W
+    meaning: Weight matrix
+    codeName: W
+    shape: (a, c)
+  - symbol: b
+    meaning: Bias, added to every row
+    codeName: b
+    shape: (c,)
+  - symbol: Y
+    meaning: Output, one row per token
+    codeName: null
+    shape: (T, c)
+  - symbol: a
+    meaning: Input width. It is d, or F for the second feed-forward layer
+    codeName: null
+    shape: scalar
+  - symbol: c
+    meaning: Output width. It is d, F or V, depending on the layer
+    codeName: null
+    shape: scalar
+example: null
+shapes:
+  - id: query
+    label: Query projection, width stays the same
+    stages:
+      - name: Xn
+        dims: [T, d]
+      - name: Q
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: Q = Xn @ params[p+"wq"] + params[p+"bq"]
+  - id: feed-forward
+    label: First feed-forward layer, width grows
+    stages:
+      - name: Xn
+        dims: [T, d]
+      - name: Z
+        dims: [T, F]
+    target:
+      file: transformer.py
+      symbol: transformer.ffn_forward
+      match: Z = Xn @ params[p + "ff1_w"] + params[p + "ff1_b"]
+  - id: head
+    label: Linear head, width becomes the vocabulary size
+    stages:
+      - name: Xf
+        dims: [T, d]
+      - name: logits
+        dims: [T, V]
+    target:
+      file: transformer.py
+      symbol: transformer.forward
+      match: logits = Xf @ params["head_w"] + params["head_b"]
+source:
+  - file: ops.py
+    symbol: ops.linear_forward
+usedBy:
+  - file: transformer.py
+    symbol: transformer.attention_forward
+    match: Q = Xn @ params[p+"wq"] + params[p+"bq"]
+    note: Query. Key and value are on the next two lines.
+  - file: transformer.py
+    symbol: transformer.attention_forward
+    match: out = O @ params[p + "wo"] + params[p + "bo"]
+    note: Attention output.
+  - file: transformer.py
+    symbol: transformer.ffn_forward
+    match: Z = Xn @ params[p + "ff1_w"] + params[p + "ff1_b"]
+    note: First feed-forward layer.
+  - file: transformer.py
+    symbol: transformer.ffn_forward
+    match: return A @ params[p + "ff2_w"] + params[p + "ff2_b"]
+    note: Second feed-forward layer.
+  - file: transformer.py
+    symbol: transformer.forward
+    match: logits = Xf @ params["head_w"] + params["head_b"]
+    note: The head.
+pdfRef:
+  section: "4.3"
+  equations: ["19"]
+  page: 6
+notes:
+  - ops.linear_forward is only called by tests. The model writes the same formula inline.

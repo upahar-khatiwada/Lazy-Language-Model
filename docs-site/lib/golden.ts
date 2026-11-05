@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 
-// data/golden/{ops,attention,optim,sampling,bpe}.json hold results of running the repository's real
+// data/golden/{ops,attention,optim,sampling,bpe,params,data}.json hold results of running the repository's real
 // functions on hand-picked inputs. `bun run sync:golden` writes them; never edit them by hand.
 // This module reads files, so only server components and tests may import it.
 
@@ -22,7 +22,15 @@ const FileSchema = z.strictObject({ cases: z.array(CaseSchema) });
 
 export type GoldenCase = z.infer<typeof CaseSchema>;
 
-export const GOLDEN_FILES = ["ops", "attention", "optim", "sampling", "bpe"] as const;
+export const GOLDEN_FILES = [
+  "ops",
+  "attention",
+  "optim",
+  "sampling",
+  "bpe",
+  "params",
+  "data",
+] as const;
 export type GoldenFile = (typeof GOLDEN_FILES)[number];
 
 // JSON has no infinity, so make_golden.py stores -inf as this string.

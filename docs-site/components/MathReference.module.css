@@ -1,6 +1,8 @@
 .reference {
   display: grid;
   gap: var(--space-3);
+  /* A track sized to its content would grow to the widest equation, instead of letting it scroll. */
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
 
@@ -129,6 +131,12 @@
 
 .links {
   align-items: flex-start;
+}
+
+/* A file:line link is wider than this column at some widths. */
+.links a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* Cards. `hidden` must still win over the block display of a row. */

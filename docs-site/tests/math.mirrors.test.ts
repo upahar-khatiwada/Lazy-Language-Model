@@ -29,8 +29,10 @@ test("the engine has the expected files", () => {
   expect(files.sort()).toEqual([
     "attention.ts",
     "bpe.ts",
+    "data.ts",
     "ops.ts",
     "optim.ts",
+    "params.ts",
     "sampling.ts",
     "tensor.ts",
   ]);

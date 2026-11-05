@@ -1,0 +1,51 @@
+id: data.iterate_batches
+title: Shuffling and batching
+category: data
+inventory: [M12]
+status: derived
+summary: >-
+  iterate_batches puts the windows in a random order, using the random generator it is given, and
+  hands them out in groups of batch_size. A shorter last batch is kept.
+why: >-
+  One update from all the windows would be slow, and one update from a single window would be noisy.
+  A new order each epoch changes which windows are averaged together.
+equations:
+  - id: data.batches
+    latex: \text{batches per epoch} = \left\lceil \frac{W}{B} \right\rceil
+    role: none
+    label: Batches in one epoch
+symbols:
+  - symbol: W
+    meaning: Number of windows
+    codeName: len(tr_x)
+    shape: scalar
+  - symbol: B
+    meaning: Windows in one batch
+    codeName: batch_size
+    shape: scalar
+example: null
+shapes:
+  - id: batches
+    label: From all windows to one sequence
+    stages:
+      - name: tr_x
+        dims: [W, T]
+      - name: xb
+        dims: [B, T]
+      - name: x
+        dims: [T]
+    target:
+      file: data.py
+      symbol: data.iterate_batches
+      match: yield inputs.loc[rows].to_numpy(), targets.loc[rows].to_numpy()
+source:
+  - file: data.py
+    symbol: data.iterate_batches
+usedBy:
+  - file: train.py
+    symbol: train.main
+    match: steps_per_epoch = math.ceil(len(tr_x) / config.batch_size)
+    note: The same count, computed for the learning-rate schedule.
+pdfRef: null
+notes:
+  - The PDF states this in prose and in its code listing, not as an equation.

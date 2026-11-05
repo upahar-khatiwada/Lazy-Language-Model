@@ -1,0 +1,42 @@
+id: tokenizer.count_words
+title: Pre-tokens and word counts
+category: tokenizer
+inventory: [M01]
+status: implemented
+summary: >-
+  A regular expression cuts the text into pre-tokens. Each one is a run of word characters, a single
+  whitespace character, or a single other character. count_words returns how often each one occurs.
+why: >-
+  Pre-tokens limit where merges can happen. Each pre-token has its own list of tokens, so no merge
+  can join the end of one pre-token to the start of the next. The counts avoid repeating work, since
+  each distinct pre-token is handled once and weighted by its count.
+equations:
+  - id: bpe.word-count
+    latex: 'n_w = \left|\{\, i : p_i = w \,\}\right|'
+    role: none
+    label: How often the pre-token w occurs
+symbols:
+  - symbol: p_i
+    meaning: The i-th match of PRE_TOKEN_RE in the text
+    codeName: word
+    shape: string
+  - symbol: w
+    meaning: A distinct pre-token
+    codeName: word
+    shape: string
+  - symbol: n_w
+    meaning: Its count
+    codeName: counts[word]
+    shape: integer
+example: null
+shapes: []
+source:
+  - file: tokenizer.py
+    symbol: tokenizer.count_words
+usedBy: []
+pdfRef:
+  section: "4.1"
+  equations: ["3"]
+  page: 4
+notes:
+  - The PDF's pattern lets a word carry its leading space. The code's pattern does not.

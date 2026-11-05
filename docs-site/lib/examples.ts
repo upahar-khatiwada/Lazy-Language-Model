@@ -5,7 +5,12 @@ import { z } from "zod";
 // data/golden/examples.json holds numbers computed by running repository functions.
 // `bun run sync:examples` writes it; never edit it by hand.
 
-const value = z.union([z.number(), z.array(z.number()), z.array(z.array(z.number()))]);
+const value = z.union([
+  z.number(),
+  z.array(z.number()),
+  z.array(z.array(z.number())),
+  z.array(z.array(z.array(z.number()))),
+]);
 
 const StoredExampleSchema = z.strictObject({
   kind: z.enum(["illustrative", "actual"]),
@@ -40,7 +45,9 @@ export function getStoredExample(conceptId: string): StoredExample {
   return example;
 }
 
-export function formatNumbers(input: z.infer<typeof value>, precision: number): string {
+type Nested = number | Nested[];
+
+export function formatNumbers(input: Nested, precision: number): string {
   if (typeof input === "number") return input.toFixed(precision);
   return `[${input.map((item) => formatNumbers(item, precision)).join(", ")}]`;
 }

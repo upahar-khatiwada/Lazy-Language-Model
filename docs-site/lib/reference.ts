@@ -84,7 +84,11 @@ export function readPageSources(): PageSource[] {
 // A page explains a concept if it renders one of the concept's components.
 export function conceptLinks(conceptId: string, pages: PageSource[]) {
   const attribute = `concept="${conceptId}"`;
-  const withExample = pages.find((page) => page.body.includes(`<NumericExample ${attribute}`));
+  // NumericExample, or a component for an example NumericExample cannot show: its name ends in Example.
+  const example = `Example ${attribute}`;
+  const withExample = pages.find((page) =>
+    page.body.split("<").some((tag) => /^\w*Example /.test(tag) && tag.includes(example)),
+  );
   const explaining =
     pages.find((page) => page.body.includes(`<ConceptCard ${attribute}`)) ??
     pages.find((page) => page.body.includes(attribute));

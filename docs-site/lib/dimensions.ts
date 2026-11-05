@@ -1,7 +1,7 @@
 import { loadConfig, type RepoConfig } from "./repo";
 
 // Names used for tensor dimensions, and the config.py constant behind each one.
-// V has no constant: the vocabulary size depends on the corpus, so no number is shown for it.
+// V, N and W have no constant: they depend on the corpus, so no number is shown for them.
 const DIMENSIONS = {
   d: { config: "emb_dim", note: null },
   H: { config: "num_heads", note: null },
@@ -14,6 +14,9 @@ const DIMENSIONS = {
   },
   Tmax: { config: "context_len", note: null },
   V: { config: null, note: "V depends on the corpus. It is not a value in config.py." },
+  N: { config: null, note: "N is the number of ids. It depends on the corpus." },
+  W: { config: null, note: "W is the number of windows. It depends on the corpus." },
+  B: { config: "batch_size", note: "A final short batch has fewer rows." },
 } as const;
 
 export type DimensionName = keyof typeof DIMENSIONS;

@@ -1,0 +1,62 @@
+links:
+  - equationId: params.block
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p[b + "ln1_g"], p[b + "ln1_b"] = np.ones(d), np.zeros(d)
+    role: implements
+  - equationId: params.block
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p[b + "w" + n] = xavier_uniform(d, d, rng)
+    role: implements
+  - equationId: params.block
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p[b + "b" + n] = np.zeros(d)
+    role: implements
+  - equationId: params.block
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p[b + "ln2_g"], p[b + "ln2_b"] = np.ones(d), np.zeros(d)
+    role: implements
+  - equationId: params.block
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p[b + "ff1_w"], p[b + "ff1_b"] = xavier_uniform(d, F, rng), np.zeros(F)
+    role: implements
+  - equationId: params.block
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p[b + "ff2_w"], p[b + "ff2_b"] = xavier_uniform(F, d, rng), np.zeros(d)
+    role: implements
+  - equationId: params.total
+    file: transformer.py
+    symbol: transformer.count_params
+    match: return int(sum(v.size for v in params.values()))
+    role: implements
+  - equationId: params.total
+    file: transformer.py
+    symbol: transformer.init_params
+    match: '"tok_emb": xavier_uniform(V, d, rng)'
+    role: implements
+  - equationId: params.total
+    file: transformer.py
+    symbol: transformer.init_params
+    match: '"pos_emb": xavier_uniform(cfg.context_len, d, rng)'
+    role: implements
+  - equationId: params.total
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p["lnf_g"], p["lnf_b"] = np.ones(d), np.zeros(d)
+    role: implements
+  - equationId: params.total
+    file: transformer.py
+    symbol: transformer.init_params
+    match: p["head_w"], p["head_b"] = xavier_uniform(d, V, rng), np.zeros(V)
+    role: implements
+  - equationId: params.total
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_param_count_matches_formula
+    match: count_params
+    occurrence: 0
+    role: test

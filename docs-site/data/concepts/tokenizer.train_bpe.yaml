@@ -1,0 +1,52 @@
+id: tokenizer.train_bpe
+title: Pair frequency and the best pair
+category: tokenizer
+inventory: [M02, M03]
+status: implemented
+summary: >-
+  At each step, train_bpe counts every adjacent pair of tokens inside every pre-token, weighted by
+  how often that pre-token occurs. It picks the pair with the largest count. A tie goes to the pair
+  it found first.
+why: >-
+  Merging the most frequent pair lets one token stand for characters that often occur together, so
+  common words take fewer tokens. The list of merges is what the tokenizer learns from the text.
+equations:
+  - id: bpe.pair-frequency
+    latex: 'f(a,b) = \sum_{w} n_w \,\bigl|\{\, i : s^{w}_{i} = a,\; s^{w}_{i+1} = b \,\}\bigr|'
+    role: none
+    label: Pair frequency, weighted by word count
+  - id: bpe.best-pair
+    latex: (a^*, b^*) = \operatorname*{arg\,max}_{(a,b)} f(a,b)
+    role: none
+    label: The best pair
+symbols:
+  - symbol: f(a,b)
+    meaning: Frequency of the adjacent pair
+    codeName: pair_freq[(a, b)]
+    shape: integer
+  - symbol: n_w
+    meaning: Count of the pre-token w
+    codeName: word_freqs[word]
+    shape: integer
+  - symbol: s^{w}
+    meaning: The current split of w, a list of tokens
+    codeName: word_splits[word]
+    shape: list of strings
+  - symbol: (a^*, b^*)
+    meaning: The chosen pair, the first maximum found
+    codeName: best_pair
+    shape: pair of strings
+example: null
+shapes: []
+source:
+  - file: tokenizer.py
+    symbol: tokenizer.train_bpe
+  - file: tokenizer.py
+    symbol: tokenizer.train_bpe_on_text
+usedBy: []
+pdfRef:
+  section: "4.1"
+  equations: ["3"]
+  page: 4
+notes:
+  - The argmax is unnumbered in the PDF. The tie rule comes from the code.

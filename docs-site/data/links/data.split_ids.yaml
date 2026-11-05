@@ -1,0 +1,21 @@
+links:
+  - equationId: data.cut
+    file: data.py
+    symbol: data.split_ids
+    match: cut = int((1 - val_fraction) * len(ids))
+    role: implements
+  - equationId: data.cut
+    file: data.py
+    symbol: data.split_ids
+    match: return ids[:cut], ids[cut:]
+    role: implements
+  - equationId: data.cut
+    file: train.py
+    symbol: train.main
+    match: train_ids, val_ids = split_ids(ids, config.val_fraction)
+    role: call
+  - equationId: data.cut
+    file: tests/test_data.py
+    symbol: tests.test_data.test_split_is_contiguous_and_disjoint
+    match: len(train) == 90 and len(val) == 10
+    role: test

@@ -70,7 +70,7 @@ An example declares its input and which local variables to capture. `sync:exampl
 
 ## Math engine and interactive kit
 
-`lib/math/` is a pure TypeScript copy of the repository's NumPy operations, for interactive pages. Each function names the Python function it mirrors, and `tests/math.golden.test.ts` compares it with the real Python to within 1e-9, using `data/golden/{ops,attention,optim,sampling,bpe}.json`. No number in an example may be typed into JSX: take inputs from data and values from `lib/math`.
+`lib/math/` is a pure TypeScript copy of the repository's NumPy operations, for interactive pages. Each function names the Python function it mirrors, and `tests/math.golden.test.ts` compares it with the real Python to within 1e-9, using `data/golden/{ops,attention,optim,sampling,bpe,params,data}.json`. No number in an example may be typed into JSX: take inputs from data and values from `lib/math`.
 
 `np.argsort` in `generate.sample_next` is not stable. When the top-p cutoff falls inside a group of equal probabilities, Python may keep different token ids from the engine. The kept count and the probabilities still match, and `applyTopP` sets `tieDependent` so a page can say so.
 

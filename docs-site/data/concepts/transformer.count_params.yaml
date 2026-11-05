@@ -1,0 +1,74 @@
+id: transformer.count_params
+title: Parameter count
+category: initialization
+inventory: [M15]
+status: derived
+summary: >-
+  The number of scalars in the arrays init_params creates. The code only ever computes it as a sum
+  of array sizes, in count_params. The formula below is derived from the shapes in init_params.
+why: >-
+  The model does not need this number to run. It tells a reader how the model's size depends on each
+  setting, and only V depends on the corpus. Only tests call count_params.
+equations:
+  - id: params.block
+    latex: N_{\text{block}} = 4d^2 + 2dF + F + 9d
+    role: none
+    label: Scalars in one block
+  - id: params.total
+    latex: N = (2d+1)V + (T_{\max}+2)d + L\left(4d^2 + 2dF + F + 9d\right)
+    role: none
+    label: Scalars in the whole model
+symbols:
+  - symbol: N
+    meaning: Total scalars
+    codeName: count_params(params)
+    shape: scalar
+  - symbol: N_{\text{block}}
+    meaning: Scalars one pass of the layer loop creates
+    codeName: null
+    shape: scalar
+  - symbol: V
+    meaning: Vocabulary size
+    codeName: cfg.vocab_size
+    shape: scalar
+  - symbol: T_{\max}
+    meaning: Rows in the position table
+    codeName: cfg.context_len
+    shape: scalar
+  - symbol: d
+    meaning: Width of each token's vector
+    codeName: cfg.emb_dim
+    shape: scalar
+  - symbol: F
+    meaning: Width of the feed-forward hidden layer
+    codeName: cfg.ff_dim
+    shape: scalar
+  - symbol: L
+    meaning: Number of blocks
+    codeName: cfg.num_layers
+    shape: scalar
+example: null
+shapes:
+  - id: feed-forward-weights
+    label: The two feed-forward weight matrices of one block
+    stages:
+      - name: ff1_w
+        dims: [d, F]
+      - name: ff2_w
+        dims: [F, d]
+    target:
+      file: transformer.py
+      symbol: transformer.init_params
+      match: p[b + "ff1_w"], p[b + "ff1_b"] = xavier_uniform(d, F, rng), np.zeros(F)
+source:
+  - file: transformer.py
+    symbol: transformer.count_params
+  - file: transformer.py
+    symbol: transformer.init_params
+usedBy: []
+pdfRef:
+  section: "3"
+  equations: ["2"]
+  page: 3
+notes:
+  - H does not appear. Splitting into heads reshapes arrays and creates no parameters.

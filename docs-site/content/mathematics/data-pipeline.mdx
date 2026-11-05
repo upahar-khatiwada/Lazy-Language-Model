@@ -1,0 +1,239 @@
+---
+title: Data Pipeline
+description: How data.py and train.main turn a CSV file into training windows and batches, and why the targets are the inputs shifted by one.
+sourceFile: data.py
+status: published
+---
+
+This page follows the text from the CSV file to the batches the training loop reads. None of these steps has a backward pass: gradients stop at the embedding table, and the ids have no gradient.
+
+## The order in train.main
+
+`train.main` runs these lines in this order, before the model exists. The comment in the code says the same: `split BEFORE windowing`.
+
+<CodeStep id="train.corpus" />
+
+<CodeStep id="train.tokenizer" />
+
+<CodeStep id="train.ids" />
+
+<CodeStep id="train.split" />
+
+<CodeStep id="train.windows" />
+
+The tokenizer is built on the whole text, including the part that later becomes validation. The split separates the windows, not the vocabulary or the merges.
+
+## Next-token prediction
+
+Training has one objective: at each position of a window, predict the next token. For input `x[t]`, the correct answer is `y[t]`, the id right after it in the stream. A causal mask in <PageLink page="mathematics/attention">attention</PageLink> stops a position from reading later ones, so the prediction at `t` can only use `x[0]` to `x[t]`. <PageLink page="mathematics/softmax-cross-entropy">Softmax & Cross-Entropy</PageLink> covers how the model is scored on each answer.
+
+<Callout kind="note">
+
+In general, the probability of a whole sequence can be written as a product, over positions, of each token's probability given the tokens before it. The PDF states this as Eq. 61. This code never computes that product. It computes a mean cross-entropy over windows of at most <ConfigValue name="seq_len" /> tokens.
+
+</Callout>
+
+## Text to ids
+
+`load_corpus` reads one column of a CSV file. In `config.py` the file is <ConfigValue name="corpus_path" />, the column is <ConfigValue name="corpus_column" />, and at most <ConfigValue name="max_rows" /> rows are read.
+
+- A column that does not exist raises `ValueError`.
+- `max_rows` limits the rows read from the file, before missing values are dropped.
+- Each remaining row is stripped of surrounding whitespace.
+- All rows are joined with newlines, and one final newline is added.
+
+The result is a single string. Rows have no other boundary in it, so a window can run from the end of one row into the start of the next, and the model sees the newline as a token.
+
+<CorpusExample />
+
+<CodeReference symbol="data.load_corpus" />
+
+`encode_corpus` passes that string to the tokenizer and stores the ids in a one-dimensional `int64` array of `N` ids. <PageLink page="mathematics/tokenization" hash="encode-and-decode">Tokenization</PageLink> covers `encode`.
+
+<CodeReference symbol="data.encode_corpus" />
+
+## The split
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="data.split_ids" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="data.split_ids" />
+
+Windows overlap, so the order matters. If `train.main` made windows first and split them afterwards, the windows around the cut would hold ids from both sides, and validation would partly test on training text. Splitting first removes those windows, at the cost of fewer windows overall.
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="data.cut" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="data.split_ids" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+The last column counts the windows that would hold ids from both sides if the order were reversed. At stride 1 it equals `T` in every row.
+
+<SplitExample concept="data.split_ids" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`ids` has shape `(N,)`, `train_ids` has `cut` elements and `val_ids` has `N - cut`. In `config.py`, `val_fraction` is <ConfigValue name="val_fraction" />.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="data.split_ids" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="data.split_ids" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="data.split_ids" />
+
+## Sliding windows
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="data.make_windows" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="data.make_windows" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="windows.starts" />
+
+The last target of a window is `ids[s + T]`, which must exist. That is why `s` stops before `N - T`.
+
+<MathBlock id="windows.input" />
+
+<MathBlock id="windows.target" />
+
+<MathBlock id="windows.shift" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="data.make_windows" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Edit the ids, the window length or the stride.
+
+<WindowExample concept="data.make_windows" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`train.main` uses <ConfigValue name="seq_len" /> as `T` and <ConfigValue name="stride" /> as `k`. At stride 1, neighbouring windows share all but one id.
+
+<TensorShape concept="data.make_windows" shape="inputs" />
+
+<TensorShape concept="data.make_windows" shape="targets" />
+
+`make_windows` returns two pandas DataFrames, with one row per window and one column per position. They are not NumPy arrays until `iterate_batches` or `validation_loss` calls `to_numpy`. The two DataFrames share the same row index, which keeps each input row with its target row.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="data.make_windows" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="data.make_windows" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="data.make_windows" />
+
+## Window count
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="data.window_count" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="data.window_count" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+`np.arange(0, N - T, k)` lists the multiples of `k` from 0 up to, but not including, `N - T`. Counting them gives the formula.
+
+<MathBlock id="windows.count" />
+
+If `N` is not greater than `T`, `make_windows` raises `ValueError` before it creates any start. With a stride above 1, the ids after the last window may go unused.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="data.window_count" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<WindowCountExample concept="data.window_count" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`W` is the number of rows of `tr_x` and `tr_y`, as shown under <PageLink page="mathematics/data-pipeline" hash="sliding-windows">Sliding windows</PageLink>. It depends on the corpus, so it stays a symbol.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+The code is the `starts` line of `make_windows`, shown under Sliding windows. No function computes `W` from the formula.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="data.window_count" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="data.window_count" />
+
+## Shuffling and batching
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="data.iterate_batches" split />
+
+`train.main` creates one generator from <ConfigValue name="seed" /> (<CodeLine id="train.seed" />) and uses it for everything random. `iterate_batches` receives it once per epoch and passes it to pandas, which moves the generator along. So each epoch gets a new order, and a repeated run with the same settings gets the same orders.
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="data.iterate_batches" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="data.batches" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="data.iterate_batches" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<BatchExample concept="data.iterate_batches" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`B` is <ConfigValue name="batch_size" />, except in a shorter last batch. The batch is a NumPy array, but the model has no batch axis: `batch_loss_and_grads` takes one row at a time (<CodeLine id="notation.batch-loop" />). <PageLink page="training/training-loop">Training Loop</PageLink> covers how the results are averaged.
+
+<TensorShape concept="data.iterate_batches" shape="batches" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="data.iterate_batches" />
+
+<CodeStep id="train.batches" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="data.iterate_batches" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="data.iterate_batches" />
+
+## Every symbol in data.py
+
+<SymbolCoverage file="data.py" />

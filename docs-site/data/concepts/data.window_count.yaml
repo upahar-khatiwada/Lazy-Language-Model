@@ -1,0 +1,45 @@
+id: data.window_count
+title: Window count
+category: data
+inventory: [M09]
+status: derived
+summary: >-
+  The number of windows is the number of start positions. The code never computes this formula. It
+  follows from the array of starts that make_windows creates.
+why: >-
+  The window count sets how many batches make up an epoch, and so how many steps training runs. The
+  learning-rate schedule needs that total.
+equations:
+  - id: windows.count
+    latex: W = \left\lceil \frac{N - T}{k} \right\rceil, \qquad N > T
+    role: none
+    label: Number of windows
+symbols:
+  - symbol: W
+    meaning: Number of windows
+    codeName: len(inputs)
+    shape: scalar
+  - symbol: N
+    meaning: Number of ids given to make_windows
+    codeName: len(ids)
+    shape: scalar
+  - symbol: T
+    meaning: Window length
+    codeName: seq_len
+    shape: scalar
+  - symbol: k
+    meaning: Stride
+    codeName: stride
+    shape: scalar
+example: null
+shapes: []
+source:
+  - file: data.py
+    symbol: data.make_windows
+usedBy: []
+pdfRef:
+  section: "4.2"
+  equations: ["18"]
+  page: 6
+notes:
+  - The PDF writes the equivalent form floor((N - T - 1) / k) + 1.

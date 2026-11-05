@@ -1,6 +1,8 @@
 import { CODE_REFS } from "@/data/code-refs";
 import { GLANCE, QUESTIONS } from "@/data/home";
-import { PARAMETER_ROLES, REPO_MAP } from "@/data/parameters";
+import { SYMBOL_COVERAGE } from "@/data/coverage";
+import { NOTATION } from "@/data/notation";
+import { PARAMETER_GROUPS, PARAMETER_ROLES, REPO_MAP } from "@/data/parameters";
 import { PIPELINE, type PipelinePhase } from "@/data/pipeline";
 import {
   resolveTarget,
@@ -130,7 +132,31 @@ export function verifySiteData(input: SiteDataInput): string[] {
   for (const [name, { target }] of Object.entries(parameterRoles)) {
     resolve(`parameter ${name}`, target);
   }
+  sameSet(
+    "parameter groups",
+    parameterNames,
+    PARAMETER_GROUPS.flatMap((group) => group.names),
+  );
   sameSet("repository map", repoFiles, Object.keys(repoMap));
+
+  for (const [file, rows] of Object.entries(SYMBOL_COVERAGE)) {
+    sameSet(
+      `coverage of ${file}`,
+      [...symbols.values()].filter((symbol) => symbol.file === file).map((symbol) => symbol.id),
+      rows.map((row) => row.symbol),
+    );
+  }
+
+  for (const row of NOTATION) {
+    const where = `notation row ${row.dimension}`;
+    if (row.config && !config.constants.some((constant) => constant.name === row.config)) {
+      problems.push(`${where}: config.json has no ${row.config}`);
+    }
+    const target = resolve(where, row.target);
+    if (target && !targetLines(target).includes(row.code)) {
+      problems.push(`${where}: "${row.code}" is not in the resolved lines`);
+    }
+  }
 
   for (const concept of concepts) {
     for (const row of concept.inventory) {

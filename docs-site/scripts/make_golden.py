@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Run the repository's real functions on fixed small inputs and store the results.
 
-  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe}.json
+  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data}.json
   bun run verify:golden   recomputes and fails if the stored numbers differ
 
 tests/math.golden.test.ts compares lib/math with these files. Inputs are hand-picked, so every case
 is an Illustrative Example. Repository modules are imported read-only, nothing is written outside
-data/golden/, and training is not run: train and data are not imported.
+data/golden/, and training is not run: train is not imported. data.py needs pandas.
 """
 
 import copy
+import io
 import json
 import sys
 from pathlib import Path
@@ -21,7 +22,10 @@ OUT = Path(__file__).resolve().parents[1] / "data" / "golden"
 
 import numpy as np  # noqa: E402
 
+import pandas as pd  # noqa: E402
+
 import config  # noqa: E402
+import data  # noqa: E402
 import generate  # noqa: E402
 import ops  # noqa: E402
 import optim  # noqa: E402
@@ -122,6 +126,11 @@ def traced(function, names, *args, **kwargs):
 
 # ops.py -------------------------------------------------------------------------------------------
 
+# The starting values of the matrix example on the Notation page. The page edits and slices these.
+MATMUL_X = arr([[1.0, 2.0, -1.0], [0.0, 0.5, 3.0]])
+MATMUL_W = arr([[0.5, -1.0, 2.0], [1.5, 0.25, -0.5], [2.0, 0.0, 1.0]])
+MATMUL_B = arr([0.1, -0.2, 0.3])
+
 X23 = arr([[1.0, 2.0], [-1.0, 0.5], [0.0, 3.0]])
 W23 = arr([[0.5, -1.0, 2.0], [1.5, 0.25, -0.5]])
 B3 = arr([0.1, -0.2, 0.3])
@@ -174,7 +183,22 @@ def layer_norm_cases(case_id, epsilon):
     ]
 
 
+def matmul_cases(case_id, X, W, b):
+    """X @ W is the same function with b = 0, so the page's two results both have a golden value."""
+    return [
+        case(case_id, "ops.linear_forward", {"X": X, "W": W, "b": b}, {"Y": ops.linear_forward(X, W, b)}),
+        case(
+            f"{case_id}.no_bias",
+            "ops.linear_forward",
+            {"X": X, "W": W, "b": np.zeros_like(b)},
+            {"Y": ops.linear_forward(X, W, np.zeros_like(b))},
+        ),
+    ]
+
+
 def ops_cases():
+    edited_x = MATMUL_X.copy()
+    edited_x[0, 0] = 2.0
     dY = arr([[1.0, 0.0, -1.0], [0.5, 2.0, 0.25], [-0.5, 1.0, 1.5]])
     dX, dW, db = ops.linear_backward(X23, W23, dY)
     Z = arr([[-1.0, 0.0, 2.0], [3.0, -0.5, 0.0]])
@@ -230,6 +254,9 @@ def ops_cases():
         *cross_entropy_cases("cross_entropy.large_logits", arr([[1000.0, 0.0, -1000.0], [5.0, 5.0, 5.0]]), [1, 2]),
         *layer_norm_cases("layer_norm.explicit_epsilon", 1e-2),
         *layer_norm_cases("layer_norm.default_epsilon", None),
+        *matmul_cases("matmul.two_columns", MATMUL_X, MATMUL_W[:, :2], MATMUL_B[:2]),
+        *matmul_cases("matmul.three_columns", MATMUL_X, MATMUL_W, MATMUL_B),
+        *matmul_cases("matmul.edited_cell", edited_x, MATMUL_W[:, :2], MATMUL_B[:2]),
     ]
 
 
@@ -496,9 +523,126 @@ def merge_case(case_id, tokens, pair, merged):
     )
 
 
+def count_words_case(case_id, text):
+    return case(
+        case_id,
+        "tokenizer.count_words",
+        {"text": text},
+        {"word_freqs": list(tokenizer.count_words(text).items())},
+    )
+
+
+def bpe_text_case(case_id, text, max_merges=None):
+    """What the stepper shows. Splits come from running train_bpe with 0, 1, 2 ... merges and reading
+    its own word_splits, so no merge is applied here."""
+    word_freqs = tokenizer.count_words(text)
+    keyword = {} if max_merges is None else {"max_merges": max_merges}
+    merges = tokenizer.train_bpe_on_text(text, **keyword)
+    _, history = traced(tokenizer.train_bpe, ["pair_freq"], word_freqs, **keyword)
+    splits = []
+    for count in range(len(merges) + 1):
+        _, seen = traced(tokenizer.train_bpe, ["word_splits"], word_freqs, max_merges=count)
+        splits.append(list(seen["word_splits"][-1].items()))
+    inputs = {"text": text}
+    if max_merges is not None:
+        inputs["max_merges"] = max_merges
+    return case(
+        case_id,
+        "tokenizer.train_bpe_on_text",
+        inputs,
+        {
+            "word_freqs": list(word_freqs.items()),
+            "merges": merges,
+            "pair_counts": [
+                [{"pair": list(pair), "count": count} for pair, count in pair_freq.items()]
+                for pair_freq in history["pair_freq"]
+            ],
+            "splits": splits,
+        },
+    )
+
+
+def apply_merges_case(case_id, train_text, text):
+    merges = tokenizer.train_bpe_on_text(train_text)
+    return case(
+        case_id,
+        "tokenizer.apply_merges",
+        {"text": text, "merges": merges},
+        {"tokens": tokenizer.apply_merges(text, merges)},
+    )
+
+
+def build_tokenizer_case(case_id, text, max_merges=None):
+    keyword = {} if max_merges is None else {"max_merges": max_merges}
+    tok = tokenizer.build_tokenizer(text, **keyword)
+    inputs = {"text": text}
+    if max_merges is not None:
+        inputs["max_merges"] = max_merges
+    return case(
+        case_id,
+        "tokenizer.build_tokenizer",
+        inputs,
+        {
+            "merges": tok.merges,
+            "itos": tok.itos,
+            "stoi": list(tok.stoi.items()),
+            "vocab_size": tok.vocab_size,
+        },
+    )
+
+
+def encode_case(case_id, train_text, text):
+    tok = tokenizer.build_tokenizer(train_text)
+    ids = tok.encode(text)
+    return case(
+        case_id,
+        "tokenizer.Tokenizer.encode",
+        {"train_text": train_text, "text": text},
+        {"tokens": tokenizer.apply_merges(text, tok.merges), "ids": ids, "decoded": tok.decode(ids)},
+    )
+
+
+def decode_case(case_id, train_text, ids):
+    tok = tokenizer.build_tokenizer(train_text)
+    return case(
+        case_id,
+        "tokenizer.Tokenizer.decode",
+        {"train_text": train_text, "ids": ids},
+        {"text": tok.decode(ids)},
+    )
+
+
+STEPPER_TEXT = "low lower lowest"
+# tests/test_tokenizer.py uses this corpus.
+TEST_TEXT = "low low low lower newest newest"
+
+
 def bpe_cases():
     words = [["low", 5], ["lower", 2], ["newest", 6], ["widest", 3]]
     return [
+        count_words_case("count_words.stepper", STEPPER_TEXT),
+        count_words_case("count_words.test_file", "a a b!"),
+        # An apostrophe splits a word. An underscore and digits do not. Each whitespace stands alone.
+        count_words_case("count_words.classes", "Don't stop_1  now,\nok\t?"),
+        bpe_text_case("train_bpe_on_text.stepper", STEPPER_TEXT),
+        bpe_text_case("train_bpe_on_text.test_file", TEST_TEXT),
+        bpe_text_case("train_bpe_on_text.limit", TEST_TEXT, 3),
+        bpe_text_case("train_bpe_on_text.punctuation_never_merges", "a,a,a b.b.b"),
+        apply_merges_case("apply_merges.new_word", STEPPER_TEXT, "slow lowest"),
+        apply_merges_case("apply_merges.keeps_every_character", TEST_TEXT, "lot  z\n"),
+        build_tokenizer_case("build_tokenizer.stepper", STEPPER_TEXT),
+        build_tokenizer_case("build_tokenizer.test_file", TEST_TEXT, 5),
+        build_tokenizer_case("build_tokenizer.no_merges", "ab ba", 0),
+        encode_case("encode.training_text_has_no_unknown", STEPPER_TEXT, STEPPER_TEXT),
+        encode_case("encode.known_word", STEPPER_TEXT, "lowest low"),
+        encode_case("encode.unseen_punctuation", STEPPER_TEXT, "low!"),
+        encode_case("encode.unseen_inside_word", STEPPER_TEXT, "lowz"),
+        encode_case("encode.each_unseen_character", STEPPER_TEXT, "zzz"),
+        # The string "<unk>" in text is five characters. It only maps to id 0 if they were unseen.
+        encode_case("encode.unk_text_unseen", STEPPER_TEXT, "<unk>"),
+        encode_case("encode.unk_text_seen", "<unk> <unk>", "<unk>"),
+        decode_case("decode.joins_strings", STEPPER_TEXT, [1, 2, 3]),
+        decode_case("decode.unknown_id", STEPPER_TEXT, [0, 1, 0]),
         merge_case("merge_tokens.simple", ["a", "b", "c", "a", "b"], ["a", "b"], "ab"),
         merge_case("merge_tokens.overlap_left_to_right", ["a", "a", "a"], ["a", "a"], "aa"),
         merge_case("merge_tokens.no_match", ["a", "b"], ["b", "a"], "ba"),
@@ -514,6 +658,153 @@ def bpe_cases():
     ]
 
 
+# transformer.init_params and count_params ---------------------------------------------------------
+
+
+def count_case(case_id, V, Tmax, d, H, F, L):
+    def count(layers):
+        cfg = transformer.ModelConfig(V, Tmax, d, H, F, layers)
+        return transformer.count_params(transformer.init_params(cfg, np.random.default_rng(0)))
+
+    return case(
+        case_id,
+        "transformer.count_params",
+        {"V": V, "Tmax": Tmax, "d": d, "H": H, "F": F, "L": L},
+        {"count": count(L), "block": count(1) - count(0)},
+    )
+
+
+def params_cases():
+    return [
+        count_case("count_params.tiny", 11, 7, 4, 2, 6, 3),
+        count_case("count_params.one_layer", 13, 5, 6, 3, 10, 1),
+        count_case("count_params.no_layers", 9, 3, 2, 1, 4, 0),
+        # Shape values from config.py. V = 300 is the value tests/test_transformer.py uses, not this
+        # model's vocabulary size, which depends on the corpus.
+        count_case(
+            "count_params.config_shape_with_test_vocab",
+            300, config.context_len, config.emb_dim, config.num_heads, config.ff_dim, config.num_layers,
+        ),
+    ]
+
+
+# data.py ------------------------------------------------------------------------------------------
+
+
+def load_corpus_case(case_id, rows, max_rows):
+    """pandas reads the CSV from memory, so nothing is written to disk."""
+    buffer = io.StringIO()
+    pd.DataFrame({"text": rows}).to_csv(buffer, index=False)
+    buffer.seek(0)
+    return case(
+        case_id,
+        "data.load_corpus",
+        {"rows": rows, "max_rows": max_rows},
+        {"text": data.load_corpus(buffer, "text", max_rows)},
+    )
+
+
+def windows_case(case_id, ids, seq_len, stride=1):
+    ids = np.array(ids)
+    inputs = {"ids": ids, "seq_len": seq_len, "stride": stride}
+    try:
+        (x, y), history = traced(data.make_windows, ["starts"], ids, seq_len, stride)
+    except ValueError as error:
+        return case(case_id, "data.make_windows", inputs, {"raises": "ValueError", "message": str(error)})
+    return case(
+        case_id,
+        "data.make_windows",
+        inputs,
+        {
+            "starts": history["starts"][-1],
+            "inputs": x.to_numpy(),
+            "targets": y.to_numpy(),
+            "count": len(x),
+            "stored_as": [type(x).__name__, type(y).__name__],
+        },
+    )
+
+
+def split_case(case_id, n, val_fraction, seq_len):
+    """ids are their own positions, so a window's values say which side of the cut it touches."""
+    ids = np.arange(n)
+    train, val = data.split_ids(ids, val_fraction)
+    whole_x, whole_y = data.make_windows(ids, seq_len)
+    cut = len(train)
+    crossing = int(((whole_x.to_numpy()[:, 0] < cut) & (whole_y.to_numpy()[:, -1] >= cut)).sum())
+    return case(
+        case_id,
+        "data.split_ids",
+        {"n": n, "val_fraction": val_fraction, "seq_len": seq_len},
+        {
+            "cut": cut,
+            "train_length": len(train),
+            "val_length": len(val),
+            "train_last": train[-1],
+            "val_first": val[0],
+            "train_windows": len(data.make_windows(train, seq_len)[0]),
+            "val_windows": len(data.make_windows(val, seq_len)[0]),
+            "whole_windows": len(whole_x),
+            "crossing": crossing,
+        },
+    )
+
+
+def batches_case(case_id, n, seq_len, batch_size, seed, shuffle=True):
+    x, y = data.make_windows(np.arange(n), seq_len)
+
+    def epochs(count):
+        rng = np.random.default_rng(seed)
+        return [list(data.iterate_batches(x, y, batch_size, rng, shuffle)) for _ in range(count)]
+
+    runs = epochs(2)
+    again = epochs(2)
+    first = runs[0]
+    return case(
+        case_id,
+        "data.iterate_batches",
+        {"n": n, "seq_len": seq_len, "batch_size": batch_size, "seed": seed, "shuffle": shuffle},
+        {
+            "epoch_starts": [[xb[:, 0] for xb, _ in epoch] for epoch in runs],
+            "sizes": [len(xb) for xb, _ in first],
+            "batch_shape": list(first[0][0].shape),
+            "stored_as": type(first[0][0]).__name__,
+            "pairs_aligned": all((yb[:, :-1] == xb[:, 1:]).all() for epoch in runs for xb, yb in epoch),
+            "same_seed_repeats": all(
+                (a[0] == b[0]).all() for run_a, run_b in zip(runs, again) for a, b in zip(run_a, run_b)
+            ),
+        },
+    )
+
+
+def data_cases():
+    # tests/test_data.py uses these ids.
+    ids = [3, 1, 4, 1, 5, 2, 6, 5, 3, 5]
+    return [
+        load_corpus_case("load_corpus.skips_missing", [" hello ", None, "world"], 10),
+        # max_rows counts the missing row too, because pandas reads rows before dropna runs.
+        load_corpus_case("load_corpus.limit_before_dropping", [None, "a", "b"], 2),
+        windows_case("make_windows.test_file", ids, 4),
+        windows_case("make_windows.stride_two", ids, 4, 2),
+        windows_case("make_windows.stride_three", ids, 4, 3),
+        windows_case("make_windows.stride_equal_to_gap", ids, 4, 6),
+        windows_case("make_windows.stride_above_gap", ids, 4, 7),
+        windows_case("make_windows.one_window", ids[:5], 4),
+        windows_case("make_windows.length_one", ids, 1),
+        # seq_len from config.py, with hand-picked ids.
+        windows_case("make_windows.config_seq_len", list(range(40)), config.seq_len, config.stride),
+        windows_case("make_windows.too_few", ids[:4], 4),
+        split_case("split_ids.small", 20, 0.25, 3),
+        split_case("split_ids.fifth", 40, 0.2, 4),
+        split_case("split_ids.config_settings", 3000, config.val_fraction, config.seq_len),
+        batches_case("iterate_batches.shuffled", 14, 4, 4, config.seed),
+        batches_case("iterate_batches.not_shuffled", 14, 4, 4, config.seed, False),
+        batches_case("iterate_batches.exact_division", 12, 4, 4, 0),
+        # The sizes tests/test_data.py asserts.
+        batches_case("iterate_batches.test_file", 50, 4, 16, 0),
+    ]
+
+
 # Writing and checking -----------------------------------------------------------------------------
 
 
@@ -524,6 +815,8 @@ def build():
         "optim": optim_cases(),
         "sampling": sampling_cases(),
         "bpe": bpe_cases(),
+        "params": params_cases(),
+        "data": data_cases(),
     }
 
 

@@ -8,7 +8,19 @@ import {
   splitHeads,
   type AttentionParams,
 } from "@/lib/math/attention";
-import { mergeTokens, trainBpe, type Pair, type WordFrequency } from "@/lib/math/bpe";
+import {
+  applyMerges,
+  bpeSteps,
+  buildTokenizer,
+  countWords,
+  decode,
+  encode,
+  mergeTokens,
+  trainBpe,
+  type Merge,
+  type Pair,
+  type WordFrequency,
+} from "@/lib/math/bpe";
 import {
   crossEntropy,
   crossEntropyBackward,
@@ -31,6 +43,17 @@ import {
   type AdamSettings,
   type TensorMap,
 } from "@/lib/math/optim";
+import {
+  batchesPerEpoch,
+  batchSizes,
+  joinRows,
+  makeWindows,
+  range,
+  splitIds,
+  windowCount,
+  windowStarts,
+} from "@/lib/math/data";
+import { blockParameterCount, parameterCount, type ParameterDims } from "@/lib/math/params";
 import { sampleNextDistribution, type SampleResult } from "@/lib/math/sampling";
 import type { Matrix, Tensor3, Vector } from "@/lib/math/tensor";
 import { shapeOf } from "@/lib/viz/shape";
@@ -245,6 +268,73 @@ const RUNNERS: Record<string, Runner> = {
     check(item, { steps });
   },
   "generate.sample_next": checkSampling,
+  "data.load_corpus": (item) => {
+    const { rows, max_rows } = item.inputs as { rows: (string | null)[]; max_rows: number };
+    check(item, { text: joinRows(rows, max_rows) });
+  },
+  "data.make_windows": (item) => {
+    const { ids, seq_len, stride } = item.inputs as {
+      ids: number[];
+      seq_len: number;
+      stride: number;
+    };
+    if (item.outputs.raises) {
+      expect(() => makeWindows(ids, seq_len, stride)).toThrow(item.outputs.message as string);
+      return;
+    }
+    const { starts, inputs, targets } = makeWindows(ids, seq_len, stride);
+    check(item, {
+      starts,
+      inputs,
+      targets,
+      count: windowCount(ids.length, seq_len, stride),
+      stored_as: item.outputs.stored_as,
+    });
+    expect(windowStarts(ids.length, seq_len, stride).length, item.id).toBe(item.outputs.count);
+  },
+  "data.split_ids": (item) => {
+    const { n, val_fraction, seq_len } = item.inputs as {
+      n: number;
+      val_fraction: number;
+      seq_len: number;
+    };
+    const ids = range(0, n);
+    const { cut, train, val } = splitIds(ids, val_fraction);
+    const whole = makeWindows(ids, seq_len);
+    check(item, {
+      cut,
+      train_length: train.length,
+      val_length: val.length,
+      train_last: train.at(-1),
+      val_first: val[0],
+      train_windows: windowCount(train.length, seq_len),
+      val_windows: windowCount(val.length, seq_len),
+      whole_windows: whole.starts.length,
+      crossing: whole.inputs.filter((row, w) => row[0]! < cut && whole.targets[w]!.at(-1)! >= cut)
+        .length,
+    });
+  },
+  // The order comes from pandas and NumPy's generator and has no mirror. The rest is checked.
+  "data.iterate_batches": (item) => {
+    const { n, seq_len, batch_size, shuffle } = item.inputs as {
+      n: number;
+      seq_len: number;
+      batch_size: number;
+      shuffle: boolean;
+    };
+    const count = windowCount(n, seq_len);
+    const outputs = item.outputs as { epoch_starts: number[][][]; sizes: number[] };
+    expect(outputs.sizes).toEqual(batchSizes(count, batch_size));
+    expect(outputs.sizes).toHaveLength(batchesPerEpoch(count, batch_size));
+    for (const epoch of outputs.epoch_starts) {
+      expect(epoch.flat().sort((a, b) => a - b)).toEqual(range(0, count));
+      if (!shuffle) expect(epoch.flat()).toEqual(range(0, count));
+    }
+  },
+  "transformer.count_params": (item) => {
+    const dims = item.inputs as ParameterDims;
+    check(item, { count: parameterCount(dims), block: blockParameterCount(dims) });
+  },
   "tokenizer.merge_tokens": (item) => {
     const { tokens, pair, merged } = item.inputs as {
       tokens: string[];
@@ -260,6 +350,49 @@ const RUNNERS: Record<string, Runner> = {
     };
     const { merges, pairCounts } = trainBpe(word_freqs, max_merges);
     check(item, { merges, pair_counts: pairCounts });
+  },
+  "tokenizer.count_words": (item) => {
+    check(item, { word_freqs: countWords(item.inputs.text as string) });
+  },
+  // The stepper's own steps, against the real train_bpe on the same text.
+  "tokenizer.train_bpe_on_text": (item) => {
+    const { text, max_merges } = item.inputs as { text: string; max_merges?: number };
+    const { wordFreqs, initial, steps, stopped } = bpeSteps(text, max_merges);
+    check(item, {
+      word_freqs: wordFreqs,
+      merges: steps.map(({ best, merged }) => ({
+        pair: best.pair,
+        merged,
+        frequency: best.count,
+      })),
+      // Python computes pair_freq once more on the pass that finds no pair, and stops.
+      pair_counts: [...steps.map(({ counts }) => counts), ...(stopped === "no-pairs" ? [[]] : [])],
+      splits: [initial, ...steps.map(({ after }) => after)],
+    });
+  },
+  "tokenizer.apply_merges": (item) => {
+    const { text, merges } = item.inputs as { text: string; merges: Merge[] };
+    check(item, { tokens: applyMerges(text, merges) });
+  },
+  "tokenizer.build_tokenizer": (item) => {
+    const { text, max_merges } = item.inputs as { text: string; max_merges?: number };
+    const tok = buildTokenizer(text, max_merges);
+    check(item, {
+      merges: tok.merges,
+      itos: tok.itos,
+      stoi: [...tok.stoi.entries()],
+      vocab_size: tok.vocabSize,
+    });
+  },
+  "tokenizer.Tokenizer.encode": (item) => {
+    const { train_text, text } = item.inputs as { train_text: string; text: string };
+    const tok = buildTokenizer(train_text);
+    const ids = encode(tok, text);
+    check(item, { tokens: applyMerges(text, tok.merges), ids, decoded: decode(tok, ids) });
+  },
+  "tokenizer.Tokenizer.decode": (item) => {
+    const { train_text, ids } = item.inputs as { train_text: string; ids: number[] };
+    check(item, { text: decode(buildTokenizer(train_text), ids) });
   },
 };
 
@@ -283,8 +416,19 @@ const REQUIRED = [
   "optim.clip_grad_norm",
   "optim.Adam.step",
   "generate.sample_next",
+  "data.load_corpus",
+  "data.split_ids",
+  "data.make_windows",
+  "data.iterate_batches",
   "tokenizer.merge_tokens",
   "tokenizer.train_bpe",
+  "tokenizer.count_words",
+  "tokenizer.train_bpe_on_text",
+  "tokenizer.apply_merges",
+  "tokenizer.build_tokenizer",
+  "tokenizer.Tokenizer.encode",
+  "tokenizer.Tokenizer.decode",
+  "transformer.count_params",
 ];
 
 const allCases = GOLDEN_FILES.flatMap((file) => loadGolden(file).map((item) => ({ file, item })));

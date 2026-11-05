@@ -1,0 +1,31 @@
+links:
+  - equationId: bpe.pair-frequency
+    file: tokenizer.py
+    symbol: tokenizer.train_bpe
+    match: weight = word_freqs[word]
+    role: implements
+  - equationId: bpe.pair-frequency
+    file: tokenizer.py
+    symbol: tokenizer.train_bpe
+    match: key = (tokens[i], tokens[i + 1])
+    role: implements
+  - equationId: bpe.pair-frequency
+    file: tokenizer.py
+    symbol: tokenizer.train_bpe
+    match: pair_freq[key] = pair_freq.get(key, 0) + weight
+    role: implements
+  - equationId: bpe.best-pair
+    file: tokenizer.py
+    symbol: tokenizer.train_bpe
+    match: if pair_freq[pair] > best_count
+    role: implements
+  - equationId: bpe.best-pair
+    file: tokenizer.py
+    symbol: tokenizer.train_bpe
+    match: best_pair = pair
+    role: implements
+  - equationId: bpe.best-pair
+    file: tests/test_tokenizer.py
+    symbol: tests.test_tokenizer.test_first_three_merges_match_hand_trace
+    match: train_bpe_on_text(CORPUS, max_merges=3)
+    role: test

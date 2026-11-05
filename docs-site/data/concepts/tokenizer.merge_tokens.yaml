@@ -1,0 +1,37 @@
+id: tokenizer.merge_tokens
+title: Applying a merge
+category: tokenizer
+inventory: [M04]
+status: implemented
+summary: >-
+  merge_tokens scans a list of tokens from left to right. Wherever the two tokens of the pair sit
+  side by side, it replaces them with one token and moves past both.
+why: >-
+  Training uses it to update each split after choosing a pair, and encoding uses it to replay the
+  learned merges. Both go through this one function, so they treat a pair the same way.
+equations:
+  - id: bpe.merge
+    latex: '[\,\dots,\, a^*,\, b^*,\, \dots\,] \;\to\; [\,\dots,\, a^* b^*,\, \dots\,]'
+    role: none
+    label: Replace an adjacent pair with one token
+symbols:
+  - symbol: a^*, b^*
+    meaning: The two tokens of the pair
+    codeName: pair[0], pair[1]
+    shape: strings
+  - symbol: a^* b^*
+    meaning: The two strings joined
+    codeName: merged
+    shape: string
+example: null
+shapes: []
+source:
+  - file: tokenizer.py
+    symbol: tokenizer.merge_tokens
+usedBy: []
+pdfRef:
+  section: "4.1"
+  equations: []
+  page: 4
+notes:
+  - The PDF's signature is merge_tokens(tokens, pair). The code also takes merged.

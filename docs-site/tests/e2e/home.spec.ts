@@ -25,7 +25,7 @@ test("the exported home page renders its title and hero text", async ({ page }) 
 test("Start learning opens the first written Mathematics page", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Start learning" }).click();
-  await expect(page).toHaveURL(/\/mathematics\/tokenization\/$/);
+  await expect(page).toHaveURL(/\/mathematics\/notation-and-shapes\/$/);
 });
 
 test("the reference page exists, so its question is a link", async ({ page }) => {

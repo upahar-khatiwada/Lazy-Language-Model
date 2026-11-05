@@ -1,0 +1,26 @@
+links:
+  - equationId: bpe.merge
+    file: tokenizer.py
+    symbol: tokenizer.merge_tokens
+    match: if i < len(tokens) - 1 and tokens[i] == pair[0] and tokens[i + 1] == pair[1]
+    role: implements
+  - equationId: bpe.merge
+    file: tokenizer.py
+    symbol: tokenizer.merge_tokens
+    match: result.append(merged)
+    role: implements
+  - equationId: bpe.merge
+    file: tokenizer.py
+    symbol: tokenizer.train_bpe
+    match: word_splits[word] = merge_tokens(word_splits[word], best_pair, merged)
+    role: call
+  - equationId: bpe.merge
+    file: tokenizer.py
+    symbol: tokenizer.apply_merges
+    match: tokens = merge_tokens(tokens, m["pair"], m["merged"])
+    role: call
+  - equationId: bpe.merge
+    file: tests/test_tokenizer.py
+    symbol: tests.test_tokenizer.test_merge_tokens_overlap_is_left_to_right
+    match: merge_tokens(["a", "a", "a"], ("a", "a"), "aa")
+    role: test

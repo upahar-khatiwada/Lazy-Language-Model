@@ -1,0 +1,61 @@
+id: tokenizer.Tokenizer.encode
+title: Encode and decode
+category: tokenizer
+inventory: [M05]
+status: implemented
+summary: >-
+  encode cuts the text into pre-tokens, replays every merge in order on each one, and looks up each
+  resulting token. A token that is not in the vocabulary gets the id of the unknown token. decode
+  looks up the string of each id and joins them.
+why: >-
+  The model works on ids. Encoding turns the corpus and each prompt into ids, and decoding turns the
+  ids that generation produces back into text.
+equations:
+  - id: bpe.encode
+    latex: \text{id}(\tau) = \begin{cases} \text{stoi}[\tau] & \text{if } \tau \in \text{stoi} \\ \text{stoi}[\,\texttt{<unk>}\,] & \text{otherwise} \end{cases}
+    role: none
+    label: The id of a token
+  - id: bpe.decode
+    latex: \text{decode}(i_1, \dots, i_n) = \text{itos}[i_1] \,\Vert\, \cdots \,\Vert\, \text{itos}[i_n]
+    role: none
+    label: Decoding joins the strings
+symbols:
+  - symbol: \tau
+    meaning: A token after all merges
+    codeName: token
+    shape: string
+  - symbol: i_k
+    meaning: An id
+    codeName: i
+    shape: integer
+  - symbol: \Vert
+    meaning: String concatenation
+    codeName: '"".join(tokens)'
+    shape: operator
+example: null
+shapes:
+  - id: encoded-corpus
+    label: The ids of the corpus, as a list and then as an array
+    stages:
+      - name: tok.encode(text)
+        dims: [N]
+      - name: ids
+        dims: [N]
+    target:
+      file: data.py
+      symbol: data.encode_corpus
+      match: return np.array(tok.encode(text), dtype=np.int64)
+source:
+  - file: tokenizer.py
+    symbol: tokenizer.Tokenizer.encode
+  - file: tokenizer.py
+    symbol: tokenizer.Tokenizer.decode
+  - file: tokenizer.py
+    symbol: tokenizer.apply_merges
+usedBy: []
+pdfRef:
+  section: "4.1"
+  equations: []
+  page: 4
+notes:
+  - The PDF describes a per-pre-token cache. The code has none and replays the merges every time.

@@ -1,0 +1,16 @@
+links:
+  - equationId: windows.count
+    file: data.py
+    symbol: data.make_windows
+    match: starts = np.arange(0, len(ids) - seq_len, stride)
+    role: implements
+  - equationId: windows.count
+    file: data.py
+    symbol: data.make_windows
+    match: if len(ids) <= seq_len
+    role: implements
+  - equationId: windows.count
+    file: tests/test_data.py
+    symbol: tests.test_data.test_window_counts_for_n_3000
+    match: len(make_windows(train, 16)[0]) == 2684
+    role: test

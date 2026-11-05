@@ -1,0 +1,88 @@
+{
+ "cases": [
+  {
+   "id": "count_params.tiny",
+   "mirrors": "transformer.count_params",
+   "kind": "illustrative",
+   "inputs": {
+    "V": 11,
+    "Tmax": 7,
+    "d": 4,
+    "H": 2,
+    "F": 6,
+    "L": 3
+   },
+   "outputs": {
+    "count": 597,
+    "block": 154
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "count_params.one_layer",
+   "mirrors": "transformer.count_params",
+   "kind": "illustrative",
+   "inputs": {
+    "V": 13,
+    "Tmax": 5,
+    "d": 6,
+    "H": 3,
+    "F": 10,
+    "L": 1
+   },
+   "outputs": {
+    "count": 539,
+    "block": 328
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "count_params.no_layers",
+   "mirrors": "transformer.count_params",
+   "kind": "illustrative",
+   "inputs": {
+    "V": 9,
+    "Tmax": 3,
+    "d": 2,
+    "H": 1,
+    "F": 4,
+    "L": 0
+   },
+   "outputs": {
+    "count": 55,
+    "block": 54
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "count_params.config_shape_with_test_vocab",
+   "mirrors": "transformer.count_params",
+   "kind": "illustrative",
+   "inputs": {
+    "V": 300,
+    "Tmax": 32,
+    "d": 32,
+    "H": 2,
+    "F": 128,
+    "L": 2
+   },
+   "outputs": {
+    "count": 45996,
+    "block": 12704
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  }
+ ]
+}

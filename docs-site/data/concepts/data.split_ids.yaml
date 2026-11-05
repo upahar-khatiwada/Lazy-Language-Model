@@ -1,0 +1,41 @@
+id: data.split_ids
+title: The split
+category: data
+inventory: [M07]
+status: implemented
+summary: >-
+  split_ids cuts the id array at one position. Everything before the cut is for training and
+  everything after it is for validation. Nothing is shuffled, so both parts stay in order.
+why: >-
+  Validation loss is only useful on text the model did not train on. Because the cut happens before
+  windows exist, no window can hold ids from both sides.
+equations:
+  - id: data.cut
+    latex: \text{cut} = \lfloor (1 - \rho)\, N \rfloor
+    role: none
+    label: Where the stream is cut
+symbols:
+  - symbol: \rho
+    meaning: Fraction kept for validation
+    codeName: val_fraction
+    shape: scalar
+  - symbol: N
+    meaning: Number of ids in the stream
+    codeName: len(ids)
+    shape: scalar
+  - symbol: \text{cut}
+    meaning: Number of training ids
+    codeName: cut
+    shape: scalar
+example: null
+shapes: []
+source:
+  - file: data.py
+    symbol: data.split_ids
+usedBy: []
+pdfRef:
+  section: "4.2"
+  equations: []
+  page: 6
+notes:
+  - The code uses int(), which truncates. For a positive number that equals the floor in the PDF.

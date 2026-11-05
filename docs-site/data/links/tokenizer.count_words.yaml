@@ -1,0 +1,16 @@
+links:
+  - equationId: bpe.word-count
+    file: tokenizer.py
+    symbol: tokenizer.count_words
+    match: for word in PRE_TOKEN_RE.findall(text)
+    role: implements
+  - equationId: bpe.word-count
+    file: tokenizer.py
+    symbol: tokenizer.count_words
+    match: counts[word] = counts.get(word, 0) + 1
+    role: implements
+  - equationId: bpe.word-count
+    file: tests/test_tokenizer.py
+    symbol: tests.test_tokenizer.test_count_words_splits_words_spaces_punctuation
+    match: count_words("a a b!")
+    role: test

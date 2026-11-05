@@ -1,24 +1,271 @@
 ---
 title: Tokenization
-description: Placeholder page used to test the documentation shell.
+description: The byte pair encoding tokenizer as tokenizer.py implements it. It works on characters, learns a list of merges, and maps unseen characters to one unknown token.
 sourceFile: tokenizer.py
-status: placeholder
+status: published
 ---
 
-This paragraph exists only to test page layout. Real documentation replaces it in a later task.
+The tokenizer turns text into the integer ids the model reads. It learns from the text itself, by repeatedly merging the most frequent adjacent pair of tokens.
 
-## Opening section
+## What this code does
 
-This paragraph exists only to test page layout. It fills the column so that scrolling, the rail and the source file label can be checked on a page with a source file.
+The method is called byte pair encoding, but this code works on characters, not bytes. `list(word)` splits a pre-token into Unicode characters (<CodeLine id="tokenizer.chars" />). Nothing here touches UTF-8 bytes.
 
-### Nested section
+| Feature                         | In this code                                                |
+| ------------------------------- | ----------------------------------------------------------- |
+| Starting tokens                 | Unicode characters of the text, not byte values             |
+| Characters not seen in training | Each maps to the unknown token, id 0                        |
+| Case                            | Preserved. No lower-casing, so `The` and `the` are distinct |
+| Padding, start and end tokens   | Not available from the implementation                       |
 
-This paragraph exists only to test page layout. It fills the column so that scrolling, the rail and the source file label can be checked on a page with a source file.
+`train.main` passes <ConfigValue name="num_merges" /> as the limit on merges (<CodeLine id="train.tokenizer" />). That is a maximum, because training stops early if no pair is left (<CodeLine id="tokenizer.stop" />). The default in the function signature, `max_merges=1000`, is not used by training.
 
-This paragraph exists only to test page layout. It fills the column so that scrolling, the rail and the source file label can be checked on a page with a source file.
+<Callout kind="source">
 
-## Closing section
+The reference PDF differs from the code here, and this page follows the code. Its pattern lets a word carry its leading space, and it lower-cases the text. In the code, a space is always its own pre-token and case is preserved. The full list is on <PageLink page="reference/sources-discrepancies">Sources & Discrepancies</PageLink>.
 
-This paragraph exists only to test page layout. It fills the column so that scrolling, the rail and the source file label can be checked on a page with a source file.
+</Callout>
 
-This paragraph exists only to test page layout. It fills the column so that scrolling, the rail and the source file label can be checked on a page with a source file.
+The tokenizer has no backward pass. Training the merges only counts, and the model's gradients stop at the embedding table.
+
+## Pre-tokens and word counts
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="tokenizer.count_words" split />
+
+The pattern has three alternatives, tried in order:
+
+- `\w+`: one or more word characters. On Python strings these are Unicode letters and digits, plus the underscore.
+- `\s`: exactly one whitespace character. Two spaces make two pre-tokens.
+- `[^\w\s]`: exactly one character that is neither of those, such as punctuation.
+
+Every character matches one of the three, so no character is dropped.
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="tokenizer.count_words" />
+
+Whitespace and punctuation pre-tokens are always one character long, so they have no inner pair. As a result, every merge in this tokenizer happens inside a run of word characters, and a merged token never contains a space or punctuation.
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="bpe.word-count" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="tokenizer.count_words" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<WordCountExample concept="tokenizer.count_words" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+None. This step works on a string and a dict, before any array exists.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="tokenizer.PRE_TOKEN_RE" />
+
+<CodeReference symbol="tokenizer.count_words" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="tokenizer.count_words" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="tokenizer.count_words" />
+
+## Pair frequency and the best pair
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="tokenizer.train_bpe" split />
+
+Each entry of the merge list records the pair, the merged string and the frequency (<CodeLine id="tokenizer.merges-append" />).
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="tokenizer.train_bpe" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="bpe.pair-frequency" />
+
+<MathBlock id="bpe.best-pair" />
+
+The argmax is not unique when pairs tie. The code loops over `pair_freq` in the order pairs were first found and only replaces the best pair on a strictly larger count (<CodeLine id="tokenizer.strict" />), so the first maximum found wins. That order follows the order of first appearance of the pre-tokens in the text.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="tokenizer.train_bpe" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Step through the training of a tiny text. Each step shows the word table, the pair counts, the chosen pair and the updated splits. In the first text, `l + o` and `o + w` tie on the first merge, so you can see the rule above decide.
+
+<BpeExample concept="tokenizer.train_bpe" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+None. Training the merges uses dicts and lists of strings.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="tokenizer.train_bpe" />
+
+`train_bpe_on_text` joins the two steps so far.
+
+<CodeReference symbol="tokenizer.train_bpe_on_text" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="tokenizer.train_bpe" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="tokenizer.train_bpe" />
+
+## Applying a merge
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="tokenizer.merge_tokens" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="tokenizer.merge_tokens" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="bpe.merge" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="tokenizer.merge_tokens" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+The second row shows the left-to-right scan: in three `a` tokens, the first two merge and the third stays alone.
+
+<MergeExample concept="tokenizer.merge_tokens" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+None. A split is a list of strings.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="tokenizer.merge_tokens" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="tokenizer.merge_tokens" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="tokenizer.merge_tokens" />
+
+## The vocabulary
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="tokenizer.build_tokenizer" split />
+
+Because of that last check (<CodeLine id="tokenizer.dedupe" />), `V` is at most one, plus the number of distinct characters, plus the number of merges.
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="tokenizer.build_tokenizer" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="bpe.vocab" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="tokenizer.build_tokenizer" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<VocabularyExample concept="tokenizer.build_tokenizer" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+None here. `V` from this step sets the size of `tok_emb` and `head_w`, as listed on <PageLink page="mathematics/notation-and-shapes" hash="parameter-count">Notation & Shapes</PageLink>.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="tokenizer.build_tokenizer" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="tokenizer.build_tokenizer" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="tokenizer.build_tokenizer" />
+
+## Encode and decode
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="tokenizer.Tokenizer.encode" split />
+
+The unknown token works like this (<CodeLine id="tokenizer.unk" />):
+
+- Only a character that was not in the training text can be missing from the vocabulary. Merged tokens and seen characters are all listed.
+- Each unseen character becomes its own id 0. `zzz` gives three ids, and a word keeps its known part: `lowz` gives the id of `low`, then 0.
+- `decode` turns id 0 into the literal string `<unk>`, so the original character is lost. `decode(encode(x))` returns `x` only when every character of `x` was seen in training.
+- The text `<unk>` is not special. It is five characters, and each is looked up on its own.
+- `train.main` builds the tokenizer from the same text it encodes, so every character is known and id 0 does not occur in the training ids. It can occur in a prompt given to `talk.py`.
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="tokenizer.Tokenizer.encode" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="bpe.encode" />
+
+<MathBlock id="bpe.decode" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="tokenizer.Tokenizer.encode" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<EncodeExample concept="tokenizer.Tokenizer.encode" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`encode` returns a Python list. `encode_corpus` turns it into a one-dimensional array of integers, which is where the <PageLink page="mathematics/data-pipeline">Data Pipeline</PageLink> starts.
+
+<TensorShape concept="tokenizer.Tokenizer.encode" shape="encoded-corpus" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="tokenizer.UNK" />
+
+<CodeReference symbol="tokenizer.apply_merges" />
+
+<CodeReference symbol="tokenizer.Tokenizer.encode" />
+
+<CodeReference symbol="tokenizer.Tokenizer.decode" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="tokenizer.Tokenizer.encode" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="tokenizer.Tokenizer.encode" />
+
+## Every symbol in tokenizer.py
+
+This table lists every function, class and constant in the file. It is checked against the code at build time.
+
+<SymbolCoverage file="tokenizer.py" />

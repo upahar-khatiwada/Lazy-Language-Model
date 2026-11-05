@@ -325,3 +325,65 @@ Append one entry per finished task. Newest at the bottom.
   - No new LLM issues found.
 - Decisions needed from the human: none.
 - Status: Task 06 finished. Nothing was committed.
+
+### Task 07: Notation, Tokenizer & Data Pipeline Pages (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Pages: new `content/mathematics/notation-and-shapes.mdx`, `content/mathematics/data-pipeline.mdx`; `content/mathematics/tokenization.mdx` replaces the placeholder.
+  - Concepts and links, one file each in `data/concepts/` and `data/links/`: `notation.matmul`, `notation.heads`, `transformer.count_params`, `tokenizer.count_words`, `tokenizer.train_bpe`, `tokenizer.merge_tokens`, `tokenizer.build_tokenizer`, `tokenizer.Tokenizer.encode`, `data.split_ids`, `data.make_windows`, `data.window_count`, `data.iterate_batches`.
+  - Engine: new `lib/math/params.ts`, `lib/math/data.ts`; `lib/math/bpe.ts` gains `countWords`, `bpeSteps`, `applyMerges`, `buildTokenizer`, `encode`, `decode`.
+  - Golden: `scripts/make_golden.py`, `lib/golden.ts`; new `data/golden/params.json`, `data/golden/data.json`; regenerated `ops.json`, `bpe.json`, `examples.json`. 121 cases in 7 files. `make_golden.py` now imports `data.py`, so it needs pandas.
+  - New components: `ConceptStep`, `EquationCode`, `NotationTable`, `ParameterDerivation` (`ParameterDerivation`, `ParameterExample`), `MatrixExample`, `MatrixPlayground`, `BpeExample`, `BpeStepper`, `Tokens`, `TokenizerExamples`, `SymbolCoverage`, `WindowExplorer`, `DataExamples`, `Examples.module.css`.
+  - New data: `data/notation.ts`, `data/coverage.ts`. Changed: `data/parameters.ts` (`PARAMETER_GROUPS`), `data/code-refs.ts`.
+  - Changed shared code: `lib/concepts.ts` and `lib/examples.ts` (3-D example values), `lib/dimensions.ts` (`N`, `W`, `B`), `lib/reference.ts` (any `<...Example concept="id">` counts as an example link), `lib/site-verify.ts` (checks notation, parameter groups, symbol coverage), `components/ConceptCard.tsx` (`split`, `ConceptWhy`), `components/ArchitectureTables.tsx` (`ParameterCount configOnly`), `components/mdx.tsx`, `README.md`.
+  - CSS fixes: `components/StepPlayer.module.css` and `Examples.module.css` (`.prose ul`, `.prose ol` padding indented the lists), `components/MathReference.module.css` (grid track and `file:line` links overflowed once real concepts existed).
+  - Tests: new `tests/mathematics-pages.test.ts`, `tests/e2e/mathematics.spec.ts`; changed `tests/math.golden.test.ts`, `tests/math.mirrors.test.ts`, `tests/e2e/home.spec.ts`, `tests/e2e/shell.spec.ts`, `tests/e2e/components.spec.ts`. The three e2e changes replace assumptions that Notation was unwritten and that only softmax links into `attention_forward`.
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added.
+- Commands run and results (Node v26.13.0 prepended to PATH for each process, Bun 1.3.13; `.next`, `out` and `test-results` deleted before the final run; HEAD `a5aaaee`, `sha` `66da45b`):
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:links`: `OK: 74 links, 13 concepts and 1 pipelines match the code.`
+  - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 121 golden cases match a fresh run.`
+  - `bun run verify:content`: `verify:content: not implemented yet`, exit 0. It is still the stub from Task 02, so this run checks nothing.
+  - `bun run typecheck`: exit 0. `bun run lint`: `All matched files use Prettier code style!`, exit 0.
+  - `bun run test`: `Test Files 13 passed (13)`, `Tests 639 passed (639)`.
+  - `bun run build`: exit 0.
+  - `bun run test:e2e`: `176 passed (4.6m)`, exit 0. Includes axe at 1280, 1000 and 390 in both themes on the three pages, with no findings, and the stepper at 390, every step compared with the real `train_bpe`.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 2.92s`.
+  - Acceptance, tamper: a scratchpad script applied 12 changes one at a time, ran `bun run test`, restored and compared hashes. All 12 failed tests, including `page equation (2d+1)V to (2d+2)V: Tests 4 failed`, `tie: first maximum to last: Tests 17 failed`, `window count ceil to floor: Tests 2 failed`, `targets not shifted: Tests 18 failed`, `page order swapped: Tests 1 failed`, `tokenizer function dropped from coverage: Tests 2 failed`.
+  - By hand, `init_params` for one layer: ln1 2d; q, k, v, o 4d^2 + 4d; ln2 2d; ff1 dF + F; ff2 Fd + d. Sum 4d^2 + 2dF + F + 9d, which is 12,704 at `config.py` values and equals `count_params` differences in the golden file.
+  - Read-only on the local corpus, no training: `id 0 count in ids: 0`, `merges: 500 max: 500`, `V bound holds: True 575`, `make_windows returns: DataFrame DataFrame (225099, 16)`, `window formula: 225099 225099`. These numbers are not on the pages.
+  - Screenshots reviewed by eye: Notation at 1280 and 390 dark, stepper at 390 light, windows, batches and split at 390 dark, Data Pipeline at 1280.
+  - `git status --short -- ':(exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files, the same as before. No state-changing git command was run.
+  - Failures seen on the way:
+    - One full e2e run: `reference.spec.ts` at 1280 `no horizontal scroll` reported 70px, `1 failed, 175 passed`. It did not recur: that test alone 30 of 30, its spec file 56 of 56, a probe on 40 fresh loads found 0, then the full suite passed. The cause is not known. The test was not changed.
+    - The full e2e suite first found 6 failures the targeted runs had missed: a real overflow on the reference page at 1000 and 390, three stale test assumptions, and one bug in my new test. All fixed.
+    - A screenshot showed `.prose` list padding stacking pair tokens vertically. No test caught it. Fixed.
+    - `sed` with a backtick pattern put a backtick at the start of every line of the new spec file (`` \` `` means start of buffer). Repaired by script. Git Bash heredocs also failed again on long scripts.
+    - The first version of the Tokenization page said two merges can produce the same string. A search of 291,938 small inputs with the real `train_bpe` found none, so the claim and its fixture were removed.
+- Assumptions:
+  - Status labels follow this task's wording where it disagrees with `contract/MATH_INVENTORY.md`: `count_params` (M15) and `make_windows` (M08) are Derived from implementation, while the inventory says Implemented. Each still shows its PDF equation number (Eq. 2, Eq. 17).
+  - Pair frequency is Implemented, because the PDF writes it as Eq. 3.
+  - The next-token factorisation is one "In general, ..." sentence with no equation record. This task allows it if the PDF states it (Eq. 61), and `contract/PDF_VS_CODE.md` marks it not to be documented as this project's mathematics, allowing only that wording.
+  - `data.iterate_batches` has `pdfRef: null`, because the inventory gives only "p.16, code" with no section, and D4 forbids reopening the PDF. The Trace block therefore says "Not stated in the PDF", meaning not stated as an equation.
+  - The nine protocol steps are real h3 headings written as JSX, so they stay out of the on-this-page rail.
+  - Step 8 uses a new `EquationCode` table of the `data/links` entries, not `MathCodeLink`, which would repeat each equation's anchor id and the whole function next to step 7.
+  - `load_corpus` and `encode_corpus` are documented as prose and code, without the nine steps, because the inventory has no row for them and a concept must name one.
+  - The BPE stepper offers two fixed ASCII texts, not free text, because Python's Unicode `\w` and `\s` differ from JavaScript's. `countWords` throws on anything else.
+  - The shuffled batch order is the stored result of the real function, not engine output, because it comes from pandas and NumPy's generator. The engine checks sizes and coverage.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the task's parts.
+- Open issues:
+  - `verify:content` is still a stub.
+  - The one-off 70px overflow above is unexplained.
+  - `verify:golden` compares the stored batch order exactly, so a different pandas or NumPy version could fail it without any repository change.
+  - Links from these pages to unwritten pages (Linear, Softmax, Attention, Training Loop, Sources & Discrepancies) show as disabled text until those pages exist.
+  - `/reference/sources` does not exist yet (the nav slug is `reference/sources-discrepancies`). No PDF-versus-code difference was found beyond those already logged, so `contract/DISCREPANCIES.md` was not changed. The PDF was not reopened (D4).
+  - On a phone the symbol, split and `EquationCode` tables scroll sideways inside their wrappers.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 still appears in server logs.
+  - GitHub links were not opened, because the working rules allow no requests to other sites.
+- LLM observations, reported only and nothing changed:
+  - `build_tokenizer`'s `if m["merged"] not in seen` guard never fired in the search above, and may be unreachable. It is harmless.
+  - `train.main` builds the tokenizer on the whole text before the split, so the merges and vocabulary see the validation text. The page states this.
+- Decisions needed from the human:
+  - `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while this task labelled them Derived. Should the inventory change, or the two labels?
+- Status: Task 07 finished. Nothing was committed.

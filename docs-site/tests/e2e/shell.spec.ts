@@ -95,7 +95,7 @@ test.describe("desktop, 1280px", () => {
     // Only written pages are links; all the others are disabled.
     await expect(nav.getByRole("link")).toHaveCount(WRITTEN);
     const disabled = nav.locator('[aria-disabled="true"]');
-    await expect(disabled.first()).toContainText("Notation & Shapes");
+    await expect(disabled.first()).toContainText("Linear / ReLU / Initialisation");
     await expect(nav.getByText("gradcheck.py")).toBeVisible();
     await expect(nav.getByRole("link", { name: /design/i })).toHaveCount(0);
     expect(await disabled.count()).toBe(NAV.flatMap((group) => group.pages).length - WRITTEN);
@@ -112,7 +112,7 @@ test.describe("desktop, 1280px", () => {
     await pager.getByRole("link", { name: /Architecture/ }).click();
     await expect(page).toHaveURL(/\/getting-started\/architecture\/$/);
 
-    // Notation & Shapes comes next in the tree, but it is not written, so it is skipped.
+    await pager.getByRole("link", { name: /Notation & Shapes/ }).click();
     await pager.getByRole("link", { name: /Tokenization/ }).click();
     await expect(page).toHaveURL(new RegExp(`${TOKENIZATION}$`));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tokenization");
@@ -121,8 +121,15 @@ test.describe("desktop, 1280px", () => {
     );
     await expect(sidebar(page).locator('[aria-current="page"]')).toContainText("Tokenization");
 
-    await pager.getByRole("link", { name: /Architecture/ }).click();
-    await expect(page).toHaveURL(/\/getting-started\/architecture\/$/);
+    await pager.getByRole("link", { name: /Notation & Shapes/ }).click();
+    await expect(page).toHaveURL(/\/mathematics\/notation-and-shapes\/$/);
+
+    // Linear / ReLU / Initialisation comes next after Data Pipeline, but it is not written, so the
+    // pager skips every unwritten page up to the next written one.
+    await page.goto("/mathematics/data-pipeline/");
+    await expect(pager.getByRole("link", { name: /Linear/ })).toHaveCount(0);
+    await pager.getByRole("link", { name: /Mathematics Reference/ }).click();
+    await expect(page).toHaveURL(/\/reference\/mathematics\/$/);
   });
 
   test("the rail lists h2 and h3 headings and follows scrolling in both directions", async ({
@@ -351,7 +358,7 @@ for (const { name, width, scheme } of [
   { name: "1000px dark", width: 1000, scheme: "dark" },
   { name: "390px dark", width: 390, scheme: "dark" },
 ] as const) {
-  test(`axe finds nothing on a placeholder page at ${name}`, async ({ page }) => {
+  test(`axe finds nothing on a page with a source file at ${name}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.emulateMedia({ colorScheme: scheme });
     await page.goto(TOKENIZATION);

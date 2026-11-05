@@ -5,7 +5,7 @@
   min-width: 0;
 }
 
-.list {
+.list.list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);

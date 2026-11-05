@@ -2,7 +2,8 @@ import { CATEGORY_LABELS, conceptAnchor, getConcept } from "@/lib/concepts";
 import { Badge } from "./Badge";
 import styles from "./ConceptCard.module.css";
 
-export function ConceptCard({ concept }: { concept: string }) {
+// `split` leaves out the "why" text, for pages that show it under its own heading with ConceptWhy.
+export function ConceptCard({ concept, split = false }: { concept: string; split?: boolean }) {
   const found = getConcept(concept);
   return (
     <section
@@ -16,7 +17,11 @@ export function ConceptCard({ concept }: { concept: string }) {
       </div>
       <p className={styles.category}>{CATEGORY_LABELS[found.category]}</p>
       <p>{found.summary}</p>
-      <p className={styles.why}>{found.why}</p>
+      {split ? null : <p className={styles.why}>{found.why}</p>}
     </section>
   );
+}
+
+export function ConceptWhy({ concept }: { concept: string }) {
+  return <p>{getConcept(concept).why}</p>;
 }

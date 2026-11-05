@@ -1,0 +1,21 @@
+links:
+  - equationId: data.batches
+    file: data.py
+    symbol: data.iterate_batches
+    match: for i in range(0, len(order), batch_size)
+    role: implements
+  - equationId: data.batches
+    file: data.py
+    symbol: data.iterate_batches
+    match: order = inputs.sample(frac=1, random_state=rng).index
+    role: implements
+  - equationId: data.batches
+    file: train.py
+    symbol: train.main
+    match: steps_per_epoch = math.ceil(len(tr_x) / config.batch_size)
+    role: inline
+  - equationId: data.batches
+    file: tests/test_data.py
+    symbol: tests.test_data.test_batches_cover_every_window_once
+    match: sizes == [16, 16, 14]
+    role: test

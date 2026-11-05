@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { parse } from "yaml";
 import { clickWhenHydrated } from "./hydration";
 
 const SAMPLE = "/design/components/";
@@ -17,6 +18,20 @@ const realLines = (file: string) =>
     encoding: "utf-8",
     maxBuffer: 1 << 24,
   }).split(/\r?\n/);
+
+// The distinct code matches in data/links that point into a symbol.
+const linkedMatches = (symbol: string) => {
+  const files = readdirSync(join("data", "links")).filter((name) => name.endsWith(".yaml"));
+  const links = files.flatMap(
+    (name) =>
+      (
+        parse(readFileSync(join("data", "links", name), "utf-8")) as {
+          links: { symbol: string; match: string }[];
+        }
+      ).links,
+  );
+  return [...new Set(links.filter((link) => link.symbol === symbol).map((link) => link.match))];
+};
 
 const codeBlock = (page: Page, name: string, index = 0) =>
   page.locator("figure", { has: page.getByText(name, { exact: true }) }).nth(index);
@@ -149,10 +164,15 @@ test.describe("code references match the file at the pinned commit", () => {
       "return e / e.sum(axis=-1, keepdims=True)",
     ]);
 
+    // Without an equation, every link into the function is highlighted, whichever concept owns it.
     const attention = await highlighted(codeBlock(page, "attention_forward"));
-    expect(attention.map((line) => realLines("transformer.py")[line - 1]?.trim())).toEqual([
-      "A = softmax_forward(S)",
-    ]);
+    const shown = attention.map((line) => realLines("transformer.py")[line - 1]!.trim());
+    const declared = linkedMatches("transformer.attention_forward");
+    expect(shown).toContain("A = softmax_forward(S)");
+    expect(shown).toHaveLength(declared.length);
+    for (const match of declared) {
+      expect(shown.some((line) => line.includes(match))).toBe(true);
+    }
   });
 
   test("resolved line links carry the pinned sha", async ({ page }) => {

@@ -1,0 +1,95 @@
+id: notation.heads
+title: Heads
+category: attention
+inventory: [M30]
+status: implemented
+summary: >-
+  Attention splits each token's vector into H parts of width d_h. The third axis is the only axis
+  the code adds to a sequence, so a head array has the shape H x T x d_h.
+why: >-
+  Each head computes its own attention weights from its own part of the vector. The split keeps the
+  columns of each head together, so merging them restores the original array.
+equations:
+  - id: notation.head-width
+    latex: d_h = \frac{d}{H}, \qquad d \bmod H = 0
+    role: forward
+    label: Width of one head
+  - id: notation.split
+    latex: M^{(h)}_{t,i} = M_{t,\; h d_h + i}
+    role: forward
+    label: Head h owns one block of columns
+symbols:
+  - symbol: M
+    meaning: A matrix to split
+    codeName: M
+    shape: (T, d)
+  - symbol: M^{(h)}
+    meaning: Head h of the split array
+    codeName: null
+    shape: (T, d_h) for each head; (H, T, d_h) together
+  - symbol: d_h
+    meaning: Width of one head
+    codeName: dh
+    shape: scalar
+  - symbol: H
+    meaning: Number of heads
+    codeName: H
+    shape: scalar
+  - symbol: h
+    meaning: Head index, from 0
+    codeName: null
+    shape: scalar
+  - symbol: i
+    meaning: Column index inside a head, from 0
+    codeName: null
+    shape: scalar
+example:
+  kind: illustrative
+  call: transformer.split_heads
+  input:
+    M:
+      - [1, 2, 3, 4]
+      - [5, 6, 7, 8]
+    H: 2
+  steps:
+    - id: width
+      label: Width of the input
+      equationId: notation.head-width
+      capture: d
+  output:
+    label: Split array, head 0 then head 1
+  precision: 0
+shapes:
+  - id: heads
+    label: Split, for the query matrix
+    stages:
+      - name: Q
+        dims: [T, d]
+      - name: Qh
+        dims: [H, T, dh]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: Qh, Kh, Vh = split_heads(Q, H), split_heads(K, H), split_heads(V, H)
+  - id: merged
+    label: Merge, after the weighted values
+    stages:
+      - name: A @ Vh
+        dims: [H, T, dh]
+      - name: O
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.attention_forward
+      match: O = merge_heads(A @ Vh)
+source:
+  - file: transformer.py
+    symbol: transformer.split_heads
+  - file: transformer.py
+    symbol: transformer.merge_heads
+usedBy: []
+pdfRef:
+  section: "3"
+  equations: ["1"]
+  page: 3
+notes: []

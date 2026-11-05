@@ -1,0 +1,31 @@
+links:
+  - equationId: windows.starts
+    file: data.py
+    symbol: data.make_windows
+    match: starts = np.arange(0, len(ids) - seq_len, stride)
+    role: implements
+  - equationId: windows.input
+    file: data.py
+    symbol: data.make_windows
+    match: rows = starts[:, None] + np.arange(seq_len)
+    role: implements
+  - equationId: windows.input
+    file: data.py
+    symbol: data.make_windows
+    match: inputs = pd.DataFrame(ids[rows])
+    role: implements
+  - equationId: windows.target
+    file: data.py
+    symbol: data.make_windows
+    match: targets = pd.DataFrame(ids[rows + 1])
+    role: implements
+  - equationId: windows.shift
+    file: data.py
+    symbol: data.make_windows
+    match: targets = pd.DataFrame(ids[rows + 1])
+    role: implements
+  - equationId: windows.shift
+    file: tests/test_data.py
+    symbol: tests.test_data.test_targets_are_inputs_shifted_by_one
+    match: (y.to_numpy()[:, :-1] == x.to_numpy()[:, 1:]).all()
+    role: test

@@ -68,7 +68,12 @@ const ShapeSchema = z.strictObject({
   target: CodeTargetSchema,
 });
 
-const NumericValueSchema = z.union([z.number(), z.array(z.number()), z.array(z.array(z.number()))]);
+const NumericValueSchema = z.union([
+  z.number(),
+  z.array(z.number()),
+  z.array(z.array(z.number())),
+  z.array(z.array(z.array(z.number()))),
+]);
 
 export type NumericValue = z.infer<typeof NumericValueSchema>;
 

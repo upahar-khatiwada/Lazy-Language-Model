@@ -1,0 +1,42 @@
+id: tokenizer.build_tokenizer
+title: The vocabulary
+category: tokenizer
+inventory: [M06]
+status: implemented
+summary: >-
+  build_tokenizer trains the merges and then lists the vocabulary. The unknown token comes first, so
+  it has id 0. Next come the characters of the text in order of first appearance, then each merged
+  token in merge order. A merged string already in the list is not added again.
+why: >-
+  An id is a row of the token table and a column of the head, so every token needs a fixed id. Keeping
+  all the characters means any text made of seen characters can be encoded, even when no merge applies.
+equations:
+  - id: bpe.vocab
+    latex: \text{itos} = [\,\texttt{<unk>}\,] + [\,\text{characters, first seen first}\,] + [\,\text{new merged tokens, in merge order}\,]
+    role: none
+    label: The order of the vocabulary
+symbols:
+  - symbol: \text{itos}
+    meaning: From an id to its token
+    codeName: itos
+    shape: list of V strings
+  - symbol: \text{stoi}
+    meaning: From a token to its id
+    codeName: stoi
+    shape: dict of V entries
+  - symbol: V
+    meaning: The vocabulary size
+    codeName: vocab_size
+    shape: integer
+example: null
+shapes: []
+source:
+  - file: tokenizer.py
+    symbol: tokenizer.build_tokenizer
+usedBy: []
+pdfRef:
+  section: "4.1"
+  equations: []
+  page: 4
+notes:
+  - The PDF's signature is build_tokenizer(text, num_merges). The code's second argument is max_merges.

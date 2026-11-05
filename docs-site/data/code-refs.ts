@@ -72,6 +72,42 @@ export const CODE_REFS: Record<string, CodeTarget> = {
   },
   "talk.print": { ...TALK, match: "print(tok.decode(out[len(ids):]))" },
 
+  "tokenizer.merges-append": {
+    file: "tokenizer.py",
+    symbol: "tokenizer.train_bpe",
+    match: 'merges.append({"pair": best_pair, "merged": merged, "frequency": best_count})',
+  },
+  "tokenizer.stop": {
+    file: "tokenizer.py",
+    symbol: "tokenizer.train_bpe",
+    match: "if len(pair_freq) == 0:",
+  },
+  "tokenizer.strict": {
+    file: "tokenizer.py",
+    symbol: "tokenizer.train_bpe",
+    match: "if pair_freq[pair] > best_count:",
+  },
+  "tokenizer.chars": {
+    file: "tokenizer.py",
+    symbol: "tokenizer.train_bpe",
+    match: "word_splits[word] = list(word)",
+  },
+  "tokenizer.unk": {
+    file: "tokenizer.py",
+    symbol: "tokenizer.Tokenizer.encode",
+    match: "ids.append(self.stoi.get(token, self.stoi[UNK]))",
+  },
+  "tokenizer.dedupe": {
+    file: "tokenizer.py",
+    symbol: "tokenizer.build_tokenizer",
+    match: 'if m["merged"] not in seen:',
+  },
+  "notation.batch-loop": {
+    file: "train.py",
+    symbol: "train.batch_loss_and_grads",
+    match: "for x, y in zip(xb, yb):",
+  },
+
   "forward.assert": { ...FORWARD, match: "assert len(ids) <= cfg.context_len" },
   "forward.return": { ...FORWARD, match: "return logits, dict(" },
   "outside.loss": {

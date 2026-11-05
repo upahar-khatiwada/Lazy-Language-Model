@@ -1,0 +1,191 @@
+---
+title: Notation & Shapes
+description: The tensor conventions the code uses, which code name each math symbol stands for, matrix multiplication, and how the parameters add up.
+status: published
+---
+
+This page fixes the notation for the rest of the Mathematics section. Every symbol below names something real in the code, and every size is read from `config.py`.
+
+## Conventions
+
+These are how the code arranges its numbers, not general rules about transformers.
+
+- **A token is a row.** One token's vector is a row with `d` numbers.
+- **A sequence is a matrix.** A sequence of `T` tokens has shape `[T x d]`.
+- **A linear layer is `X @ W + b`.** `X` is on the left, so `W` has one row per input feature. The bias `b` is added to every row.
+- **There is no batch axis.** `forward` and `loss_and_grads` take one sequence at a time. `batch_loss_and_grads` in `train.py` is a Python loop over the windows of a batch (<CodeLine id="notation.batch-loop" />).
+- **Heads add one axis.** Multi-head attention works on `[H x T x d_h]`. The head comes first.
+
+## Symbols and code names
+
+Values come from `config.py`. `V` has no value there, because it depends on the corpus.
+
+<NotationTable />
+
+A letter can mean something else in a local variable. The notes in the table name the case that matters most: `V` inside `attention_forward`.
+
+## Matrix multiplication
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="notation.matmul" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="notation.matmul" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="matmul.entry" />
+
+<MathBlock id="matmul.shape" />
+
+<MathBlock id="matmul.linear" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="notation.matmul" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Edit any cell. Switch `W` to three columns and watch the shape of the result change, while the rows stay the same.
+
+<MatrixExample concept="notation.matmul" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+The rule above, at three of the places the model uses it.
+
+<TensorShape concept="notation.matmul" shape="query" />
+
+<TensorShape concept="notation.matmul" shape="feed-forward" />
+
+<TensorShape concept="notation.matmul" shape="head" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="ops.linear_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="notation.matmul" />
+
+The backward pass of this layer, `linear_backward`, is on <PageLink page="mathematics/linear-relu-initialisation">Linear / ReLU / Initialisation</PageLink>.
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+`ops.linear_forward` is defined, but only a test calls it. `transformer.py` does not import it and writes the formula in place instead, at the lines listed here.
+
+<Trace concept="notation.matmul" />
+
+## Heads
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="notation.heads" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="notation.heads" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="notation.head-width" />
+
+`config.py` asserts the divisibility when it is imported.
+
+<MathBlock id="notation.split" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="notation.heads" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<NumericExample concept="notation.heads" kind="illustrative" />
+
+Head 0 holds columns 0 and 1, and head 1 holds columns 2 and 3.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="notation.heads" shape="heads" />
+
+<TensorShape concept="notation.heads" shape="merged" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.split_heads" />
+
+<CodeReference symbol="transformer.merge_heads" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="notation.heads" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="notation.heads" />
+
+<PageLink page="mathematics/attention">Attention</PageLink> covers what each head computes.
+
+## Parameter count
+
+<Callout kind="note">
+
+This section is test-only mathematics. `count_params` is not part of the pipeline: only a test calls it, and training does not print this number.
+
+</Callout>
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.count_params" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.count_params" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Add the scalars of every array `init_params` creates. The names, shapes and values in this table come from calling `init_params` and from `config.py`.
+
+<ParameterDerivation />
+
+The rows marked once per block add up to one block:
+
+<MathBlock id="params.block" />
+
+Multiply that by `L`, and collect the remaining rows by what they depend on. `tok_emb` and the head give `(2d + 1)V`. `pos_emb` and the final LayerNorm give `(T_max + 2)d`.
+
+<MathBlock id="params.total" />
+
+With the values in `config.py`, and `V` left as a symbol:
+
+<ParameterCount configOnly />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.count_params" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<ParameterExample concept="transformer.count_params" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+Every array's shape is listed on <PageLink page="getting-started/architecture" hash="parameters">Architecture</PageLink>. The feed-forward pair shows why `dF` appears twice in the formula.
+
+<TensorShape concept="transformer.count_params" shape="feed-forward-weights" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.count_params" />
+
+<CodeReference symbol="transformer.init_params" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.count_params" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="transformer.count_params" />

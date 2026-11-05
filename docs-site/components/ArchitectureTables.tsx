@@ -88,13 +88,18 @@ export function ParameterTable() {
   );
 }
 
-export function ParameterCount() {
+export function ParameterCount({ configOnly = false }: { configOnly?: boolean }) {
   const { parameters } = loadInitParams();
   const { perVocabulary, constant } = countInV(parameters, { ...realValues(), L: value("L") });
   return (
     <div className={styles.count} data-testid="parameter-count">
       <Badge kind="derived" />
-      <TexDisplay tex={`N = ${countFormulaTex(parameters)}`} label="Parameter count from shapes" />
+      {configOnly ? null : (
+        <TexDisplay
+          tex={`N = ${countFormulaTex(parameters)}`}
+          label="Parameter count from shapes"
+        />
+      )}
       <TexDisplay
         tex={`N = ${perVocabulary.toLocaleString("en-US")}\\,V + ${constant.toLocaleString("en-US").replace(",", "{,}")}`}
         label="Parameter count with config values"

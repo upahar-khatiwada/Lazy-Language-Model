@@ -1,0 +1,31 @@
+links:
+  - equationId: bpe.encode
+    file: tokenizer.py
+    symbol: tokenizer.Tokenizer.encode
+    match: ids.append(self.stoi.get(token, self.stoi[UNK]))
+    role: implements
+  - equationId: bpe.encode
+    file: tokenizer.py
+    symbol: tokenizer.apply_merges
+    match: tokens = merge_tokens(tokens, m["pair"], m["merged"])
+    role: call
+  - equationId: bpe.encode
+    file: tests/test_tokenizer.py
+    symbol: tests.test_tokenizer.test_unseen_character_becomes_unk
+    match: tok.encode("low!")[-1] == 0
+    role: test
+  - equationId: bpe.decode
+    file: tokenizer.py
+    symbol: tokenizer.Tokenizer.decode
+    match: tokens.append(self.itos[i])
+    role: implements
+  - equationId: bpe.decode
+    file: tokenizer.py
+    symbol: tokenizer.Tokenizer.decode
+    match: return "".join(tokens)
+    role: implements
+  - equationId: bpe.decode
+    file: tests/test_tokenizer.py
+    symbol: tests.test_tokenizer.test_round_trip
+    match: tok.decode(tok.encode(s)) == s
+    role: test

@@ -1,4 +1,50 @@
 {
+  "notation.heads": {
+    "kind": "illustrative",
+    "call": "transformer.split_heads",
+    "input": {
+      "M": [
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          5,
+          6,
+          7,
+          8
+        ]
+      ],
+      "H": 2
+    },
+    "steps": {
+      "width": 4
+    },
+    "output": [
+      [
+        [
+          1,
+          2
+        ],
+        [
+          5,
+          6
+        ]
+      ],
+      [
+        [
+          3,
+          4
+        ],
+        [
+          7,
+          8
+        ]
+      ]
+    ]
+  },
   "ops.softmax_forward": {
     "kind": "illustrative",
     "call": "ops.softmax_forward",

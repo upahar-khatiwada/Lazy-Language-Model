@@ -1,0 +1,21 @@
+links:
+  - equationId: bpe.vocab
+    file: tokenizer.py
+    symbol: tokenizer.build_tokenizer
+    match: itos = [UNK]
+    role: implements
+  - equationId: bpe.vocab
+    file: tokenizer.py
+    symbol: tokenizer.build_tokenizer
+    match: for ch in text
+    role: implements
+  - equationId: bpe.vocab
+    file: tokenizer.py
+    symbol: tokenizer.build_tokenizer
+    match: for m in merges
+    role: implements
+  - equationId: bpe.vocab
+    file: tests/test_tokenizer.py
+    symbol: tests.test_tokenizer.test_unk_is_id_zero
+    match: tok.itos[0] == UNK
+    role: test

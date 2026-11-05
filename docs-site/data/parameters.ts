@@ -51,6 +51,21 @@ export const PARAMETER_ROLES = {
   { role: string; target: { file: string; symbol: string; match: string } }
 >;
 
+// How the Notation page groups the parameters to derive the total. A group sums its names' scalars.
+// lib/site-verify.ts checks that every parameter is in exactly one group.
+export const PARAMETER_GROUPS: { label: string; names: string[] }[] = [
+  { label: "Token table", names: ["tok_emb"] },
+  { label: "Position table", names: ["pos_emb"] },
+  { label: "LayerNorm 1", names: ["b{l}.ln1_g", "b{l}.ln1_b"] },
+  { label: "Q, K, V and output weights", names: ["b{l}.wq", "b{l}.wk", "b{l}.wv", "b{l}.wo"] },
+  { label: "Q, K, V and output biases", names: ["b{l}.bq", "b{l}.bk", "b{l}.bv", "b{l}.bo"] },
+  { label: "LayerNorm 2", names: ["b{l}.ln2_g", "b{l}.ln2_b"] },
+  { label: "First feed-forward layer", names: ["b{l}.ff1_w", "b{l}.ff1_b"] },
+  { label: "Second feed-forward layer", names: ["b{l}.ff2_w", "b{l}.ff2_b"] },
+  { label: "Final LayerNorm", names: ["lnf_g", "lnf_b"] },
+  { label: "Linear head", names: ["head_w", "head_b"] },
+];
+
 // One line per file in data/generated/code-index.json. lib/site-verify.ts checks both directions.
 export const REPO_MAP: Record<string, string> = {
   "config.py": "Hyperparameters as module-level constants, plus two import-time assertions.",
