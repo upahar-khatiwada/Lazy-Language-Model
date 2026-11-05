@@ -664,3 +664,4 @@ Append one entry per finished task. Newest at the bottom.
 - Decisions needed from the human:
   - Still open from Task 10: should the E007 note in `contract/PDF_VS_CODE.md` change to match, now that the pages say Implemented?
 - Status: Task 11 finished, with one test-only fix after the last full e2e run. Nothing was committed.
+- Follow-up after Task 11, at the human's request (2026-11-05): the E007 question open since Task 10 is closed. The human said yes. The E007 row of `contract/PDF_VS_CODE.md` now says to label the parameter count Implemented (M15), because the PDF states it as Eq. 2. It still says the code never computes the formula, and "In code" stays `partly`. `contract/` is git-ignored, so this edit exists only on this machine. No page changed. The full e2e suite has still not been rerun since the test-only fix above.
