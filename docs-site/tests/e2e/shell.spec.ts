@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { NAV } from "../../data/nav";
@@ -6,6 +6,10 @@ import { clickWhenHydrated } from "./hydration";
 
 const INTRO = "/getting-started/introduction/";
 const TOKENIZATION = "/mathematics/tokenization/";
+
+const WRITTEN = readdirSync("content", { recursive: true, encoding: "utf-8" }).filter(
+  (path) => path.endsWith(".mdx") && !path.startsWith("_"),
+).length;
 
 const repoMeta = JSON.parse(readFileSync("data/generated/repo-meta.json", "utf-8")) as {
   sha: string;
@@ -88,13 +92,13 @@ test.describe("desktop, 1280px", () => {
         .evaluate((el) => getComputedStyle(el).fontFamily),
     ).toContain("IBM Plex Mono");
 
-    // Two pages exist so far; all the others are disabled and are not links.
-    await expect(nav.getByRole("link")).toHaveCount(2);
+    // Only written pages are links; all the others are disabled.
+    await expect(nav.getByRole("link")).toHaveCount(WRITTEN);
     const disabled = nav.locator('[aria-disabled="true"]');
-    await expect(disabled.first()).toContainText("How This LLM Works");
+    await expect(disabled.first()).toContainText("Notation & Shapes");
     await expect(nav.getByText("gradcheck.py")).toBeVisible();
     await expect(nav.getByRole("link", { name: /design/i })).toHaveCount(0);
-    expect(await disabled.count()).toBe(NAV.flatMap((group) => group.pages).length - 2);
+    expect(await disabled.count()).toBe(NAV.flatMap((group) => group.pages).length - WRITTEN);
   });
 
   test("breadcrumbs and previous/next links work and skip disabled pages", async ({ page }) => {
@@ -104,7 +108,11 @@ test.describe("desktop, 1280px", () => {
     );
     const pager = page.getByRole("navigation", { name: "Previous and next pages" });
     await expect(pager.getByRole("link")).toHaveCount(1);
+    await pager.getByRole("link", { name: /How This LLM Works/ }).click();
+    await pager.getByRole("link", { name: /Architecture/ }).click();
+    await expect(page).toHaveURL(/\/getting-started\/architecture\/$/);
 
+    // Notation & Shapes comes next in the tree, but it is not written, so it is skipped.
     await pager.getByRole("link", { name: /Tokenization/ }).click();
     await expect(page).toHaveURL(new RegExp(`${TOKENIZATION}$`));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tokenization");
@@ -113,8 +121,8 @@ test.describe("desktop, 1280px", () => {
     );
     await expect(sidebar(page).locator('[aria-current="page"]')).toContainText("Tokenization");
 
-    await pager.getByRole("link", { name: /Introduction/ }).click();
-    await expect(page).toHaveURL(new RegExp(`${INTRO}$`));
+    await pager.getByRole("link", { name: /Architecture/ }).click();
+    await expect(page).toHaveURL(/\/getting-started\/architecture\/$/);
   });
 
   test("the rail lists h2 and h3 headings and follows scrolling in both directions", async ({
@@ -292,8 +300,8 @@ test.describe("mobile, 390px", () => {
   test("tabbing out of the drawer closes it", async ({ page }) => {
     await page.goto(INTRO);
     await clickWhenHydrated(page.getByRole("button", { name: "Contents" }));
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
+    // One stop per sidebar link, and only written pages are links.
+    for (let stop = 0; stop < WRITTEN; stop++) await page.keyboard.press("Tab");
     await expect(sidebar(page)).toBeVisible();
     await page.keyboard.press("Tab");
     await expect(page.locator('nav[aria-label="Documentation"]')).toBeHidden();

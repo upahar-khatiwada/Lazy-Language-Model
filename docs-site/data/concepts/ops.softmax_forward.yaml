@@ -1,6 +1,7 @@
 id: ops.softmax_forward
 title: Softmax
 category: basic-operations
+inventory: [M21]
 status: implemented
 summary: Turns a vector of scores into probabilities along the last axis.
 why: >-

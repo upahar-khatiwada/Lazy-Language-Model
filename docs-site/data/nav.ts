@@ -93,7 +93,7 @@ export const NAV: NavGroup[] = [
   {
     title: "Reference",
     pages: [
-      { title: "Mathematics Reference", slug: "reference/mathematics-reference" },
+      { title: "Mathematics Reference", slug: "reference/mathematics" },
       { title: "Not in This Model", slug: "reference/not-in-this-model" },
       { title: "Sources & Discrepancies", slug: "reference/sources-discrepancies" },
     ],

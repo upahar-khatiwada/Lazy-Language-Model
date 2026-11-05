@@ -1,0 +1,197 @@
+{
+  "probe": {
+    "V": 101,
+    "Tmax": 103,
+    "d": 107,
+    "F": 109,
+    "L": 2
+  },
+  "countParams": 173338,
+  "parameters": [
+    {
+      "name": "tok_emb",
+      "perBlock": false,
+      "dims": [
+        "V",
+        "d"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "pos_emb",
+      "perBlock": false,
+      "dims": [
+        "Tmax",
+        "d"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "b{l}.ln1_g",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "ones"
+    },
+    {
+      "name": "b{l}.ln1_b",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "b{l}.wq",
+      "perBlock": true,
+      "dims": [
+        "d",
+        "d"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "b{l}.bq",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "b{l}.wk",
+      "perBlock": true,
+      "dims": [
+        "d",
+        "d"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "b{l}.bk",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "b{l}.wv",
+      "perBlock": true,
+      "dims": [
+        "d",
+        "d"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "b{l}.bv",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "b{l}.wo",
+      "perBlock": true,
+      "dims": [
+        "d",
+        "d"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "b{l}.bo",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "b{l}.ln2_g",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "ones"
+    },
+    {
+      "name": "b{l}.ln2_b",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "b{l}.ff1_w",
+      "perBlock": true,
+      "dims": [
+        "d",
+        "F"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "b{l}.ff1_b",
+      "perBlock": true,
+      "dims": [
+        "F"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "b{l}.ff2_w",
+      "perBlock": true,
+      "dims": [
+        "F",
+        "d"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "b{l}.ff2_b",
+      "perBlock": true,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "lnf_g",
+      "perBlock": false,
+      "dims": [
+        "d"
+      ],
+      "init": "ones"
+    },
+    {
+      "name": "lnf_b",
+      "perBlock": false,
+      "dims": [
+        "d"
+      ],
+      "init": "zeros"
+    },
+    {
+      "name": "head_w",
+      "perBlock": false,
+      "dims": [
+        "d",
+        "V"
+      ],
+      "init": "xavier_uniform"
+    },
+    {
+      "name": "head_b",
+      "perBlock": false,
+      "dims": [
+        "V"
+      ],
+      "init": "zeros"
+    }
+  ]
+}

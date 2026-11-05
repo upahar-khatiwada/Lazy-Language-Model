@@ -93,6 +93,7 @@ const concept = {
   id: "c",
   title: "C",
   category: "basic-operations",
+  inventory: ["M21"],
   status: "derived",
   summary: "s",
   why: "w",

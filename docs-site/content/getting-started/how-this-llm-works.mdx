@@ -1,0 +1,137 @@
+---
+title: How This LLM Works
+description: What train.main does, step by step, from the corpus to a saved checkpoint, and how talk.py uses the result.
+status: published
+---
+
+Running `python train.py` calls `train.main`. It reads text, trains a tokenizer, trains the model and saves a checkpoint. The sections below follow that function in code order. Each one shows the real lines.
+
+The code uses NumPy only for arrays. There is no automatic differentiation: every backward function is written by hand. The model has no batch dimension, so `forward` and `loss_and_grads` process one sequence at a time. <PageLink page="getting-started/architecture">Architecture</PageLink> shows the model itself.
+
+## Prepare the data
+
+### Seed the random numbers
+
+One generator, seeded with <ConfigValue name="seed" />, is used for initial weights, for shuffling and for sampling.
+
+<CodeStep id="train.seed" />
+
+### Read the corpus
+
+`load_corpus` reads at most <ConfigValue name="max_rows" /> rows of one CSV column, drops missing values, strips each row and joins the rows with newlines. See <PageLink page="mathematics/data-pipeline">Data Pipeline</PageLink>.
+
+<CodeStep id="train.corpus" />
+
+### Train the tokenizer
+
+`build_tokenizer` learns up to <ConfigValue name="num_merges" /> BPE merges from the text. It works on Unicode characters, not bytes. See <PageLink page="mathematics/tokenization">Tokenization</PageLink>.
+
+<CodeStep id="train.tokenizer" />
+
+### Encode the text as ids
+
+`encode_corpus` turns the whole text into one 1-D array of token ids.
+
+<CodeStep id="train.ids" />
+
+### Split into training and validation
+
+`split_ids` does not shuffle. The leading part of the stream is for training, and the last <ConfigValue name="val_fraction" /> of it is for validation. The split happens before windowing, so no window crosses it.
+
+<CodeStep id="train.split" />
+
+### Cut windows
+
+`make_windows` slides a window of <ConfigValue name="seq_len" /> tokens along each part, moving <ConfigValue name="stride" /> token at a time. Targets are the inputs shifted by one token. The results are `pandas` DataFrames.
+
+<CodeStep id="train.windows" />
+
+## Build the model and optimizer
+
+`ModelConfig` takes its vocabulary size from the tokenizer, so `V` depends on the corpus. `init_params` creates the arrays listed in <PageLink page="getting-started/architecture" hash="parameters">Parameters</PageLink>. `Adam` holds the optimizer state. It takes a weight decay of <ConfigValue name="weight_decay" />, applied separately from the gradient, so it behaves as AdamW.
+
+<CodeStep id="train.model" />
+
+`ln_eps` is not passed, so `ModelConfig` keeps its own default and `config.ln_eps` has no effect.
+
+The number of steps follows from the number of training windows, so it depends on the corpus too. The learning-rate schedule needs this total.
+
+<CodeStep id="train.steps" />
+
+## The training loop
+
+The loop runs <ConfigValue name="epochs" /> times over the training windows. Each pass shuffles them and yields batches of <ConfigValue name="batch_size" />. A final short batch is kept.
+
+<CodeStep id="train.batches" />
+
+### Gradient
+
+`batch_loss_and_grads` runs `loss_and_grads` once per window in a Python loop, then averages the losses and gradients. See <PageLink page="training/how-the-model-learns">How the Model Learns</PageLink>.
+
+<CodeStep id="train.gradient" />
+
+<CodeReference symbol="train.batch_loss_and_grads" />
+
+### Clip
+
+`clip_grad_norm` scales all gradients together if their global norm is above <ConfigValue name="grad_clip" />. It returns the norm from before clipping. See <PageLink page="training/adamw-learning-rate-clipping">AdamW / Learning Rate / Clipping</PageLink>.
+
+<CodeStep id="train.clip" />
+
+### Learning rate
+
+`step` increases first, so the schedule sees steps starting at 1. The rate rises linearly for <ConfigValue name="warmup_steps" /> steps to <ConfigValue name="lr_max" />, then falls along a cosine to <ConfigValue name="lr_min" />.
+
+<CodeStep id="train.lr" />
+
+### AdamW
+
+`opt.step` updates the parameters in place. Weight decay is applied inside this call and only to arrays with two or more dimensions. Decay therefore does not pass through clipping.
+
+<CodeStep id="train.adamw" />
+
+Then the loop prints the loss, the norm and the learning rate on the first step and at the interval in the code.
+
+<CodeStep id="train.log" />
+
+## After each epoch
+
+### Validation
+
+`validation_loss` averages the cross-entropy over all validation windows. It runs `forward` only. `perplexity` is the exponential of this loss, and it is only used for this printed line.
+
+<CodeStep id="train.validation" />
+
+<CodeReference symbol="train.validation_loss" />
+
+### Sample
+
+The loop prints a sample: it takes the first tokens of the first validation window as a seed and generates from them, using the sampling settings in `config.py`. See <PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink>. This site shows no output from these lines, because no run of the pinned commit and its corpus is available.
+
+<CodeStep id="train.sample" />
+
+## Save the checkpoint
+
+Saving happens once, after the last epoch. `save_checkpoint` writes three files that share a prefix: `.npz` for weights, `.json` for the model shape and `.tok.json` for the tokenizer. See <PageLink page="code/checkpoints-tests">Checkpoints & Tests</PageLink>.
+
+<CodeStep id="train.checkpoint" />
+
+## Using the trained model
+
+`talk.main` is the other entry point. It is a prompt loop that completes text. It has no chat format, no message history and no stopping token.
+
+`load_checkpoint` restores the weights, the model shape and the tokenizer.
+
+<CodeStep id="talk.load" />
+
+Each prompt starts fresh and is encoded on its own.
+
+<CodeStep id="talk.encode" />
+
+`generate` appends <ConfigValue name="max_new_tokens" /> sampled tokens. It feeds `forward` only the last <ConfigValue name="seq_len" /> ids. The window and sampling settings come from the current `config.py`, while the model shape comes from the checkpoint.
+
+<CodeStep id="talk.generate" />
+
+Only the new tokens are printed.
+
+<CodeStep id="talk.print" />

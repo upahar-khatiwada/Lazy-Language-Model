@@ -10,12 +10,14 @@ import { DIMENSION_NAMES } from "./dimensions";
 
 const text = z.string().min(1);
 
-// The groups of contract/MATH_INVENTORY.md.
+// The groups of contract/MATH_INVENTORY.md, plus loss: the reference page filters on it, and the
+// inventory keeps cross-entropy under basic operations.
 export const CATEGORY_LABELS = {
   tokenizer: "Tokenizer",
   data: "Data",
   initialization: "Initialization",
   "basic-operations": "Basic operations",
+  loss: "Loss",
   embeddings: "Embeddings",
   attention: "Attention",
   "feed-forward-and-block": "Feed-forward and block",
@@ -24,6 +26,8 @@ export const CATEGORY_LABELS = {
   sampling: "Sampling",
   "gradient-checking": "Gradient checking",
 } as const;
+
+export type ConceptCategory = keyof typeof CATEGORY_LABELS;
 
 const categories = Object.keys(CATEGORY_LABELS) as [
   keyof typeof CATEGORY_LABELS,
@@ -99,6 +103,8 @@ export const MathConceptSchema = z
     id: text,
     title: text,
     category: z.enum(categories),
+    // The contract/MATH_INVENTORY.md rows this concept documents. The coverage line counts these.
+    inventory: z.array(z.string().regex(/^M\d+$/)).min(1),
     status: z.enum(["implemented", "derived"]),
     summary: text,
     why: text,
@@ -185,4 +191,12 @@ export function getPipeline(id: string): Pipeline {
 // The anchor of an equation: eq-softmax-shift.
 export function equationAnchor(id: string): string {
   return `eq-${id.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+}
+
+export function conceptAnchor(id: string): string {
+  return `concept-${id.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+}
+
+export function exampleAnchor(id: string): string {
+  return `example-${id.replace(/[^a-zA-Z0-9]+/g, "-")}`;
 }

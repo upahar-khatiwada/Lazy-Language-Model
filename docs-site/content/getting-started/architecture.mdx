@@ -1,0 +1,51 @@
+---
+title: Architecture
+description: The forward pass as transformer.forward runs it, the parameters init_params creates, and the files in the repository.
+status: published
+---
+
+The model is a decoder-only transformer with pre-LayerNorm blocks, written with NumPy and hand-written backward functions. This page shows its structure. The pages it links to hold the equations.
+
+## The forward pass
+
+`transformer.forward` takes one sequence of ids and returns logits and a cache for the backward pass. It first checks the length (<CodeLine id="forward.assert" />). The longest allowed sequence is <ConfigValue name="context_len" /> tokens, and training and generation use windows of <ConfigValue name="seq_len" />.
+
+Each box below is one function call or inline expression, in code order. The name in code font is what the code runs there. The boxes in the frame are the body of `block_forward`, which `forward` calls once per layer.
+
+<FullPipelineDiagram only="forward" />
+
+Each block reads normalized copies, and each residual adds to the value that was not normalized. `T` is at most <ConfigValue name="seq_len" />. `V` depends on the corpus, so it stays a symbol.
+
+## What is not inside forward
+
+`forward` stops at the logits (<CodeLine id="forward.return" />). It applies no softmax to them and computes no loss.
+
+| Step                             | Where it runs     | Line                                 |
+| -------------------------------- | ----------------- | ------------------------------------ |
+| Cross-entropy, in training       | `loss_and_grads`  | <CodeLine id="outside.loss" />       |
+| Cross-entropy, in validation     | `validation_loss` | <CodeLine id="outside.validation" /> |
+| Softmax on logits, in generation | `sample_next`     | <CodeLine id="outside.sampling" />   |
+
+The only softmax inside `forward` turns attention scores into attention weights (<CodeLine id="inside.attention-softmax" />). <PageLink page="mathematics/attention">Attention</PageLink> covers it.
+
+## Parameters
+
+`init_params` returns a flat dictionary of arrays. The names below come from calling it. `b{l}` is the block index, starting at 0, so `b0.wq` is the query weights of the first block. The "With config" column uses `config.py`. `V` depends on the corpus and no exported value exists, so it stays a symbol. `head_w` is a separate matrix (<CodeLine id="inside.head-separate" />).
+
+<ParameterTable />
+
+Symbols: `T_max` is `context_len`, `d` is `emb_dim`, `F` is `ff_dim`, `L` is `num_layers` and `V` is the vocabulary size.
+
+Summing the "Scalars" column gives the total. The first line is collected from the shapes above and the second puts in the values from `config.py`.
+
+<ParameterCount />
+
+`count_params` in `transformer.py` sums the array sizes, but only tests call it. Training does not print this number.
+
+## Repository map
+
+Every Python file at the pinned commit. The links open the file at that commit until the <PageLink page="code/code-explorer">Code Explorer</PageLink> is written.
+
+<RepoMap />
+
+`data/corpus.csv` and `checkpoints/` are git-ignored, so they are not part of the commit. A fresh clone needs a corpus before it can train.

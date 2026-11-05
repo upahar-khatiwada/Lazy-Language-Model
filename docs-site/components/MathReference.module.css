@@ -1,0 +1,196 @@
+.reference {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.coverage {
+  font-weight: 500;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
+.control {
+  display: grid;
+  flex: 1 1 200px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* --muted, not --line: the boundary of a control needs at least 3:1 against its background. */
+.control input,
+.control select {
+  background: var(--surface);
+  border: var(--border-width) solid var(--muted);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 400;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+  width: 100%;
+}
+
+.count,
+.empty,
+.missing,
+.values {
+  color: var(--muted);
+}
+
+.count {
+  font-size: var(--fs-sm);
+}
+
+.table {
+  font-size: var(--fs-sm);
+  table-layout: fixed;
+}
+
+.table th:nth-child(1) {
+  width: 17%;
+}
+
+.table th:nth-child(2) {
+  width: 35%;
+}
+
+.table th:nth-child(3) {
+  width: 20%;
+}
+
+.table th:nth-child(4) {
+  width: 15%;
+}
+
+.table th:nth-child(5) {
+  width: 13%;
+}
+
+.table th,
+.table td {
+  padding: var(--space-2);
+}
+
+.table td {
+  overflow-wrap: break-word;
+  vertical-align: top;
+}
+
+.title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.cellLabel {
+  display: none;
+}
+
+.direction {
+  display: block;
+  margin-top: var(--space-2);
+}
+
+.equations > * + * {
+  margin-top: var(--space-2);
+}
+
+.source,
+.shape,
+.stage,
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.source + .source,
+.shape + .shape {
+  margin-top: var(--space-2);
+}
+
+.source code,
+.stage code {
+  background: none;
+  padding: 0;
+}
+
+.stage {
+  gap: 0;
+}
+
+.links {
+  align-items: flex-start;
+}
+
+/* Cards. `hidden` must still win over the block display of a row. */
+@media (max-width: 859px) {
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+  }
+
+  .table tr {
+    background: var(--surface);
+    border: var(--border-width) solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .table tr[hidden] {
+    display: none;
+  }
+
+  .table td {
+    border: 0;
+    padding: var(--space-2) 0 0;
+  }
+
+  .table td:first-child {
+    padding-top: 0;
+  }
+
+  .cellLabel {
+    color: var(--muted);
+    display: block;
+    font-weight: 500;
+    margin-bottom: var(--space-1);
+  }
+
+  .control input,
+  .control select {
+    min-height: var(--touch-target);
+  }
+
+  .links a {
+    align-items: center;
+    display: inline-flex;
+    min-height: var(--touch-target);
+  }
+
+  .shapeLabel {
+    align-items: center;
+    display: inline-flex;
+    min-height: var(--touch-target);
+  }
+}

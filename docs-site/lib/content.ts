@@ -53,6 +53,11 @@ export function readPageMeta(slug: string): PageMeta {
   return readSource(slug).meta;
 }
 
+// The MDX source of a page, without its frontmatter.
+export function readPageBody(slug: string): string {
+  return readSource(slug).body;
+}
+
 // Pages are compiled at build time only, because the site is a static export.
 // remark-math is left out on purpose: equations come from structured data through MathBlock.
 export async function loadPage(slug: string): Promise<LoadedPage> {

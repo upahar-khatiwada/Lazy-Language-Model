@@ -164,6 +164,14 @@ export function requireTarget(target: CodeTarget, index?: SymbolIndex): Resolved
   return result.value;
 }
 
+// The text of the resolved lines.
+export function targetLines({ symbol, startLine, endLine }: ResolvedTarget): string {
+  return symbol.source
+    .split("\n")
+    .slice(startLine - symbol.startLine, endLine - symbol.startLine + 1)
+    .join("\n");
+}
+
 export function formatLineRange(startLine: number, endLine: number): string {
   return startLine === endLine ? `${startLine}` : `${startLine}-${endLine}`;
 }

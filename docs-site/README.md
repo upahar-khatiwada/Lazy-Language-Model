@@ -18,11 +18,13 @@ Requires Bun, Node.js and Python 3 on `PATH`. Next.js does not build on Bun's `n
 | `bun run test:e2e`         | Run Playwright against `out/`. Needs a build and `bunx playwright install chromium` |
 | `bun run sync:repo`        | Regenerate `data/generated/` from the repository                                    |
 | `bun run verify:generated` | Fail if `data/generated/` is stale or was edited by hand                            |
-| `bun run verify:links`     | Fail if concepts, links or pipelines no longer match the code. `build` runs this    |
+| `bun run verify:links`     | Fail if hand-written data no longer matches the code. `build` runs this             |
 | `bun run sync:examples`    | Run repository functions and write `data/golden/examples.json`. Needs NumPy         |
 | `bun run verify:examples`  | Fail if the stored example numbers differ from a fresh run. Needs NumPy             |
 | `bun run sync:golden`      | Run repository functions and write the golden files for `lib/math`. Needs NumPy     |
 | `bun run verify:golden`    | Fail if the stored golden numbers differ from a fresh run. Needs NumPy              |
+| `bun run sync:derived`     | Call `init_params`, snapshot the math inventory into `data/derived/`. Needs NumPy   |
+| `bun run verify:derived`   | Fail if `data/derived/` differs from a fresh run. Needs NumPy                       |
 | `bun run verify:content`   | Stub: not implemented yet                                                           |
 
 To build for GitHub Pages, set the base path first:

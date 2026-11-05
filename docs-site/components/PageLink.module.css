@@ -1,0 +1,4 @@
+.disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}

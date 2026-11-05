@@ -1,0 +1,37 @@
+.line,
+.muted {
+  display: block;
+  font-size: var(--fs-sm);
+  width: fit-content;
+}
+
+.line {
+  margin-top: var(--space-1);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* These tables scroll sideways inside DataTable on a phone instead of squeezing the text. */
+.parameters {
+  min-width: 700px;
+}
+
+.repoMap {
+  min-width: 560px;
+}
+
+.parameters code {
+  white-space: nowrap;
+}
+
+.count {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.count > div {
+  width: 100%;
+}

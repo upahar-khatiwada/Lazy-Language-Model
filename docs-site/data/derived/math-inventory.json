@@ -1,0 +1,309 @@
+{
+  "rows": [
+    {
+      "id": "M01",
+      "name": "Pre-token count",
+      "group": "Tokenizer (`tokenizer.py`)"
+    },
+    {
+      "id": "M02",
+      "name": "Pair frequency",
+      "group": "Tokenizer (`tokenizer.py`)"
+    },
+    {
+      "id": "M03",
+      "name": "Best pair",
+      "group": "Tokenizer (`tokenizer.py`)"
+    },
+    {
+      "id": "M04",
+      "name": "Merge",
+      "group": "Tokenizer (`tokenizer.py`)"
+    },
+    {
+      "id": "M05",
+      "name": "Encode",
+      "group": "Tokenizer (`tokenizer.py`)"
+    },
+    {
+      "id": "M06",
+      "name": "Vocabulary order",
+      "group": "Tokenizer (`tokenizer.py`)"
+    },
+    {
+      "id": "M07",
+      "name": "Split",
+      "group": "Data (`data.py`, `train.py`)"
+    },
+    {
+      "id": "M08",
+      "name": "Windows",
+      "group": "Data (`data.py`, `train.py`)"
+    },
+    {
+      "id": "M09",
+      "name": "Window count",
+      "group": "Data (`data.py`, `train.py`)"
+    },
+    {
+      "id": "M10",
+      "name": "Batch averaging",
+      "group": "Data (`data.py`, `train.py`)"
+    },
+    {
+      "id": "M11",
+      "name": "Validation loss",
+      "group": "Data (`data.py`, `train.py`)"
+    },
+    {
+      "id": "M12",
+      "name": "Step counts",
+      "group": "Data (`data.py`, `train.py`)"
+    },
+    {
+      "id": "M13",
+      "name": "Xavier uniform",
+      "group": "Initialization (`ops.py`, `transformer.py`)"
+    },
+    {
+      "id": "M14",
+      "name": "Parameter initial values",
+      "group": "Initialization (`ops.py`, `transformer.py`)"
+    },
+    {
+      "id": "M15",
+      "name": "Parameter count",
+      "group": "Initialization (`ops.py`, `transformer.py`)"
+    },
+    {
+      "id": "M16",
+      "name": "Linear",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M17",
+      "name": "Linear (inline)",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M18",
+      "name": "Linear backward",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M19",
+      "name": "ReLU",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M20",
+      "name": "ReLU backward",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M21",
+      "name": "Softmax",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M22",
+      "name": "Softmax backward",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M23",
+      "name": "Cross-entropy",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M24",
+      "name": "Cross-entropy backward",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M25",
+      "name": "Layer norm",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M26",
+      "name": "Layer norm backward",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M27",
+      "name": "Perplexity",
+      "group": "Basic operations (`ops.py`)"
+    },
+    {
+      "id": "M28",
+      "name": "Embedding",
+      "group": "Embeddings (`transformer.py`)"
+    },
+    {
+      "id": "M29",
+      "name": "Embedding backward",
+      "group": "Embeddings (`transformer.py`)"
+    },
+    {
+      "id": "M30",
+      "name": "Split, merge heads",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M31",
+      "name": "Q, K, V",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M32",
+      "name": "Scores, mask, weights, values",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M33",
+      "name": "Output projection",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M34",
+      "name": "Output projection backward",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M35",
+      "name": "Values and weights backward",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M37",
+      "name": "Q, K, V parameters and input backward",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M38",
+      "name": "Key bias gradient is zero",
+      "group": "Attention (`transformer.py`)"
+    },
+    {
+      "id": "M36",
+      "name": "Feed-forward",
+      "group": "Feed-forward and block (`transformer.py`)"
+    },
+    {
+      "id": "M39",
+      "name": "Feed-forward backward",
+      "group": "Feed-forward and block (`transformer.py`)"
+    },
+    {
+      "id": "M40",
+      "name": "Pre-LN block",
+      "group": "Feed-forward and block (`transformer.py`)"
+    },
+    {
+      "id": "M41",
+      "name": "Block backward",
+      "group": "Feed-forward and block (`transformer.py`)"
+    },
+    {
+      "id": "M42",
+      "name": "Length check",
+      "group": "Whole model (`transformer.py`)"
+    },
+    {
+      "id": "M43",
+      "name": "Blocks in sequence",
+      "group": "Whole model (`transformer.py`)"
+    },
+    {
+      "id": "M44",
+      "name": "Final layer norm",
+      "group": "Whole model (`transformer.py`)"
+    },
+    {
+      "id": "M46",
+      "name": "Head",
+      "group": "Whole model (`transformer.py`)"
+    },
+    {
+      "id": "M47",
+      "name": "Head and final-norm backward",
+      "group": "Whole model (`transformer.py`)"
+    },
+    {
+      "id": "M48",
+      "name": "Reverse order",
+      "group": "Whole model (`transformer.py`)"
+    },
+    {
+      "id": "M49",
+      "name": "Moments",
+      "group": "Optimizer (`optim.py`)"
+    },
+    {
+      "id": "M50",
+      "name": "Bias correction",
+      "group": "Optimizer (`optim.py`)"
+    },
+    {
+      "id": "M51",
+      "name": "Update with decoupled decay",
+      "group": "Optimizer (`optim.py`)"
+    },
+    {
+      "id": "M52",
+      "name": "Learning-rate schedule",
+      "group": "Optimizer (`optim.py`)"
+    },
+    {
+      "id": "M53",
+      "name": "Global-norm clip",
+      "group": "Optimizer (`optim.py`)"
+    },
+    {
+      "id": "M54",
+      "name": "Greedy guard",
+      "group": "Sampling (`generate.py`)"
+    },
+    {
+      "id": "M55",
+      "name": "Temperature",
+      "group": "Sampling (`generate.py`)"
+    },
+    {
+      "id": "M56",
+      "name": "Top-k",
+      "group": "Sampling (`generate.py`)"
+    },
+    {
+      "id": "M57",
+      "name": "Top-p",
+      "group": "Sampling (`generate.py`)"
+    },
+    {
+      "id": "M58",
+      "name": "Sample",
+      "group": "Sampling (`generate.py`)"
+    },
+    {
+      "id": "M59",
+      "name": "Generation loop",
+      "group": "Sampling (`generate.py`)"
+    },
+    {
+      "id": "M60",
+      "name": "Central difference",
+      "group": "Gradient checking (`gradcheck.py`). Test-time only"
+    },
+    {
+      "id": "M61",
+      "name": "Relative error",
+      "group": "Gradient checking (`gradcheck.py`). Test-time only"
+    },
+    {
+      "id": "M62",
+      "name": "Per-parameter check",
+      "group": "Gradient checking (`gradcheck.py`). Test-time only"
+    }
+  ]
+}

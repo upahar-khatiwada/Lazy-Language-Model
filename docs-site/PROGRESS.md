@@ -264,3 +264,64 @@ Append one entry per finished task. Newest at the bottom.
   - `contract/` is git-ignored, so these edits exist only on this machine.
   - `docs-site/CLAUDE.md` was not changed. It still says the repository was last inspected at `c17aa75`, and also says to pin to the real HEAD.
   - Earlier entries in this file were left as written.
+
+### Task 06: Homepage, Architecture Page & Mathematics Reference (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Part A: `app/(docs)/page.tsx`, `data/pipeline.ts`, `data/home.ts`, `lib/model-glance.ts`, `lib/pages.ts`, `lib/site-verify.ts`, `components/PageLink.tsx`, `components/Home.module.css`; `components/PipelineDiagram.tsx` and its CSS gain `FullPipelineDiagram`.
+  - Part B: `content/getting-started/how-this-llm-works.mdx`, `content/getting-started/architecture.mdx`, `data/code-refs.ts`, `data/parameters.ts`, `lib/parameters.ts`, `components/CodeStep.tsx` (`CodeStep`, `CodeLine`), `components/ConfigValue.tsx`, `components/ArchitectureTables.tsx` (`ParameterTable`, `ParameterCount`, `RepoMap`), `scripts/sync_derived.py`, `data/derived/init-params.json`, `data/derived/math-inventory.json`.
+  - Part C: `content/reference/mathematics.mdx`, `lib/reference.ts`, `components/MathReference.tsx`, `components/MathReferenceTable.tsx`, CSS module.
+  - Changed: `lib/concepts.ts` (required `inventory` field, new `loss` category, `conceptAnchor`, `exampleAnchor`), `data/concepts/ops.softmax_forward.yaml` (`inventory: [M21]`), `data/nav.ts` (slug `reference/mathematics-reference` is now `reference/mathematics`), `lib/code-targets.ts` (`targetLines`), `lib/content.ts` (`readPageBody`), `components/ConceptCard.tsx` and `NumericExample.tsx` (anchor ids), `components/mdx.tsx`, `scripts/verify_links.ts` (also runs `verifySiteData`), `package.json` (`sync:derived`, `verify:derived`), `.prettierignore`, `README.md`.
+  - Tests: new `tests/site-data.test.ts`, `tests/reference.test.ts`, `tests/e2e/pages.spec.ts`, `tests/e2e/reference.spec.ts`; rewritten `tests/e2e/home.spec.ts`; changed `tests/e2e/shell.spec.ts` (counts written pages instead of assuming 2) and `tests/links.test.ts` (fixture field).
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added.
+- Commands run and results (Node v26.13.0 prepended to PATH for each process, Bun 1.3.13; `.next`, `out` and `test-results` deleted before the final run; HEAD `a7a1c2d`, `sha` `66da45b`):
+  - `bun install --frozen-lockfile`: `Checked 528 installs across 596 packages (no changes)`, exit 0.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`, exit 0.
+  - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`, exit 0.
+  - `bun run verify:examples`: `OK: 1 example(s) match a fresh run.`, exit 0.
+  - `bun run verify:golden`: `OK: 72 golden cases match a fresh run.`, exit 0.
+  - `bun run verify:links`: `OK: 4 links, 1 concepts and 1 pipelines match the code.`, exit 0.
+  - `bun run verify:content`: `verify:content: not implemented yet`, exit 0. It is still the stub from Task 02, so this run checks nothing.
+  - `bun run lint`: `All matched files use Prettier code style!`. `bun run typecheck`: no errors.
+  - `bun run test`: `Test Files 12 passed (12)`, `Tests 426 passed (426)`, exit 0.
+  - `bun run build`: `Compiled successfully`, exit 0.
+  - `bun run test:e2e`: `127 passed (2.3m)`. Includes axe at 1280, 1000 and 390 in both themes on the home, walkthrough, Architecture and reference pages, with no findings.
+  - Config copy, full build: `data/generated/config.json` replaced by a copy with `num_layers` 3 and `ff_dim` 64. Built pages then showed `num_layers 3`, `ff_dim 64`, `Blocks, repeated num_layers = 3`, `b{l}.ff1_w` `(32, 64)` and `2,048 per block`, and `N = 65 V + 26,720` (was `26,496`). Worked by hand: 3 x 8,544 + 1,024 + 64 = 26,720. Restored: sha256 `631a43db...` equal before and after, and `verify:generated` OK.
+  - Temporary concept, full build: adding `temp.relu_check` (concept and link files) gave `2 of 61 operations documented`, rows `ops.softmax_forward, temp.relu_check`, and a link to `ops.py#L16-L17`, with no page edited. Removed: `1 of 61`, one row, and only the original files in both folders.
+  - Order comparison: `transformer.forward` and `train.main` were re-read. `verifySiteData` now fails on a step out of line order, a call that `call-graph.json` does not show at that line, or an inline expression not in the resolved lines. A test also checks that every function `forward` and `block_forward` call has a box. An e2e test compares each quoted train step, line by line, with `train.py` on disk.
+  - Screenshots reviewed by eye: home at 1280, 1000 dark and 390; Architecture at 1280, 1000 dark and 390 dark; How This LLM Works at 1280; reference at 1280, 1000 and 390 dark. Only the 1280 reference screenshot is from after the final table change; the 1000 and 390 ones are from before it, and after it those widths were checked by the overflow and axe tests only. The home 1000 and 390 and Architecture 390 screenshots also predate later CSS fixes.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --stat -- ':(top)*.py'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files, the same as before. No state-changing git command was run.
+  - Failures seen on the way:
+    - Boxes broke `transformer.py:158` in the middle of a number at 1280, and a `file:line` range overflowed its box. Fixed with a narrower gap and wrapping.
+    - On MDX pages `.prose ol { max-width: 50ch }` squeezed the diagram. No test caught it; a screenshot did. Fixed.
+    - Reference table: `overflow-wrap: anywhere` split the badge and function names, then the equation was clipped. Screenshots again. Direction moved into the name cell to give the equation about 35% of the width.
+    - `tests/e2e/shell.spec.ts` drawer test hard-coded two Tab presses for two links. It now counts written pages.
+    - Git Bash heredocs failed with `unexpected EOF`, and one turned `\n` into a literal newline in `lib/code-targets.ts`. Edits after that went through scratchpad scripts and the Edit tool.
+    - The first config and temporary-concept runs did not print their full results, because a scratchpad inspector crashed on React's `<!-- -->` markers. Both were rerun after fixing it; the results above are from the rerun.
+- Assumptions:
+  - The task's route `/reference/mathematics` replaces the nav slug `reference/mathematics-reference`. The page keeps the nav title.
+  - Filter categories differ from the concept categories, which come from the inventory groups. `lib/reference.ts` maps them in one `Record`, so a new category does not compile until it has a filter. Initialization goes under Operations; feed-forward, block and whole model go under Transformer.
+  - A `loss` concept category was added, because the inventory keeps cross-entropy under basic operations and the task asks for a Loss filter. Later concept files for cross-entropy should use `category: loss`.
+  - A tenth filter, Testing (test-only), was added beyond the nine requested, because the page must list all concepts and D2 keeps test-only mathematics apart.
+  - A third direction, Neither (not differentiated), was added because `contract/MATH_INVENTORY.md` has "n/a" rows.
+  - Every concept must now declare `inventory: [Mnn]`. A row is "documented" when a concept names it, and `verify:links` rejects an id that is not in the inventory. Each row of the table is one concept, not one equation, and Direction shares a column with the name.
+  - `contract/` is git-ignored, so the build reads a snapshot, `data/derived/math-inventory.json`. After editing `MATH_INVENTORY.md`, run `bun run sync:derived`. Without `contract/`, `verify:derived` checks only `init-params.json`.
+  - `init-params.json` comes from calling `init_params` with prime-sized dimensions, so each size names one symbol. It lives outside `data/generated/` because `verify_generated.py` rejects extra files there.
+  - The parameter total is computed from those shapes and labelled Derived from implementation. `V` stays symbolic, with no checkpoint value, as the task says.
+  - Start learning opens the first written Mathematics page, which today is the Tokenization placeholder.
+  - Repository map links open GitHub at the pinned commit until the Code Explorer exists; then they become `/code/code-explorer/#<path>`. That page must provide those anchors, or this link format must change.
+  - An explanation link is found by scanning MDX for `concept="<id>"`, preferring a `ConceptCard`. A numerical example link needs a `<NumericExample concept="<id>"`. Later pages get these links with no edit here.
+  - Residual adds, the head and the logits are inline expressions, not function calls. The Architecture diagram labels each box with its expression, and those boxes are checked as text in the resolved lines rather than against the call graph.
+  - Literal values in `train.py` (such as the logging interval) appear only in quoted code, not typed in prose. No training was run.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the task's parts.
+- Open issues:
+  - The reference shows one row and `1 of 61`, because one concept exists. Its explanation and example links show as not written, since the only page using it is the hidden sample.
+  - `verify:content` is still a stub. The checks for this task live in `verify:links` and the tests instead.
+  - `verify:derived`, like `verify:golden`, needs NumPy and is not part of `build`.
+  - The page authoring protocol's nine sections do not appear on these pages, because they hold no concepts of their own. The task's "No new equations; link to concept pages" applies.
+  - On a phone, the parameter table and repository map scroll sideways inside their own wrapper. At 1000px a long function name can wrap in the reference table.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 from Task 04 still appears in server logs, with no visible effect.
+  - No PDF-versus-code difference was found beyond those already logged, so `contract/DISCREPANCIES.md` was not changed. The `/reference/sources` page does not exist yet.
+  - GitHub links were not opened, because the working rules allow no requests to other sites. Their form and sha were tested.
+  - No new LLM issues found.
+- Decisions needed from the human: none.
+- Status: Task 06 finished. Nothing was committed.

@@ -3,6 +3,11 @@ import { loadSymbolIndex } from "@/lib/code-targets";
 import { loadConcepts, loadPipelines } from "@/lib/concepts";
 import { loadStoredExamples } from "@/lib/examples";
 import { loadLinks } from "@/lib/links";
+import { navSlugs } from "@/lib/pages";
+import { loadInitParams } from "@/lib/parameters";
+import { loadInventory } from "@/lib/reference";
+import { loadCallGraph, loadCodeIndex, loadConfig } from "@/lib/repo";
+import { verifySiteData } from "@/lib/site-verify";
 import { verifyData } from "@/lib/verify-links";
 
 function main(): number {
@@ -13,10 +18,22 @@ function main(): number {
     symbols: loadSymbolIndex(),
     examples: loadStoredExamples(),
   };
-  const problems = verifyData(input);
+  const problems = [
+    ...verifyData(input),
+    ...verifySiteData({
+      symbols: input.symbols,
+      callGraph: loadCallGraph(),
+      config: loadConfig(),
+      navSlugs: navSlugs(),
+      parameterNames: loadInitParams().parameters.map((parameter) => parameter.name),
+      repoFiles: loadCodeIndex().files.map((file) => file.path),
+      concepts: input.concepts,
+      inventoryIds: loadInventory().rows.map((row) => row.id),
+    }),
+  ];
 
   if (problems.length > 0) {
-    console.error(`FAILED: ${problems.length} problem(s) in data/concepts, links or pipelines.`);
+    console.error(`FAILED: ${problems.length} problem(s) in hand-written data.`);
     for (const problem of problems) console.error(`  ${problem}`);
     return 1;
   }

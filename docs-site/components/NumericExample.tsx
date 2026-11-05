@@ -1,4 +1,4 @@
-import { getConcept, type ExampleKind } from "@/lib/concepts";
+import { exampleAnchor, getConcept, type ExampleKind } from "@/lib/concepts";
 import { formatNumbers, getStoredExample } from "@/lib/examples";
 import { Badge } from "./Badge";
 import styles from "./NumericExample.module.css";
@@ -21,7 +21,11 @@ export function NumericExample({ concept, kind }: { concept: string; kind: Examp
     formatNumbers(value, example.precision);
 
   return (
-    <section className={styles.example} aria-label={`Numeric example: ${concept}`}>
+    <section
+      className={styles.example}
+      id={exampleAnchor(concept)}
+      aria-label={`Numeric example: ${concept}`}
+    >
       <div className={styles.header}>
         <Badge kind={kind} />
         <span className={styles.note}>
