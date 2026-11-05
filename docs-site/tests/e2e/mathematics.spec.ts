@@ -304,10 +304,7 @@ test.describe("Data Pipeline", () => {
   test("links to pages that do not exist yet are not links", async ({ page }) => {
     await page.goto(DATA);
     const main = page.locator("main");
-    await expect(main.getByRole("link", { name: "Training Loop" })).toHaveCount(0);
-    await expect(
-      main.locator('[aria-disabled="true"]').filter({ hasText: "Training Loop" }),
-    ).toBeVisible();
+    await expect(main.getByRole("link", { name: "Training Loop" })).toBeVisible();
     await expect(main.getByRole("link", { name: "Softmax & Cross-Entropy" })).toBeVisible();
     await expect(main.getByRole("link", { name: "Tokenization" }).first()).toBeVisible();
   });

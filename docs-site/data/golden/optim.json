@@ -1565,6 +1565,982 @@
      }
     }
    }
+  },
+  {
+   "id": "lr_schedule.key_points",
+   "mirrors": "optim.lr_schedule",
+   "kind": "illustrative",
+   "inputs": {
+    "steps": [
+     0,
+     1,
+     50,
+     51,
+     200
+    ],
+    "warmup": 50,
+    "total": 200,
+    "lr_max": 0.001,
+    "lr_min": 0.0001
+   },
+   "outputs": {
+    "lrs": [
+     0.0,
+     2e-05,
+     0.001,
+     0.0009999013075636803,
+     0.0001
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "adam.two_step",
+   "mirrors": "optim.Adam.step",
+   "kind": "illustrative",
+   "inputs": {
+    "problem": "trace",
+    "params": {
+     "w": [
+      [
+       1.0
+      ]
+     ],
+     "b": [
+      1.0
+     ]
+    },
+    "grads": [
+     {
+      "w": [
+       [
+        0.5
+       ]
+      ],
+      "b": [
+       0.5
+      ]
+     },
+     {
+      "w": [
+       [
+        0.25
+       ]
+      ],
+      "b": [
+       0.25
+      ]
+     }
+    ],
+    "lrs": [
+     0.1,
+     0.1
+    ],
+    "settings": {
+     "beta1": 0.9,
+     "beta2": 0.999,
+     "eps": 1e-08,
+     "weight_decay": 0.01
+    }
+   },
+   "outputs": {
+    "steps": [
+     {
+      "params": {
+       "w": [
+        [
+         0.899000002
+        ]
+       ],
+       "b": [
+        0.900000002
+       ]
+      },
+      "m": {
+       "w": [
+        [
+         0.04999999999999999
+        ]
+       ],
+       "b": [
+        0.04999999999999999
+       ]
+      },
+      "v": {
+       "w": [
+        [
+         0.0002500000000000002
+        ]
+       ],
+       "b": [
+        0.0002500000000000002
+       ]
+      },
+      "t": 1,
+      "mhat": {
+       "w": [
+        [
+         0.5
+        ]
+       ],
+       "b": [
+        0.5
+       ]
+      },
+      "vhat": {
+       "w": [
+        [
+         0.25
+        ]
+       ],
+       "b": [
+        0.25
+       ]
+      },
+      "raw": {
+       "w": [
+        [
+         0.9999999800000003
+        ]
+       ],
+       "b": [
+        0.9999999800000003
+       ]
+      },
+      "update": {
+       "w": [
+        [
+         1.0099999800000004
+        ]
+       ],
+       "b": [
+        0.9999999800000003
+       ]
+      }
+     },
+     {
+      "params": {
+       "w": [
+        [
+         0.8048830404754623
+        ]
+       ],
+       "b": [
+        0.8067820404774624
+       ]
+      },
+      "m": {
+       "w": [
+        [
+         0.06999999999999998
+        ]
+       ],
+       "b": [
+        0.06999999999999998
+       ]
+      },
+      "v": {
+       "w": [
+        [
+         0.0003122500000000003
+        ]
+       ],
+       "b": [
+        0.0003122500000000003
+       ]
+      },
+      "t": 2,
+      "mhat": {
+       "w": [
+        [
+         0.3684210526315789
+        ]
+       ],
+       "b": [
+        0.3684210526315789
+       ]
+      },
+      "vhat": {
+       "w": [
+        [
+         0.15620310155077766
+        ]
+       ],
+       "b": [
+        0.15620310155077766
+       ]
+      },
+      "raw": {
+       "w": [
+        [
+         0.9321796152253761
+        ]
+       ],
+       "b": [
+        0.9321796152253761
+       ]
+      },
+      "update": {
+       "w": [
+        [
+         0.9411696152453761
+        ]
+       ],
+       "b": [
+        0.9321796152253761
+       ]
+      }
+     }
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "params": {
+      "w": [
+       1,
+       1
+      ],
+      "b": [
+       1
+      ]
+     },
+     "grads": [
+      {
+       "w": [
+        1,
+        1
+       ],
+       "b": [
+        1
+       ]
+      },
+      {
+       "w": [
+        1,
+        1
+       ],
+       "b": [
+        1
+       ]
+      }
+     ]
+    },
+    "outputs": {
+     "steps": [
+      {
+       "params": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "m": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "v": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "mhat": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "vhat": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "raw": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "update": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       }
+      },
+      {
+       "params": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "m": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "v": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "mhat": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "vhat": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "raw": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       },
+       "update": {
+        "w": [
+         1,
+         1
+        ],
+        "b": [
+         1
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "adam.decay_rule",
+   "mirrors": "optim.Adam.step",
+   "kind": "illustrative",
+   "inputs": {
+    "problem": "decay_rule",
+    "sizes": {
+     "tok_emb": [
+      5,
+      4
+     ],
+     "pos_emb": [
+      4,
+      4
+     ],
+     "b0.ln1_g": [
+      4
+     ],
+     "b0.ln1_b": [
+      4
+     ],
+     "b0.wq": [
+      4,
+      4
+     ],
+     "b0.bq": [
+      4
+     ],
+     "b0.wk": [
+      4,
+      4
+     ],
+     "b0.bk": [
+      4
+     ],
+     "b0.wv": [
+      4,
+      4
+     ],
+     "b0.bv": [
+      4
+     ],
+     "b0.wo": [
+      4,
+      4
+     ],
+     "b0.bo": [
+      4
+     ],
+     "b0.ln2_g": [
+      4
+     ],
+     "b0.ln2_b": [
+      4
+     ],
+     "b0.ff1_w": [
+      4,
+      6
+     ],
+     "b0.ff1_b": [
+      6
+     ],
+     "b0.ff2_w": [
+      6,
+      4
+     ],
+     "b0.ff2_b": [
+      4
+     ],
+     "b1.ln1_g": [
+      4
+     ],
+     "b1.ln1_b": [
+      4
+     ],
+     "b1.wq": [
+      4,
+      4
+     ],
+     "b1.bq": [
+      4
+     ],
+     "b1.wk": [
+      4,
+      4
+     ],
+     "b1.bk": [
+      4
+     ],
+     "b1.wv": [
+      4,
+      4
+     ],
+     "b1.bv": [
+      4
+     ],
+     "b1.wo": [
+      4,
+      4
+     ],
+     "b1.bo": [
+      4
+     ],
+     "b1.ln2_g": [
+      4
+     ],
+     "b1.ln2_b": [
+      4
+     ],
+     "b1.ff1_w": [
+      4,
+      6
+     ],
+     "b1.ff1_b": [
+      6
+     ],
+     "b1.ff2_w": [
+      6,
+      4
+     ],
+     "b1.ff2_b": [
+      4
+     ],
+     "lnf_g": [
+      4
+     ],
+     "lnf_b": [
+      4
+     ],
+     "head_w": [
+      4,
+      5
+     ],
+     "head_b": [
+      5
+     ]
+    },
+    "settings": {
+     "beta1": 0.9,
+     "beta2": 0.999,
+     "eps": 1e-08,
+     "weight_decay": 0.01
+    },
+    "lr": 0.001
+   },
+   "outputs": {
+    "rows": [
+     {
+      "name": "tok_emb",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "pos_emb",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b0.ln1_g",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.ln1_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.wq",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b0.bq",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.wk",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b0.bk",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.wv",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b0.bv",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.wo",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b0.bo",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.ln2_g",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.ln2_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.ff1_w",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b0.ff1_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b0.ff2_w",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b0.ff2_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.ln1_g",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.ln1_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.wq",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b1.bq",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.wk",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b1.bk",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.wv",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b1.bv",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.wo",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b1.bo",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.ln2_g",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.ln2_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.ff1_w",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b1.ff1_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "b1.ff2_w",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "b1.ff2_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "lnf_g",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "lnf_b",
+      "ndim": 1,
+      "changed": false
+     },
+     {
+      "name": "head_w",
+      "ndim": 2,
+      "changed": true
+     },
+     {
+      "name": "head_b",
+      "ndim": 1,
+      "changed": false
+     }
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "adam.one_weight",
+   "mirrors": "optim.Adam.step",
+   "kind": "illustrative",
+   "inputs": {
+    "problem": "one_weight",
+    "params": {
+     "w": [
+      [
+       0.5
+      ]
+     ]
+    },
+    "grads": [
+     {
+      "w": [
+       [
+        3.0
+       ]
+      ]
+     },
+     {
+      "w": [
+       [
+        0.5
+       ]
+      ]
+     }
+    ],
+    "settings": {
+     "beta1": 0.9,
+     "beta2": 0.999,
+     "eps": 1e-08,
+     "weight_decay": 0.01
+    },
+    "max_norm": 1.0,
+    "warmup": 50,
+    "total": 200,
+    "lr_max": 0.001,
+    "lr_min": 0.0001
+   },
+   "outputs": {
+    "rows": [
+     {
+      "step": 1,
+      "norm": 3.0,
+      "clipped": [
+       [
+        1.0
+       ]
+      ],
+      "lr": 2e-05,
+      "m": [
+       [
+        0.09999999999999998
+       ]
+      ],
+      "v": [
+       [
+        0.0010000000000000009
+       ]
+      ],
+      "t": 1,
+      "mhat": [
+       [
+        1.0
+       ]
+      ],
+      "vhat": [
+       [
+        1.0
+       ]
+      ],
+      "raw": [
+       [
+        0.9999999900000002
+       ]
+      ],
+      "update": [
+       [
+        1.0049999900000002
+       ]
+      ],
+      "w": [
+       [
+        0.4999799000002
+       ]
+      ]
+     },
+     {
+      "step": 2,
+      "norm": 0.5,
+      "clipped": [
+       [
+        0.5
+       ]
+      ],
+      "lr": 4e-05,
+      "m": [
+       [
+        0.13999999999999996
+       ]
+      ],
+      "v": [
+       [
+        0.0012490000000000012
+       ]
+      ],
+      "t": 2,
+      "mhat": [
+       [
+        0.7368421052631579
+       ]
+      ],
+      "vhat": [
+       [
+        0.6248124062031106
+       ]
+      ],
+      "raw": [
+       [
+        0.9321796270183889
+       ]
+      ],
+      "update": [
+       [
+        0.9371794260183909
+       ]
+      ],
+      "w": [
+       [
+        0.49994241282315927
+       ]
+      ]
+     }
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "params": {
+      "w": [
+       1,
+       1
+      ]
+     },
+     "grads": [
+      {
+       "w": [
+        1,
+        1
+       ]
+      },
+      {
+       "w": [
+        1,
+        1
+       ]
+      }
+     ]
+    },
+    "outputs": {
+     "rows": [
+      {
+       "clipped": [
+        1,
+        1
+       ],
+       "m": [
+        1,
+        1
+       ],
+       "v": [
+        1,
+        1
+       ],
+       "mhat": [
+        1,
+        1
+       ],
+       "vhat": [
+        1,
+        1
+       ],
+       "raw": [
+        1,
+        1
+       ],
+       "update": [
+        1,
+        1
+       ],
+       "w": [
+        1,
+        1
+       ]
+      },
+      {
+       "clipped": [
+        1,
+        1
+       ],
+       "m": [
+        1,
+        1
+       ],
+       "v": [
+        1,
+        1
+       ],
+       "mhat": [
+        1,
+        1
+       ],
+       "vhat": [
+        1,
+        1
+       ],
+       "raw": [
+        1,
+        1
+       ],
+       "update": [
+        1,
+        1
+       ],
+       "w": [
+        1,
+        1
+       ]
+      }
+     ]
+    }
+   }
   }
  ]
 }

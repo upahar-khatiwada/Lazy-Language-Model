@@ -1,0 +1,55 @@
+id: train.step_counts
+title: Step counts
+category: data
+inventory: [M12]
+status: derived
+summary: >-
+  train.main works out how many updates training will make before the loop starts. One epoch has one
+  step per batch, and total_steps is that number times the number of epochs.
+why: >-
+  The learning-rate schedule needs to know where training ends, so that the cosine reaches lr_min on
+  the last step. Nothing else reads total_steps.
+equations:
+  - id: steps.per-epoch
+    latex: S_{\text{epoch}} = \left\lceil \frac{W}{B} \right\rceil
+    role: none
+    label: Steps per epoch
+  - id: steps.total
+    latex: S_{\text{total}} = E \cdot S_{\text{epoch}}
+    role: none
+    label: Total steps
+symbols:
+  - symbol: W
+    meaning: Training windows
+    codeName: len(tr_x)
+    shape: scalar
+  - symbol: B
+    meaning: Windows per batch
+    codeName: config.batch_size
+    shape: scalar
+  - symbol: E
+    meaning: Passes over the training windows
+    codeName: config.epochs
+    shape: scalar
+  - symbol: S_{\text{epoch}}
+    meaning: Steps in one epoch. The ceiling counts a short last batch as a step
+    codeName: steps_per_epoch
+    shape: scalar
+  - symbol: S_{\text{total}}
+    meaning: Steps in the whole run, passed to the schedule
+    codeName: total_steps
+    shape: scalar
+example: null
+shapes: []
+source:
+  - file: train.py
+    symbol: train.main
+usedBy:
+  - file: train.py
+    symbol: train.main
+    match: steps_per_epoch = math\.ceil[\s\S]*?total_steps = config\.epochs \* steps_per_epoch
+    regex: true
+    note: These two lines are the whole calculation. lr_schedule receives total_steps.
+pdfRef: null
+notes:
+  - The inventory records that the PDF has these lines only in its code listing on p. 16.

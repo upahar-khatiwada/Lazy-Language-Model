@@ -1,0 +1,132 @@
+/* The clickable pipeline on How the Model Learns. */
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.title code {
+  background: none;
+  padding: 0;
+}
+
+/* Two classes, so that this also wins over the list rules for .prose. */
+.figure .stages {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  list-style: none;
+  margin: 0;
+  max-width: none;
+  padding: 0;
+}
+
+.stage {
+  align-items: center;
+  background: var(--surface);
+  border: var(--border-width) solid var(--muted);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: var(--fs-sm);
+  gap: var(--space-2);
+  height: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  width: 100%;
+}
+
+.stage:hover {
+  background: var(--hover);
+}
+
+/* The thick border and the weight are the non-colour cues for the selected stage. */
+.stage[aria-pressed="true"] {
+  background: var(--active-bg);
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--text);
+  font-weight: 600;
+}
+
+.number {
+  color: var(--muted);
+  flex: none;
+  font-family: var(--font-code);
+  min-width: 2ch;
+  text-align: right;
+}
+
+.panel {
+  border-top: var(--border-width) solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-top: var(--space-3);
+}
+
+.panel p {
+  margin: 0;
+  max-width: none;
+}
+
+.panelTitle.panelTitle {
+  font-size: var(--fs-h3);
+  margin: 0;
+}
+
+.path {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.figure .links {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-sm);
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  max-width: none;
+  padding-left: var(--space-4);
+}
+
+.links code,
+.also code,
+.value code {
+  overflow-wrap: anywhere;
+}
+
+.links :global(.code-link),
+.also :global(.code-link) {
+  white-space: nowrap;
+}
+
+.also {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin-top: var(--space-2);
+}
+
+.value {
+  font-size: var(--fs-sm);
+}
+
+/* A file:line link on a phone is a touch target. */
+@media (max-width: 859px) {
+  .links :global(.code-link),
+  .also :global(.code-link) {
+    align-items: center;
+    display: inline-flex;
+    min-height: var(--touch-target);
+  }
+}

@@ -39,6 +39,7 @@ test("the engine has the expected files", () => {
     "params.ts",
     "sampling.ts",
     "tensor.ts",
+    "train.ts",
   ]);
 });
 

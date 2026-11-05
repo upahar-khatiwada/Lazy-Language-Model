@@ -1,0 +1,62 @@
+id: optim.clip_grad_norm
+title: Gradient clipping
+category: optimizer
+inventory: [M53]
+status: implemented
+summary: >-
+  clip_grad_norm treats every gradient of every parameter as one long vector and measures its length.
+  If that length is above the limit, it scales every tensor by the same factor, in place, so the
+  length becomes the limit and the direction stays. It returns the length from before clipping.
+why: >-
+  The comment on grad_clip in config.py gives the reason, that one bad batch must not blow up the
+  model. A batch with an unusually large gradient still moves the parameters in its direction, but
+  with a limited length.
+equations:
+  - id: clip.norm
+    latex: \lVert g \rVert = \sqrt{\sum_{k} \sum_{i} g_{k,i}^2}
+    role: none
+    label: Global norm, over all tensors
+  - id: clip.factor
+    latex: g_k \leftarrow g_k \cdot \frac{c}{\lVert g \rVert} \qquad \text{for every key } k, \text{ only when } \lVert g \rVert > c
+    role: none
+    label: Scaling by one factor
+symbols:
+  - symbol: g_k
+    meaning: The gradient tensor of one parameter
+    codeName: grads[k]
+    shape: same as the parameter
+  - symbol: g_{k,i}
+    meaning: One number of that tensor
+    codeName: null
+    shape: scalar
+  - symbol: \lVert g \rVert
+    meaning: The length of all gradients together. This is the value train.py prints as |g|
+    codeName: norm
+    shape: scalar
+  - symbol: c
+    meaning: The limit
+    codeName: max_norm, from config.grad_clip
+    shape: scalar
+example: null
+shapes:
+  - id: clip-tensor
+    label: Clipping changes values, not shapes. head_w as one example
+    stages:
+      - name: grads[k] before
+        dims: [d, V]
+      - name: grads[k] after
+        dims: [d, V]
+    target:
+      file: optim.py
+      symbol: optim.clip_grad_norm
+      match: grads[k] *= max_norm / norm
+source:
+  - file: optim.py
+    symbol: optim.clip_grad_norm
+usedBy: []
+pdfRef:
+  section: "4.6"
+  equations: ["59"]
+  page: 14
+notes:
+  - The norm is measured over every tensor at once. There is no per-tensor limit.

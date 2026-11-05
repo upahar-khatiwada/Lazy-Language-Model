@@ -1,0 +1,36 @@
+links:
+  - equationId: clip.norm
+    file: optim.py
+    symbol: optim.clip_grad_norm
+    match: total += (grads[k] ** 2).sum()
+    role: implements
+  - equationId: clip.norm
+    file: optim.py
+    symbol: optim.clip_grad_norm
+    match: norm = np.sqrt(total)
+    role: implements
+  - equationId: clip.norm
+    file: tests/test_optim.py
+    symbol: tests.test_optim.test_clip_rescales_all_tensors_together
+    match: assert np.isclose(norm, 5.0)
+    role: test
+  - equationId: clip.factor
+    file: optim.py
+    symbol: optim.clip_grad_norm
+    match: "if norm > max_norm:"
+    role: implements
+  - equationId: clip.factor
+    file: optim.py
+    symbol: optim.clip_grad_norm
+    match: grads[k] *= max_norm / norm
+    role: implements
+  - equationId: clip.factor
+    file: train.py
+    symbol: train.main
+    match: norm = clip_grad_norm(grads, config.grad_clip)
+    role: call
+  - equationId: clip.factor
+    file: tests/test_optim.py
+    symbol: tests.test_optim.test_clip_leaves_small_gradients_alone
+    match: assert np.allclose(grads["a"], [0.3, 0.4])
+    role: test

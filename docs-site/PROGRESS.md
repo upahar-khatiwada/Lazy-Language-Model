@@ -665,3 +665,69 @@ Append one entry per finished task. Newest at the bottom.
   - Still open from Task 10: should the E007 note in `contract/PDF_VS_CODE.md` change to match, now that the pages say Implemented?
 - Status: Task 11 finished, with one test-only fix after the last full e2e run. Nothing was committed.
 - Follow-up after Task 11, at the human's request (2026-11-05): the E007 question open since Task 10 is closed. The human said yes. The E007 row of `contract/PDF_VS_CODE.md` now says to label the parameter count Implemented (M15), because the PDF states it as Eq. 2. It still says the code never computes the formula, and "In code" stays `partly`. `contract/` is git-ignored, so this edit exists only on this machine. No page changed. The full e2e suite has still not been rerun since the test-only fix above.
+
+### Task 12: Learning, Optimization & Training Loop Pages (2026-11-05 to 2026-11-06)
+- Files created or changed (all under `docs-site/`):
+  - Pages: new `content/training/how-the-model-learns.mdx` (Part A), `content/training/adamw-learning-rate-clipping.mdx` (Part B), `content/training/training-loop.mdx` (Part C).
+  - Concepts and links, one file each in `data/concepts/` and `data/links/`: `optim.Adam.step`, `optim.lr_schedule`, `optim.clip_grad_norm`, `train.batch_loss_and_grads`, `train.step_counts`, `train.validation_loss`.
+  - Data: new `data/learning-step.ts` (the 13 stages, logging lines, what each number means); changed `data/code-refs.ts`.
+  - Engine: new `lib/math/train.ts`; `lib/math/optim.ts` (`adamStep` also returns its locals as `trace`). New `lib/schedule-lab.ts`. Changed `lib/golden.ts`, `lib/site-verify.ts` (checks each stage against the call graph and the line order of `train.main`).
+  - Golden: `scripts/make_golden.py`; new `data/golden/train.json`; `data/golden/optim.json` gains 4 cases. 220 cases in 12 files.
+  - Components: new `LearningPipeline` with CSS module, `TrainingExamples`, `ScheduleLab`, `ClipLab`, `AdamCalculator`, `StepCalculator`, `WorkedRows`, `InlineCode`. Changed `mdx.tsx`, `Examples.module.css`.
+  - Tests: new `tests/training-pages.test.ts`, `tests/e2e/training.spec.ts`. Changed `tests/math.golden.test.ts`, `tests/math.mirrors.test.ts`. `tests/site-data.test.ts`, `tests/e2e/home.spec.ts` and `tests/e2e/mathematics.spec.ts` assumed these pages were unwritten.
+  - `README.md`: the golden file list is now `data/golden/*.json`.
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added. `contract/` was not changed.
+- Commands run and results (Bun 1.3.13, Node v26.13.0; `.next`, `out` and `test-results` deleted before the final build; HEAD `5288498`, `sha` `66da45b`):
+  - `bun install --frozen-lockfile`: `Checked 528 installs across 596 packages (no changes)`.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 220 golden cases match a fresh run.`
+  - `bun run verify:links`: `OK: 316 links, 55 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `verify:content: not implemented yet`. It is still the stub from Task 02, so this run checks nothing.
+  - `bun run lint`: `All matched files use Prettier code style!`. `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files 20 passed (20)`, `Tests 1263 passed (1263)`. `bun run test -- tests/math.golden`: `Tests 494 passed (494)`.
+  - `bun run build`: `Compiled successfully`, exit 0.
+  - `bunx playwright test` (full suite, on that same build): `Running 347 tests using 1 worker`, `347 passed (20.1m)`, exit 0. This also closes the item Task 11 left open. It includes axe and no sideways page scroll on the three new pages at 1280 light and dark, 1000 light, 390 light and dark.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.95s`.
+  - Acceptance per part, before the next part started: Part A browser tests `10 passed (28.4s)`; Parts A and B `23 passed (1.4m)`.
+  - Acceptance, tamper: a scratchpad script applied 18 wrong changes one at a time, ran the checks, restored and compared hashes. `18 of 18 caught; all files restored by hash`. Among them: `stages: clip and schedule swapped` (`verify:links` exit 1), `engine: ceil becomes floor: 2 failed`, `engine: loss not divided by B: 3 failed`, `engine: schedule sees the old step: 2 failed`, `engine: decay on every tensor: 5 failed`, `golden: last schedule value edited: 2 failed`, `page: division moved out of the loop: 1 failed`.
+  - Screenshots reviewed by eye: pipeline at 1280 and 390 dark, walk-through table at 1280, schedule at 1280 and 390 dark, clipping at 1280 dark, two-step table at 1280, batch table at 1280, a pipeline panel at 1280 dark, logging list at 1280, a `Trace` block at 390. Not viewed afterwards or at all: the clipping result list after its fix, the logging list at 390, the AdamW calculator, the decay table, and the page text added after the last screenshots.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files, the same as before. No state-changing git command was run.
+  - Failures seen on the way:
+    - A long Git Bash heredoc failed with `unexpected EOF` before running anything, as in earlier tasks. Git Bash also rewrote a `/training/...` argument into a Windows path; `MSYS_NO_PATHCONV=1` fixed it.
+    - Patch scripts stopped twice on a non-unique or stale anchor, leaving earlier edits applied. The remaining edits were applied by follow-up scripts, and the final checks ran on the result.
+    - An unquoted YAML `match` holding `{k: ...}` failed `verify:links`. Fixed by quoting.
+    - My test compared validation and batch losses exactly, and they differ in the last bits. It now allows `1e-12`.
+    - A screenshot showed the first logging table squeezing its meanings to one word per line, which no test caught. It is now a stacked list.
+    - I changed `Trace.tsx` so that `train.main` would not read "Not called by the pipeline". A screenshot showed `train.main` already has a caller, `train.<module>`, so the change was not needed and would have hidden a true sentence on `ops.linear_forward`. It was reverted, and `git diff` on the file is empty.
+    - `notes` in concept files are not displayed by any component. Facts I had put only there were moved into the page text.
+- Findings:
+  - No PDF-versus-code difference beyond those logged, so `contract/DISCREPANCIES.md` was not changed. The PDF was not reopened (D4), so this rests on `contract/PDF_VS_CODE.md`.
+  - The task asks for the schedule value at step 0. `train.main` never uses it, because `step += 1` runs first. The page shows it and says so. The first value used is step 1.
+  - `iterate_batches` yields exactly `steps_per_epoch` batches in all 5 golden rows, so `step` ends at `total_steps` and the last step gets `lr_min`.
+  - With 2 blocks, 15 tensors get decay and 23 do not, from the real `Adam.step` on all ones with zero gradients. `tok_emb` and `pos_emb` are among the 15.
+- Assumptions:
+  - `make_golden.py` now imports `train.py` and runs one real step on a hand-picked text with a tiny model, calling what `train.main` calls in the same order. I judged this not to be "running training". `train.main` is never called, no corpus is read, and nothing is saved. Step counts, the print formats and the loop order come from the real lines of `train.main`, read with `ast`.
+  - All numbers are Illustrative Example, including printed lines, because the inputs are hand-picked. None is Actual Model Output (D1).
+  - Part A has no concept records, since it adds no mathematics and the task lists none for it, so the nine protocol steps do not appear there. Parts B and C follow them. `optim.Adam.step` is one concept with seven equations, because it is one function.
+  - `total_steps` starts at a hand-picked 200 in the schedule chart, and windows at a hand-picked 1000 in the calculator, because the real values depend on the corpus.
+  - M10, M11 and M12 are `status: derived` with `pdfRef: null`, because the inventory gives only a page and no section, and D4 forbids reopening the PDF. `Trace` prints "Not stated in the PDF" where the task says "None", so the page adds a sentence on where the PDF mentions each. They keep the `data` category, as in the inventory.
+  - The two-step example uses `lr = 0.1`, the value in `test_adam_two_step_hand_trace`, far above `lr_max`, so that the moves are visible. The caption says so. The walk-through on Part A uses the real warmup values, so it shows 8 decimals.
+  - The optional AdamW calculator was included. Its fields and `Dimensions` control go beyond one worked example, and its limits are stated in the control.
+  - Stage 3 also shows the `iterate_batches` line, since the task's list has no separate batch stage.
+  - `sourceFile` for How the Model Learns stays `transformer.py`, as in `data/nav.ts`, though most of the page is about `train.py`.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the task's parts.
+- Open issues:
+  - `verify:content` is still a stub. The task's final check therefore verifies nothing by itself; the checks live in the tests above.
+  - `/reference/sources` does not exist (the nav slug is `reference/sources-discrepancies`).
+  - `verify:golden` on another machine was not tried. `learning.one_step` stores a shuffled batch and a sampled text exactly, so another pandas or NumPy version could fail it with no repository change.
+  - The Training Loop page links to Sampling, Autoregressive Generation and Checkpoints & Tests. They show as disabled text until those pages exist.
+  - In the pipeline's panel, a long function scrolls inside its code block, so the highlighted line can start out of view on a phone.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 still appears in server logs.
+  - GitHub links were not opened, because the working rules allow no requests to other sites.
+- LLM observations, reported only and nothing changed:
+  - The sample in `train.main` draws from the same `rng` as `iterate_batches`, so printing a sample changes the next epoch's batch order. It is not a bug, and the page states it.
+  - The comment on `lr_max` in `config.py` says it is reached right after warmup. The code reaches it exactly at the last warmup step.
+- Decisions needed from the human: none.
+- Status: Task 12 finished. Nothing was committed.

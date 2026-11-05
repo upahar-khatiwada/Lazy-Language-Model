@@ -55,6 +55,13 @@ import {
   type TensorMap,
 } from "@/lib/math/optim";
 import {
+  batchLossAndGrads,
+  LOOP_STEPS,
+  loopStep,
+  stepCounts,
+  validationLoss,
+} from "@/lib/math/train";
+import {
   batchesPerEpoch,
   batchSizes,
   joinRows,
@@ -682,15 +689,234 @@ const RUNNERS: Record<string, Runner> = {
       ...(settings.eps === undefined ? {} : { eps: settings.eps }),
       ...(settings.weight_decay === undefined ? {} : { weightDecay: settings.weight_decay }),
     };
+    if (item.inputs.problem === "decay_rule") {
+      // Ones and zero gradients, at the sizes of the real init_params: only decay can change a value.
+      const { sizes, lr } = item.inputs as unknown as {
+        sizes: Record<string, number[]>;
+        lr: number;
+      };
+      const fill = (value: number) =>
+        Object.fromEntries(
+          Object.entries(sizes).map(([name, shape]) => [
+            name,
+            shape.length === 1
+              ? new Array<number>(shape[0]!).fill(value)
+              : matrixZeros(shape[0]!, shape[1]!).map((row) => row.map(() => value)),
+          ]),
+        ) as TensorMap;
+      const ones = fill(1);
+      const next = adamStep(createAdamState(ones, adamSettings), ones, fill(0), lr);
+      check(item, {
+        rows: Object.keys(sizes).map((name) => ({
+          name,
+          ndim: sizes[name]!.length,
+          changed: next.params[name]!.flat().some((value) => value !== 1),
+        })),
+      });
+      return;
+    }
+    if (item.inputs.problem === "one_weight") {
+      const inputs = item.inputs as unknown as {
+        params: TensorMap;
+        grads: TensorMap[];
+        max_norm: number;
+        warmup: number;
+        total: number;
+        lr_max: number;
+        lr_min: number;
+      };
+      let state = createAdamState(inputs.params, adamSettings);
+      let current = inputs.params;
+      let step = 0;
+      const rows = inputs.grads.map((stepGrads) => {
+        const next = loopStep(state, current, stepGrads, step, {
+          maxNorm: inputs.max_norm,
+          warmup: inputs.warmup,
+          total: inputs.total,
+          lrMax: inputs.lr_max,
+          lrMin: inputs.lr_min,
+        });
+        state = next.state;
+        current = next.params;
+        step = next.step;
+        const trace = next.trace.w!;
+        return {
+          step,
+          norm: next.norm,
+          clipped: next.clipped.w,
+          lr: next.lr,
+          m: state.m.w,
+          v: state.v.w,
+          t: state.t,
+          mhat: trace.mhat,
+          vhat: trace.vhat,
+          raw: trace.raw,
+          update: trace.update,
+          w: current.w,
+        };
+      });
+      check(item, { rows });
+      return;
+    }
     let state = createAdamState(params, adamSettings);
     let current = params;
     const steps = grads.map((stepGrads, i) => {
       const next = adamStep(state, current, stepGrads, lrs[i]!);
       state = next.state;
       current = next.params;
+      if (item.inputs.problem === "trace") {
+        const pick = (field: "mhat" | "vhat" | "raw" | "update") =>
+          Object.fromEntries(Object.entries(next.trace).map(([name, t]) => [name, t[field]]));
+        return {
+          params: current,
+          m: state.m,
+          v: state.v,
+          t: state.t,
+          mhat: pick("mhat"),
+          vhat: pick("vhat"),
+          raw: pick("raw"),
+          update: pick("update"),
+        };
+      }
       return { params: current, m: state.m, v: state.v, t: state.t };
     });
     check(item, { steps });
+  },
+  "train.batch_loss_and_grads": (item) => {
+    if (item.inputs.problem === "learning_step") {
+      const inputs = item.inputs as unknown as {
+        text: string;
+        num_merges: number;
+        seq_len: number;
+        batch_size: number;
+        val_fraction: number;
+        stride: number;
+        epochs: number;
+        params: FlatParams;
+        settings: { beta1: number; beta2: number; eps: number; weight_decay: number };
+        max_norm: number;
+        warmup: number;
+        lr_max: number;
+        lr_min: number;
+        cfg: ModelSizes;
+      };
+      const outputs = item.outputs as { xb: number[][]; yb: number[][]; ids: number[] };
+      const tok = buildTokenizer(inputs.text, inputs.num_merges);
+      const ids = encode(tok, inputs.text);
+      const { train } = splitIds(ids, inputs.val_fraction);
+      const { val } = splitIds(ids, inputs.val_fraction);
+      const windows = makeWindows(train, inputs.seq_len, inputs.stride);
+      const { totalSteps, stepsPerEpoch } = stepCounts(
+        windows.starts.length,
+        inputs.batch_size,
+        inputs.epochs,
+      );
+      const { loss, grads } = batchLossAndGrads(inputs.params, outputs.xb, outputs.yb, inputs.cfg);
+      const state = createAdamState(inputs.params as TensorMap, {
+        beta1: inputs.settings.beta1,
+        beta2: inputs.settings.beta2,
+        eps: inputs.settings.eps,
+        weightDecay: inputs.settings.weight_decay,
+      });
+      const next = loopStep(state, inputs.params as TensorMap, grads as TensorMap, 0, {
+        maxNorm: inputs.max_norm,
+        warmup: inputs.warmup,
+        total: totalSteps,
+        lrMax: inputs.lr_max,
+        lrMin: inputs.lr_min,
+      });
+      const valWindows = makeWindows(val, inputs.seq_len, inputs.stride);
+      const { logits } = forward(inputs.params, outputs.xb[0]!, inputs.cfg);
+      check(item, {
+        tokens: applyMerges(inputs.text, tok.merges),
+        ids,
+        vocab_size: tok.vocabSize,
+        train_windows: windows.starts.length,
+        val_windows: valWindows.starts.length,
+        xb: outputs.xb,
+        yb: outputs.yb,
+        logits,
+        probs: crossEntropy(logits, outputs.yb[0]!).probs,
+        loss,
+        grads,
+        norm: next.norm,
+        clipped: next.clipped,
+        steps_per_epoch: stepsPerEpoch,
+        total_steps: totalSteps,
+        lr: next.lr,
+        params: next.params,
+        val_loss: validationLoss(
+          next.params as FlatParams,
+          inputs.cfg,
+          valWindows.inputs,
+          valWindows.targets,
+        ).loss,
+        seed_ids: valWindows.inputs[0]!.slice(0, 3),
+        printed: item.outputs.printed,
+      });
+      return;
+    }
+    const { params, xb, yb, cfg } = item.inputs as unknown as {
+      params: FlatParams;
+      xb: number[][];
+      yb: number[][];
+      cfg: ModelSizes;
+    };
+    const { loss, grads, losses } = batchLossAndGrads(params, xb, yb, cfg);
+    check(item, {
+      loss,
+      grads,
+      losses,
+      head_b_each: xb.map((x, i) => lossAndGrads(params, x, yb[i]!, cfg).grads.head_b),
+    });
+  },
+  "train.validation_loss": (item) => {
+    const { params, inputs, targets, cfg } = item.inputs as unknown as {
+      params: FlatParams;
+      inputs: number[][];
+      targets: number[][];
+      cfg: ModelSizes;
+    };
+    const { loss, losses } = validationLoss(params, cfg, inputs, targets);
+    check(item, { loss, losses, perplexity: perplexity(loss) });
+  },
+  "train.main": (item) => {
+    if (item.inputs.problem === "step_counts") {
+      const rows = item.outputs.rows as {
+        windows: number;
+        batch_size: number;
+        epochs: number;
+        yielded: number;
+      }[];
+      check(item, {
+        rows: rows.map((row) => {
+          const { stepsPerEpoch, totalSteps, lastBatch } = stepCounts(
+            row.windows,
+            row.batch_size,
+            row.epochs,
+          );
+          expect(batchSizes(row.windows, row.batch_size)).toHaveLength(row.yielded);
+          return {
+            windows: row.windows,
+            batch_size: row.batch_size,
+            epochs: row.epochs,
+            steps_per_epoch: stepsPerEpoch,
+            total_steps: totalSteps,
+            yielded: batchSizes(row.windows, row.batch_size).length,
+            last_size: lastBatch,
+          };
+        }),
+      });
+      return;
+    }
+    // The statements of the real batch loop, in order, with the engine's list after the gradient.
+    const statements = item.outputs.statements as string[];
+    const called = statements.flatMap((text) => {
+      const match = LOOP_STEPS.find((name) => text.includes(name));
+      return match ? [match] : [];
+    });
+    expect(called).toEqual([...LOOP_STEPS]);
+    expect(statements[0]).toContain("batch_loss_and_grads");
   },
   "generate.sample_next": checkSampling,
   "data.load_corpus": (item) => {
@@ -869,6 +1095,9 @@ const REQUIRED = [
   "transformer.block_backward",
   "transformer.forward",
   "transformer.loss_and_grads",
+  "train.batch_loss_and_grads",
+  "train.validation_loss",
+  "train.main",
 ];
 
 const allCases = GOLDEN_FILES.flatMap((file) => loadGolden(file).map((item) => ({ file, item })));

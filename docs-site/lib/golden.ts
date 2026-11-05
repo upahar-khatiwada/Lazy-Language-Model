@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 
-// data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings,block,model}.json hold results of running the repository's real
+// data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings,block,model,train}.json hold results of running the repository's real
 // functions on hand-picked inputs. `bun run sync:golden` writes them; never edit them by hand.
 // This module reads files, so only server components and tests may import it.
 
@@ -34,6 +34,7 @@ export const GOLDEN_FILES = [
   "embeddings",
   "block",
   "model",
+  "train",
 ] as const;
 export type GoldenFile = (typeof GOLDEN_FILES)[number];
 

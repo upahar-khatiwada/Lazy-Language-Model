@@ -69,6 +69,56 @@ export const CODE_REFS: Record<string, CodeTarget> = {
   },
   "train.checkpoint": { ...MAIN, match: "save_checkpoint(prefix, params, cfg, tok)" },
 
+  "adam.init-moments": {
+    file: "optim.py",
+    symbol: "optim.Adam.__init__",
+    match: "self.m = {k: np.zeros_like(v) for k, v in params.items()}",
+  },
+  "adam.create": {
+    ...MAIN,
+    match: "opt = Adam(params, config.beta1, config.beta2, config.adam_eps, config.weight_decay)",
+  },
+  "adam.first-step": {
+    file: "tests/test_optim.py",
+    symbol: "tests.test_optim.test_adam_first_step_is_lr_times_sign_of_gradient",
+    match: 'assert np.isclose(params["w"][0], -0.01 * np.sign(g), atol=1e-6)',
+  },
+  "adam.ndim": { file: "optim.py", symbol: "optim.Adam.step", match: "if params[k].ndim >= 2:" },
+  "loop.step-count": { ...MAIN, match: "step += 1" },
+  "loop.after-gradient": {
+    ...MAIN,
+    match: "norm = clip_grad_norm[\\s\\S]*?opt\\.step\\(params, grads, lr\\)",
+    regex: true,
+  },
+  "loop.whole": {
+    ...MAIN,
+    match: 'step = 0[\\s\\S]*?saved checkpoint to \\{prefix\\}\\.\\*"\\)',
+    regex: true,
+  },
+  "loop.shuffle-rng": {
+    ...MAIN,
+    match: "for xb, yb in iterate_batches(tr_x, tr_y, config.batch_size, rng):",
+  },
+  "log.vocab": {
+    ...MAIN,
+    match: 'print(f"V={cfg.vocab_size}  ln V={math.log(cfg.vocab_size):.3f}")',
+  },
+  "log.step": {
+    ...MAIN,
+    match: 'print(f"step {step:5d}  loss {loss:.3f}  |g| {norm:.2f}  lr {lr:.5f}")',
+  },
+  "log.epoch": {
+    ...MAIN,
+    match: 'print(f"epoch {epoch + 1}: val loss {v:.3f}  ppl {perplexity(v):.1f}")',
+  },
+  "log.sample": { ...MAIN, match: 'print("  sample:", repr(tok.decode(out)))' },
+  "log.saved": { ...MAIN, match: 'print(f"saved checkpoint to {prefix}.*")' },
+  "loop.body": {
+    ...MAIN,
+    match: '# 3\\. the loop[\\s\\S]*?lr \\{lr:\\.5f\\}"\\)',
+    regex: true,
+  },
+
   "talk.load": { ...TALK, match: "params, cfg, tok = load_checkpoint(prefix)" },
   "talk.encode": { ...TALK, match: "ids = tok.encode(prompt)" },
   "talk.generate": {

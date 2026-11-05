@@ -1,0 +1,16 @@
+links:
+  - equationId: val.mean
+    file: train.py
+    symbol: train.validation_loss
+    match: losses.append(loss)
+    role: implements
+  - equationId: val.mean
+    file: train.py
+    symbol: train.validation_loss
+    match: return float(np.mean(losses))
+    role: implements
+  - equationId: val.mean
+    file: train.py
+    symbol: train.main
+    match: v = validation_loss(params, cfg, va_x, va_y)
+    role: call

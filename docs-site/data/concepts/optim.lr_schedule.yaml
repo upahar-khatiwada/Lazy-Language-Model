@@ -1,0 +1,63 @@
+id: optim.lr_schedule
+title: Learning-rate schedule
+category: optimizer
+inventory: [M52]
+status: implemented
+summary: >-
+  lr_schedule gives the learning rate for one step. Up to warmup_steps it rises in a straight line,
+  reaching lr_max exactly at step warmup_steps. After that it follows a cosine curve down to lr_min,
+  reaching it exactly at step total_steps.
+why: >-
+  In general, large moves right after initialisation can do harm, and smaller moves near the end make
+  the parameters settle. The schedule gives small steps first, the largest steps after warmup, and
+  smaller steps toward the end.
+equations:
+  - id: lr.warmup
+    latex: \eta(t) = \eta_{\max} \cdot \frac{t}{t_{\text{warm}}} \qquad t \le t_{\text{warm}}
+    role: none
+    label: Linear warmup
+  - id: lr.frac
+    latex: f = \frac{t - t_{\text{warm}}}{t_{\text{total}} - t_{\text{warm}}} \qquad t > t_{\text{warm}}
+    role: none
+    label: How far through the decay
+  - id: lr.cosine
+    latex: \eta(t) = \eta_{\min} + \tfrac{1}{2} (\eta_{\max} - \eta_{\min}) \big(1 + \cos(\pi f)\big)
+    role: none
+    label: Cosine decay
+symbols:
+  - symbol: t
+    meaning: The step. train.main adds one before the call, so the first value is 1
+    codeName: step
+    shape: scalar
+  - symbol: t_{\text{warm}}
+    meaning: The last step of the warmup
+    codeName: warmup, from config.warmup_steps
+    shape: scalar
+  - symbol: t_{\text{total}}
+    meaning: The last step of training
+    codeName: total, from total_steps in train.main
+    shape: scalar
+  - symbol: \eta_{\max}
+    meaning: The largest learning rate
+    codeName: lr_max, from config.lr_max
+    shape: scalar
+  - symbol: \eta_{\min}
+    meaning: The learning rate at the last step
+    codeName: lr_min, from config.lr_min
+    shape: scalar
+  - symbol: f
+    meaning: How far through the decay this step is, from just above 0 to 1
+    codeName: frac
+    shape: scalar
+example: null
+shapes: []
+source:
+  - file: optim.py
+    symbol: optim.lr_schedule
+usedBy: []
+pdfRef:
+  section: "4.6"
+  equations: ["58"]
+  page: 14
+notes:
+  - The result is one number, used for every parameter at this step.

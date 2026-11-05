@@ -82,14 +82,23 @@ export function createAdamState(
   return { m: zeros, v: zeros, t: 0, b1: beta1, b2: beta2, eps, wd: weightDecay };
 }
 
-// Mirrors optim.Adam.step. Python updates params and its own state in place; this returns both.
-// Decay applies only where ndim >= 2, and outside the moments.
+export type AdamTrace = {
+  mhat: OptimTensor;
+  vhat: OptimTensor;
+  // The update before decay, and the update params[k] uses. The two differ only where ndim >= 2.
+  raw: OptimTensor;
+  update: OptimTensor;
+};
+
+// Mirrors optim.Adam.step. Python updates params and its own state in place; this returns both, and
+// the values of its locals per parameter. Decay applies only where ndim >= 2, and outside the moments.
 export function adamStep(state: AdamState, params: TensorMap, grads: TensorMap, lr: number) {
   const t = state.t + 1;
   const { b1, b2, eps, wd } = state;
   const m: TensorMap = {};
   const v: TensorMap = {};
   const next: TensorMap = {};
+  const trace: Record<string, AdamTrace> = {};
 
   for (const [name, param] of Object.entries(params)) {
     const g = grads[name]!;
@@ -98,12 +107,11 @@ export function adamStep(state: AdamState, params: TensorMap, grads: TensorMap, 
 
     const mhat = zip(m[name]!, m[name]!, (value) => value / (1 - b1 ** t));
     const vhat = zip(v[name]!, v[name]!, (value) => value / (1 - b2 ** t));
-    let update = zip(mhat, vhat, (top, bottom) => top / (Math.sqrt(bottom) + eps));
-    if (isMatrix(param)) {
-      update = zip(update, param, (value, weight) => value + wd * weight);
-    }
+    const raw = zip(mhat, vhat, (top, bottom) => top / (Math.sqrt(bottom) + eps));
+    const update = isMatrix(param) ? zip(raw, param, (value, weight) => value + wd * weight) : raw;
     next[name] = zip(param, update, (weight, value) => weight - lr * value);
+    trace[name] = { mhat, vhat, raw, update };
   }
 
-  return { state: { ...state, m, v, t }, params: next };
+  return { state: { ...state, m, v, t }, params: next, trace };
 }

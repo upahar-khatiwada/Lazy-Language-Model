@@ -1,0 +1,92 @@
+id: train.batch_loss_and_grads
+title: Mini-batch loss and gradient
+category: data
+inventory: [M10]
+status: derived
+summary: >-
+  batch_loss_and_grads turns one batch of windows into one loss and one gradient per parameter. The
+  model has no batch dimension, so it loops over the windows and calls loss_and_grads on each. It
+  divides each result by the batch size as it adds it, so what it returns is the mean.
+why: >-
+  The optimizer takes one gradient per parameter for each update. The comment above iterate_batches
+  in data.py gives the reason for batches: using all windows at once makes each update slow, and
+  using one window at a time makes updates noisy.
+equations:
+  - id: batch.size
+    latex: B = \text{number of rows of } x_b
+    role: none
+    label: The batch size, read from this batch
+  - id: batch.loss-add
+    latex: L \leftarrow L + \frac{L_i}{B} \qquad i = 1, \dots, B, \quad \text{starting from } L = 0
+    role: none
+    label: How the code accumulates the loss
+  - id: batch.grad-add
+    latex: \bar g_k \leftarrow \bar g_k + \frac{g_{k,i}}{B} \qquad \text{for every key } k, \quad \text{starting from zeros}
+    role: none
+    label: How the code accumulates each gradient
+  - id: batch.loss-mean
+    latex: L = \frac{1}{B} \sum_{i=1}^{B} L_i
+    role: none
+    label: The result, the batch mean loss
+  - id: batch.grad-mean
+    latex: \bar g_k = \frac{1}{B} \sum_{i=1}^{B} g_{k,i}
+    role: none
+    label: The result, the mean gradient
+symbols:
+  - symbol: B
+    meaning: Windows in this batch. A short last batch uses its own size
+    codeName: B = len(xb)
+    shape: scalar
+  - symbol: x_b, y_b
+    meaning: The batch's input and target windows
+    codeName: xb, yb
+    shape: (B, T)
+  - symbol: L_i
+    meaning: The mean cross-entropy of window i
+    codeName: loss
+    shape: scalar
+  - symbol: L
+    meaning: The running total, and the batch mean loss when the loop ends
+    codeName: total_loss
+    shape: scalar
+  - symbol: g_{k,i}
+    meaning: Window i's gradient for parameter k
+    codeName: g[k]
+    shape: same as the parameter
+  - symbol: \bar g_k
+    meaning: The running total, and the mean gradient when the loop ends
+    codeName: grads[k]
+    shape: same as the parameter
+example: null
+shapes:
+  - id: batch-windows
+    label: A batch goes through the model one window at a time
+    stages:
+      - name: xb
+        dims: [B, T]
+      - name: x
+        dims: [T]
+      - name: logits inside loss_and_grads
+        dims: [T, V]
+    target:
+      file: train.py
+      symbol: train.batch_loss_and_grads
+      match: "for x, y in zip(xb, yb):"
+  - id: batch-grads
+    label: One key as an example. Averaging does not change a gradient's shape
+    stages:
+      - name: g["head_w"]
+        dims: [d, V]
+      - name: grads["head_w"]
+        dims: [d, V]
+    target:
+      file: train.py
+      symbol: train.batch_loss_and_grads
+      match: grads[k] += g[k] / B
+source:
+  - file: train.py
+    symbol: train.batch_loss_and_grads
+usedBy: []
+pdfRef: null
+notes:
+  - The inventory records that the PDF states this in prose on p. 14, with no equation.

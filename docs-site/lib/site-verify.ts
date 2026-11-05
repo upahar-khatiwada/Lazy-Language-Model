@@ -2,6 +2,7 @@ import { BLOCK_CACHES, MODEL_CACHES, type CacheRow } from "@/data/caches";
 import { CODE_REFS } from "@/data/code-refs";
 import { BLOCK_FLOW, MODEL_FLOW, type FlowStep } from "@/data/gradient-flow";
 import { GLANCE, QUESTIONS } from "@/data/home";
+import { LEARNING_STAGES, type LearningStage } from "@/data/learning-step";
 import { SYMBOL_COVERAGE } from "@/data/coverage";
 import { NOTATION } from "@/data/notation";
 import { PARAMETER_GROUPS, PARAMETER_ROLES, REPO_MAP } from "@/data/parameters";
@@ -32,6 +33,7 @@ export type SiteDataInput = {
   modelFlow?: FlowStep[];
   blockFlow?: FlowStep[];
   caches?: CacheRow[];
+  learningStages?: LearningStage[];
 };
 
 // Returns every problem found. Runs in verify:links, so a problem stops the build.
@@ -52,6 +54,7 @@ export function verifySiteData(input: SiteDataInput): string[] {
     modelFlow = MODEL_FLOW,
     blockFlow = BLOCK_FLOW,
     caches = [...BLOCK_CACHES, ...MODEL_CACHES],
+    learningStages = LEARNING_STAGES,
   } = input;
   const problems: string[] = [];
 
@@ -211,6 +214,43 @@ export function verifySiteData(input: SiteDataInput): string[] {
     if (read && !targetLines(read).includes(cache.name)) {
       problems.push(`${where}: the reader does not pass ${cache.name}`);
     }
+  }
+
+  // The learning step: each hop is a real call or expression, each first hop is a line of train.main,
+  // and those lines never go backwards. "repeat" is last and points back at the loop on purpose.
+  let lastMainLine = 0;
+  for (const stage of learningStages) {
+    checkPage(`learning stage ${stage.id}`, stage.page);
+    if (!symbols.has(stage.showSymbol)) {
+      problems.push(`learning stage ${stage.id}: unknown symbol ${stage.showSymbol}`);
+    }
+    if (stage.alsoCalls) {
+      const where = `learning stage ${stage.id}, the other line`;
+      const target = resolve(where, stage.alsoCalls.target);
+      if (target) checkCall(where, target, stage.alsoCalls.call);
+    }
+    stage.links.forEach((link, index) => {
+      const where = `learning stage ${stage.id}, hop ${index + 1}`;
+      if (Boolean(link.call) === Boolean(link.inline)) {
+        problems.push(`${where}: a hop needs exactly one of call and inline`);
+      }
+      const target = resolve(where, link.target);
+      if (!target) return;
+      if (link.call) checkCall(where, target, link.call);
+      if (link.inline && !targetLines(target).includes(link.inline)) {
+        problems.push(`${where}: "${link.inline}" is not in the resolved lines`);
+      }
+      if (index > 0) return;
+      if (target.symbol.id !== "train.main") {
+        problems.push(`${where}: the first hop must be a line of train.main`);
+      }
+      if (stage.id !== "repeat") {
+        if (target.startLine < lastMainLine) {
+          problems.push(`${where}: comes before the previous stage in train.main`);
+        }
+        lastMainLine = target.startLine;
+      }
+    });
   }
 
   for (const concept of concepts) {

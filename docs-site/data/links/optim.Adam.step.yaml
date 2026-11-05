@@ -1,0 +1,56 @@
+links:
+  - equationId: adam.m
+    file: optim.py
+    symbol: optim.Adam.step
+    match: self.m[k] = self.b1 * self.m[k] + (1 - self.b1) * g
+    role: implements
+  - equationId: adam.v
+    file: optim.py
+    symbol: optim.Adam.step
+    match: self.v[k] = self.b2 * self.v[k] + (1 - self.b2) * g * g
+    role: implements
+  - equationId: adam.mhat
+    file: optim.py
+    symbol: optim.Adam.step
+    match: mhat = self.m[k] / (1 - self.b1 ** self.t)
+    role: implements
+  - equationId: adam.vhat
+    file: optim.py
+    symbol: optim.Adam.step
+    match: vhat = self.v[k] / (1 - self.b2 ** self.t)
+    role: implements
+  - equationId: adam.update
+    file: optim.py
+    symbol: optim.Adam.step
+    match: update = mhat / (np.sqrt(vhat) + self.eps)
+    role: implements
+  - equationId: adam.decay
+    file: optim.py
+    symbol: optim.Adam.step
+    match: "if params[k].ndim >= 2:"
+    role: implements
+  - equationId: adam.decay
+    file: optim.py
+    symbol: optim.Adam.step
+    match: update = update + self.wd * params[k]
+    role: implements
+  - equationId: adam.decay
+    file: tests/test_optim.py
+    symbol: tests.test_optim.test_weight_decay_only_touches_matrices
+    match: assert np.allclose(params["b"], 1.0)
+    role: test
+  - equationId: adam.param
+    file: optim.py
+    symbol: optim.Adam.step
+    match: params[k] -= lr * update
+    role: implements
+  - equationId: adam.param
+    file: train.py
+    symbol: train.main
+    match: opt.step(params, grads, lr)
+    role: call
+  - equationId: adam.param
+    file: tests/test_optim.py
+    symbol: tests.test_optim.test_adam_two_step_hand_trace
+    match: assert np.isclose(params["w"][0], 0.8068, atol=1e-4)
+    role: test

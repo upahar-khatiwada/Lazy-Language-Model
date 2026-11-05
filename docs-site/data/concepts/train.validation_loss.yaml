@@ -1,0 +1,54 @@
+id: train.validation_loss
+title: Validation loss
+category: data
+inventory: [M11]
+status: derived
+summary: >-
+  validation_loss runs the model on every validation window, one at a time, and returns the mean of
+  each window's mean cross-entropy. train.main calls it once at the end of each epoch and prints the
+  result next to its perplexity. It computes no gradients and changes nothing.
+why: >-
+  The training loss comes from text the model is being trained on, one batch at a time. The validation
+  windows come from the last part of the ids, which training never updates on, so this number shows how
+  the model does on that text.
+equations:
+  - id: val.mean
+    latex: v = \frac{1}{W_v} \sum_{j=1}^{W_v} L_j
+    role: none
+    label: Mean cross-entropy over validation windows
+symbols:
+  - symbol: v
+    meaning: The validation loss
+    codeName: np.mean(losses), v in train.main
+    shape: scalar
+  - symbol: W_v
+    meaning: Validation windows
+    codeName: len(va_x)
+    shape: scalar
+  - symbol: L_j
+    meaning: The mean cross-entropy of window j
+    codeName: loss
+    shape: scalar
+example: null
+shapes:
+  - id: validation-windows
+    label: Validation windows go through the model one at a time
+    stages:
+      - name: inputs
+        dims: [W, T]
+      - name: x
+        dims: [T]
+      - name: logits
+        dims: [T, V]
+    target:
+      file: train.py
+      symbol: train.validation_loss
+      match: logits, _ = forward(params, x, cfg)
+source:
+  - file: train.py
+    symbol: train.validation_loss
+usedBy: []
+pdfRef: null
+notes:
+  - The inventory records that the PDF has this only in its code listing, on p. 15-16, under the name train.evaluate.
+  - The code computes a mean over windows of seq_len tokens. It does not compute the PDF's corpus-wide Eq. 62.

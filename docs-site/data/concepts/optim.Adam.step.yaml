@@ -1,0 +1,135 @@
+id: optim.Adam.step
+title: AdamW update
+category: optimizer
+inventory: [M49, M50, M51]
+status: implemented
+summary: >-
+  Adam.step changes every parameter once per batch. For each key it updates two moving averages, m
+  and v, corrects them for their zero start, and divides one by the square root of the other. Keys
+  with two or more dimensions also get weight decay. The class is named Adam, and train.main gives it
+  a nonzero weight_decay, so what runs is AdamW.
+why: >-
+  The gradient says which way each number should move, but its size varies a lot from one number to
+  another and from one batch to the next. Dividing by the typical size in v gives each number a move
+  of about lr, and m smooths the direction over recent batches. Weight decay shrinks the matrices
+  slightly on each step, separately from those averages.
+equations:
+  - id: adam.m
+    latex: m_t = \beta_1 m_{t-1} + (1 - \beta_1)\, g_t
+    role: none
+    label: Moving average of the gradient
+  - id: adam.v
+    latex: v_t = \beta_2 v_{t-1} + (1 - \beta_2)\, g_t^2
+    role: none
+    label: Moving average of the squared gradient
+  - id: adam.mhat
+    latex: \hat m_t = \frac{m_t}{1 - \beta_1^{\,t}}
+    role: none
+    label: Bias correction of m
+  - id: adam.vhat
+    latex: \hat v_t = \frac{v_t}{1 - \beta_2^{\,t}}
+    role: none
+    label: Bias correction of v
+  - id: adam.update
+    latex: u_t = \frac{\hat m_t}{\sqrt{\hat v_t} + \epsilon}
+    role: none
+    label: The update before decay
+  - id: adam.decay
+    latex: u_t \leftarrow u_t + \lambda\, w_{t-1} \qquad \text{only where } w \text{ has two or more dimensions}
+    role: none
+    label: Decoupled weight decay
+  - id: adam.param
+    latex: w_t = w_{t-1} - \eta_t\, u_t
+    role: none
+    label: The parameter update, in place
+symbols:
+  - symbol: w
+    meaning: One parameter array
+    codeName: params[k]
+    shape: same as the parameter
+  - symbol: g_t
+    meaning: Its gradient at this step, after averaging over the batch and after clipping
+    codeName: g = grads[k]
+    shape: same as the parameter
+  - symbol: m_t
+    meaning: Running average of the gradient, which holds the direction
+    codeName: self.m[k]
+    shape: same as the parameter
+  - symbol: v_t
+    meaning: Running average of the squared gradient, which holds the typical size
+    codeName: self.v[k]
+    shape: same as the parameter
+  - symbol: \hat m_t, \hat v_t
+    meaning: The same averages after the correction for their zero start
+    codeName: mhat, vhat
+    shape: same as the parameter
+  - symbol: u_t
+    meaning: The update
+    codeName: update
+    shape: same as the parameter
+  - symbol: t
+    meaning: Step counter. It is 1 on the first call
+    codeName: self.t
+    shape: scalar
+  - symbol: \beta_1, \beta_2
+    meaning: How much of the old average each step keeps
+    codeName: self.b1 from config.beta1, self.b2 from config.beta2
+    shape: scalar
+  - symbol: \epsilon
+    meaning: Keeps the division defined when v is 0
+    codeName: self.eps from config.adam_eps
+    shape: scalar
+  - symbol: \lambda
+    meaning: The weight-decay rate
+    codeName: self.wd from config.weight_decay
+    shape: scalar
+  - symbol: \eta_t
+    meaning: The learning rate for this step
+    codeName: lr
+    shape: scalar
+example: null
+shapes:
+  - id: adam-matrix
+    label: One key with two dimensions, head_w, whose update includes decay
+    stages:
+      - name: grads[k]
+        dims: [d, V]
+      - name: self.m[k]
+        dims: [d, V]
+      - name: self.v[k]
+        dims: [d, V]
+      - name: update
+        dims: [d, V]
+      - name: params[k]
+        dims: [d, V]
+    target:
+      file: optim.py
+      symbol: optim.Adam.step
+      match: update = update + self.wd * params[k]
+  - id: adam-vector
+    label: One key with one dimension, head_b, whose update has no decay
+    stages:
+      - name: grads[k]
+        dims: [V]
+      - name: self.m[k]
+        dims: [V]
+      - name: self.v[k]
+        dims: [V]
+      - name: update
+        dims: [V]
+      - name: params[k]
+        dims: [V]
+    target:
+      file: optim.py
+      symbol: optim.Adam.step
+      match: update = mhat / (np.sqrt(vhat) + self.eps)
+source:
+  - file: optim.py
+    symbol: optim.Adam.step
+usedBy: []
+pdfRef:
+  section: "4.6"
+  equations: ["55", "56", "57"]
+  page: 13
+notes:
+  - Powers, squares, square roots and divisions apply to each number of the array separately.

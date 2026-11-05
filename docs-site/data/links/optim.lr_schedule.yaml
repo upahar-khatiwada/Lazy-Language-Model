@@ -1,0 +1,31 @@
+links:
+  - equationId: lr.warmup
+    file: optim.py
+    symbol: optim.lr_schedule
+    match: "if step <= warmup:"
+    role: implements
+  - equationId: lr.warmup
+    file: optim.py
+    symbol: optim.lr_schedule
+    match: return lr_max * step / warmup
+    role: implements
+  - equationId: lr.frac
+    file: optim.py
+    symbol: optim.lr_schedule
+    match: frac = (step - warmup) / (total - warmup)
+    role: implements
+  - equationId: lr.cosine
+    file: optim.py
+    symbol: optim.lr_schedule
+    match: return lr_min + 0.5 * (lr_max - lr_min) * (1 + math.cos(math.pi * frac))
+    role: implements
+  - equationId: lr.cosine
+    file: train.py
+    symbol: train.main
+    match: lr = lr_schedule(step, config.warmup_steps, total_steps,
+    role: call
+  - equationId: lr.cosine
+    file: tests/test_optim.py
+    symbol: tests.test_optim.test_lr_schedule_values
+    match: assert np.allclose(got, [1e-4, 5e-4, 1e-3, 5.5e-4, 1e-4])
+    role: test

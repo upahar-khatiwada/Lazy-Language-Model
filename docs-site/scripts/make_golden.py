@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """Run the repository's real functions on fixed small inputs and store the results.
 
-  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings,block,model}.json
+  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings,block,model,train}.json
   bun run verify:golden   recomputes and fails if the stored numbers differ
 
 tests/math.golden.test.ts compares lib/math with these files. Inputs are hand-picked, so every case
 is an Illustrative Example. Repository modules are imported read-only, nothing is written outside
-data/golden/, and training is not run: train is not imported. data.py needs pandas.
+data/golden/, and training is not run: train.main is never called. One real step on a hand-picked
+text, with a tiny model, is the most that happens here. data.py needs pandas.
 """
 
+import ast
 import copy
 import io
 import json
+import math
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,6 +35,7 @@ import gradcheck  # noqa: E402
 import ops  # noqa: E402
 import optim  # noqa: E402
 import tokenizer  # noqa: E402
+import train  # noqa: E402
 import transformer  # noqa: E402
 from tests.test_gradcheck import tiny_setup  # noqa: E402
 
@@ -696,7 +701,144 @@ def optim_cases():
         clip_case("clip_grad_norm.above", three_four, 1.0),
         clip_case("clip_grad_norm.exactly_at_limit", three_four, 5.0),
         clip_case("clip_grad_norm.below", three_four, 10.0),
+        # The values the schedule section of the AdamW page shows. train.main never calls step 0.
+        lr_case("lr_schedule.key_points", [0, 1, warmup, warmup + 1, total], warmup, total, lr_max, lr_min),
+        adam_two_step_case(),
+        adam_decay_rule_case(),
+        one_weight_case(warmup, total, lr_max, lr_min),
     ]
+
+
+def config_adam_settings():
+    return {
+        "beta1": config.beta1,
+        "beta2": config.beta2,
+        "eps": config.adam_eps,
+        "weight_decay": config.weight_decay,
+    }
+
+
+def adam_locals(optimizer, params, grads, lr, names):
+    """One real step. The values of mhat, vhat and update, per parameter. update is bound twice for a
+    parameter with decay: before and after the decay is added."""
+    _, history = traced(optimizer.step, ["mhat", "vhat", "update"], params, grads, lr)
+    updates = iter(history["update"])
+    raw, final = {}, {}
+    for name in names:
+        raw[name] = next(updates)
+        final[name] = next(updates) if params[name].ndim >= 2 else raw[name]
+    return {
+        "mhat": dict(zip(names, history["mhat"])),
+        "vhat": dict(zip(names, history["vhat"])),
+        "raw": raw,
+        "update": final,
+    }
+
+
+def adam_two_step_case():
+    """The numbers of test_adam_two_step_hand_trace (theta0 = 1, g = 0.5 then 0.25, lr = 0.1), with the
+    betas, eps and weight_decay of config.py. w has two dimensions and b has one."""
+    params = {"w": arr([[1.0]]), "b": arr([1.0])}
+    grads = [{"w": arr([[0.5]]), "b": arr([0.5])}, {"w": arr([[0.25]]), "b": arr([0.25])}]
+    lrs = [0.1, 0.1]
+    settings = config_adam_settings()
+    live = copy.deepcopy(params)
+    optimizer = optim.Adam(live, **settings)
+    steps = []
+    for step_grads, lr in zip(grads, lrs):
+        found = adam_locals(optimizer, live, step_grads, lr, list(params))
+        steps.append(
+            {
+                "params": copy.deepcopy(live),
+                "m": copy.deepcopy(optimizer.m),
+                "v": copy.deepcopy(optimizer.v),
+                "t": optimizer.t,
+                **found,
+            }
+        )
+    return case(
+        "adam.two_step",
+        "optim.Adam.step",
+        {"problem": "trace", "params": params, "grads": grads, "lrs": lrs, "settings": settings},
+        {"steps": steps},
+    )
+
+
+def adam_decay_rule_case():
+    """Which keys of the real init_params does the real Adam.step shrink? Every parameter starts at ones
+    and every gradient is zero, so only decay can change a value. Biases start at zero in the model,
+    where decay could not be seen."""
+    params = transformer.init_params(TINY_CFG, np.random.default_rng(config.seed))
+    live = {name: np.ones_like(value) for name, value in params.items()}
+    zeros = {name: np.zeros_like(value) for name, value in params.items()}
+    settings = config_adam_settings()
+    optim.Adam(live, **settings).step(live, zeros, config.lr_max)
+    return case(
+        "adam.decay_rule",
+        "optim.Adam.step",
+        {
+            "problem": "decay_rule",
+            "sizes": {name: list(value.shape) for name, value in params.items()},
+            "settings": settings,
+            "lr": config.lr_max,
+        },
+        {
+            "rows": [
+                {"name": name, "ndim": params[name].ndim, "changed": bool((live[name] != 1.0).any())}
+                for name in params
+            ],
+        },
+    )
+
+
+def one_weight_case(warmup, total, lr_max, lr_min):
+    """One weight over two steps, in the order of train.main: clip, count the step, schedule, Adam. The
+    settings are config.py's. The weight, its gradients and total are hand-picked."""
+    params = {"w": arr([[0.5]])}
+    grads = [{"w": arr([[3.0]])}, {"w": arr([[0.5]])}]
+    live = copy.deepcopy(params)
+    settings = config_adam_settings()
+    optimizer = optim.Adam(live, **settings)
+    rows = []
+    step = 0
+    for original in grads:
+        step_grads = copy.deepcopy(original)
+        norm = optim.clip_grad_norm(step_grads, config.grad_clip)
+        step += 1
+        lr = optim.lr_schedule(step, warmup, total, lr_max, lr_min)
+        found = adam_locals(optimizer, live, step_grads, lr, ["w"])
+        rows.append(
+            {
+                "step": step,
+                "norm": norm,
+                "clipped": step_grads["w"],
+                "lr": lr,
+                "m": copy.deepcopy(optimizer.m["w"]),
+                "v": copy.deepcopy(optimizer.v["w"]),
+                "t": optimizer.t,
+                "mhat": found["mhat"]["w"],
+                "vhat": found["vhat"]["w"],
+                "raw": found["raw"]["w"],
+                "update": found["update"]["w"],
+                "w": copy.deepcopy(live["w"]),
+            }
+        )
+    return case(
+        "adam.one_weight",
+        "optim.Adam.step",
+        {
+            "problem": "one_weight",
+            "params": params,
+            "grads": grads,
+            "settings": settings,
+            "max_norm": config.grad_clip,
+            "warmup": warmup,
+            "total": total,
+            "lr_max": lr_max,
+            "lr_min": lr_min,
+        },
+        {"rows": rows},
+    )
 
 
 # generate.py --------------------------------------------------------------------------------------
@@ -1699,6 +1841,217 @@ def model_file_cases():
     ]
 
 
+# train.py -----------------------------------------------------------------------------------------
+
+BATCH_X = np.array([[2, 0, 2], [1, 3, 4], [0, 0, 1]])
+BATCH_Y = np.array([[0, 2, 1], [3, 4, 0], [0, 1, 2]])
+
+# A hand-picked text for one real step, long enough to leave validation windows at T = 4.
+LEARNING_TEXT = "the cat sat on the mat\nthe dog sat on the log\nthe cat and the dog sat on the mat\nthe dog sat\n"
+LEARNING_MERGES = 5
+LEARNING_T = 4
+LEARNING_B = 2
+
+
+def main_function():
+    tree = ast.parse((ROOT / "train.py").read_text(encoding="utf-8"))
+    return next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "main")
+
+
+def real_print_lines(namespace):
+    """Evaluate each print call of train.main with these values. The formats are the file's own."""
+    printed = []
+    calls = [
+        node
+        for node in ast.walk(main_function())
+        if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "print"
+    ]
+    names = {**namespace, "print": lambda *args: printed.append(" ".join(str(arg) for arg in args))}
+    for call in sorted(calls, key=lambda node: node.lineno):
+        eval(compile(ast.Expression(call), "train.py", "eval"), names)  # noqa: S307
+    return printed
+
+
+def real_step_counts(windows, batch_size, epochs):
+    """Run the two real assignments of train.main, on a stand-in for tr_x and for config."""
+    wanted = {"steps_per_epoch", "total_steps"}
+    statements = [
+        node
+        for node in main_function().body
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", None) in wanted
+    ]
+    assert len(statements) == 2
+    names = {
+        "math": math,
+        "config": SimpleNamespace(batch_size=batch_size, epochs=epochs),
+        "tr_x": range(windows),
+    }
+    exec(compile(ast.Module(statements, []), "train.py", "exec"), names)  # noqa: S102
+    return names["steps_per_epoch"], names["total_steps"]
+
+
+def step_counts_case():
+    rows = []
+    for windows, batch_size, epochs in [(1000, 16, 20), (1600, 16, 20), (1601, 16, 20), (15, 16, 2), (1, 16, 1)]:
+        steps_per_epoch, total_steps = real_step_counts(windows, batch_size, epochs)
+        frame = pd.DataFrame(np.arange(windows))
+        sizes = [len(xb) for xb, _ in data.iterate_batches(frame, frame, batch_size, np.random.default_rng(config.seed))]
+        rows.append(
+            {
+                "windows": windows,
+                "batch_size": batch_size,
+                "epochs": epochs,
+                "steps_per_epoch": steps_per_epoch,
+                "total_steps": total_steps,
+                "yielded": len(sizes),
+                "last_size": sizes[-1],
+            }
+        )
+    return case("steps.counts", "train.main", {"problem": "step_counts"}, {"rows": rows})
+
+
+def loop_order_case():
+    """The statements of the batch loop in train.main, read from the file without running it."""
+    loops = [
+        node
+        for node in ast.walk(main_function())
+        if isinstance(node, ast.For) and "iterate_batches" in ast.unparse(node.iter)
+    ]
+    assert len(loops) == 1
+    return case(
+        "loop.order",
+        "train.main",
+        {"problem": "loop_order"},
+        {"statements": [ast.unparse(node).splitlines()[0] for node in loops[0].body]},
+    )
+
+
+def batch_case(case_id, count):
+    params = tiny_params()
+    xb, yb = BATCH_X[:count], BATCH_Y[:count]
+    total_loss, grads = train.batch_loss_and_grads(params, xb, yb, TINY_CFG)
+    each = [transformer.loss_and_grads(params, x, y, TINY_CFG) for x, y in zip(xb, yb)]
+    return case(
+        case_id,
+        "train.batch_loss_and_grads",
+        {"params": params, "xb": xb, "yb": yb, "cfg": cfg_inputs(TINY_CFG)},
+        {
+            "loss": total_loss,
+            "grads": grads,
+            "losses": [loss for loss, _ in each],
+            "head_b_each": [g["head_b"] for _, g in each],
+        },
+    )
+
+
+def validation_case():
+    params = tiny_params()
+    inputs, targets = pd.DataFrame(BATCH_X), pd.DataFrame(BATCH_Y)
+    value = train.validation_loss(params, TINY_CFG, inputs, targets)
+    losses = [
+        ops.cross_entropy_forward(transformer.forward(params, x, TINY_CFG)[0], y)[0]
+        for x, y in zip(BATCH_X, BATCH_Y)
+    ]
+    return case(
+        "validation.tiny",
+        "train.validation_loss",
+        {"params": params, "inputs": BATCH_X, "targets": BATCH_Y, "cfg": cfg_inputs(TINY_CFG)},
+        {"loss": value, "losses": losses, "perplexity": ops.perplexity(value)},
+    )
+
+
+def learning_step_case():
+    """One real step from text to updated parameters, calling what train.main calls in the same order,
+    on a hand-picked text and a tiny model. train.main is not called, and nothing is saved."""
+    rng = np.random.default_rng(config.seed)
+    tok = tokenizer.build_tokenizer(LEARNING_TEXT, LEARNING_MERGES)
+    ids = data.encode_corpus(LEARNING_TEXT, tok)
+    train_ids, val_ids = data.split_ids(ids, config.val_fraction)
+    tr_x, tr_y = data.make_windows(train_ids, LEARNING_T, config.stride)
+    va_x, va_y = data.make_windows(val_ids, LEARNING_T, config.stride)
+    cfg = transformer.ModelConfig(tok.vocab_size, LEARNING_T, 4, 2, 6, 1)
+    params = transformer.init_params(cfg, rng)
+    before = copy.deepcopy(params)
+    opt = optim.Adam(params, **config_adam_settings())
+    steps_per_epoch, total_steps = real_step_counts(len(tr_x), LEARNING_B, config.epochs)
+
+    xb, yb = next(data.iterate_batches(tr_x, tr_y, LEARNING_B, rng))
+    logits, _ = transformer.forward(params, xb[0], cfg)
+    _, probs = ops.cross_entropy_forward(logits, yb[0])
+    loss, grads = train.batch_loss_and_grads(params, xb, yb, cfg)
+    averaged = copy.deepcopy(grads)
+    norm = optim.clip_grad_norm(grads, config.grad_clip)
+    step = 1
+    lr = optim.lr_schedule(step, config.warmup_steps, total_steps, config.lr_max, config.lr_min)
+    opt.step(params, grads, lr)
+
+    v = train.validation_loss(params, cfg, va_x, va_y)
+    seed_ids = [int(i) for i in va_x.iloc[0][:3]]
+    out = generate.generate(
+        params, cfg, seed_ids, 30, LEARNING_T, config.temperature, config.top_k, config.top_p, rng
+    )
+    printed = real_print_lines(
+        {
+            "math": math, "cfg": cfg, "step": step, "loss": loss, "norm": norm, "lr": lr, "epoch": 0, "v": v,
+            "perplexity": ops.perplexity, "tok": tok, "out": out, "prefix": "checkpoints/model", "repr": repr,
+        }
+    )
+    return case(
+        "learning.one_step",
+        "train.batch_loss_and_grads",
+        {
+            "problem": "learning_step",
+            "text": LEARNING_TEXT,
+            "num_merges": LEARNING_MERGES,
+            "seq_len": LEARNING_T,
+            "batch_size": LEARNING_B,
+            "val_fraction": config.val_fraction,
+            "stride": config.stride,
+            "epochs": config.epochs,
+            "params": before,
+            "settings": config_adam_settings(),
+            "max_norm": config.grad_clip,
+            "warmup": config.warmup_steps,
+            "lr_max": config.lr_max,
+            "lr_min": config.lr_min,
+            "cfg": cfg_inputs(cfg),
+        },
+        {
+            "tokens": tokenizer.apply_merges(LEARNING_TEXT, tok.merges),
+            "ids": ids,
+            "vocab_size": tok.vocab_size,
+            "train_windows": len(tr_x),
+            "val_windows": len(va_x),
+            "xb": xb,
+            "yb": yb,
+            "logits": logits,
+            "probs": probs,
+            "loss": loss,
+            "grads": averaged,
+            "norm": norm,
+            "clipped": grads,
+            "steps_per_epoch": steps_per_epoch,
+            "total_steps": total_steps,
+            "lr": lr,
+            "params": params,
+            "val_loss": v,
+            "seed_ids": seed_ids,
+            "printed": printed,
+        },
+    )
+
+
+def train_file_cases():
+    return [
+        batch_case("batch.three_windows", 3),
+        batch_case("batch.one_window", 1),
+        validation_case(),
+        step_counts_case(),
+        loop_order_case(),
+        learning_step_case(),
+    ]
+
+
 def build():
     return {
         "ops": ops_cases(),
@@ -1712,6 +2065,7 @@ def build():
         "embeddings": embedding_cases(),
         "block": block_file_cases(),
         "model": model_file_cases(),
+        "train": train_file_cases(),
     }
 
 

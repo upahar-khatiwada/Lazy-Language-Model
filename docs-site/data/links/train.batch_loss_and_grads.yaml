@@ -1,0 +1,41 @@
+links:
+  - equationId: batch.size
+    file: train.py
+    symbol: train.batch_loss_and_grads
+    match: B = len(xb)
+    role: implements
+  - equationId: batch.loss-add
+    file: train.py
+    symbol: train.batch_loss_and_grads
+    match: total_loss = 0.0
+    role: implements
+  - equationId: batch.loss-add
+    file: train.py
+    symbol: train.batch_loss_and_grads
+    match: total_loss += loss / B
+    role: implements
+  - equationId: batch.grad-add
+    file: train.py
+    symbol: train.batch_loss_and_grads
+    match: "grads = {k: np.zeros_like(v) for k, v in params.items()}"
+    role: implements
+  - equationId: batch.grad-add
+    file: train.py
+    symbol: train.batch_loss_and_grads
+    match: grads[k] += g[k] / B
+    role: implements
+  - equationId: batch.loss-mean
+    file: train.py
+    symbol: train.batch_loss_and_grads
+    match: return total_loss, grads
+    role: implements
+  - equationId: batch.grad-mean
+    file: train.py
+    symbol: train.batch_loss_and_grads
+    match: return total_loss, grads
+    role: implements
+  - equationId: batch.grad-mean
+    file: train.py
+    symbol: train.main
+    match: loss, grads = batch_loss_and_grads(params, xb, yb, cfg)
+    role: call

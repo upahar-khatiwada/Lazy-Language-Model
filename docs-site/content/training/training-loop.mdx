@@ -1,0 +1,200 @@
+---
+title: Training Loop
+description: Mini-batches and loss averaging, step counts, validation, the sample printed each epoch, every line train.py prints, and the checkpoint.
+sourceFile: train.py
+status: published
+---
+
+`train.main` is the whole training run. <PageLink page="training/how-the-model-learns">How the Model Learns</PageLink> follows one step from text to changed parameters, and <PageLink page="training/adamw-learning-rate-clipping">AdamW / Learning Rate / Clipping</PageLink> documents the update. This page documents the rest of the loop: the batches, the step counts, what runs after each epoch, and what is printed and saved.
+
+<CodeStep id="loop.whole" />
+
+## Mini-batch gradient
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="train.batch_loss_and_grads" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="train.batch_loss_and_grads" />
+
+In general, one window's gradient depends a lot on which tokens happen to be in it. Averaging over `B` windows keeps what those gradients share, and differences between windows partly cancel, so the update changes less from one step to the next. That is general reasoning, not something this project measures.
+
+<ConceptStep>Mathematics</ConceptStep>
+
+`B` comes from the batch itself, not from `config.py`:
+
+<MathBlock id="batch.size" />
+
+The division by `B` happens inside the loop, on each window's result, as the code adds it to the total:
+
+<MathBlock id="batch.loss-add" />
+
+<MathBlock id="batch.grad-add" />
+
+When the loop ends, those totals are the means:
+
+<MathBlock id="batch.loss-mean" />
+
+<MathBlock id="batch.grad-mean" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="train.batch_loss_and_grads" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<BatchAverageExample concept="train.batch_loss_and_grads" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`B` is <ConfigValue name="batch_size" /> and `T` is <ConfigValue name="seq_len" />, except that the last batch of an epoch can be shorter. `V` depends on the corpus.
+
+<TensorShape concept="train.batch_loss_and_grads" shape="batch-windows" />
+
+<TensorShape concept="train.batch_loss_and_grads" shape="batch-grads" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="train.batch_loss_and_grads" />
+
+A short last batch divides by its own size, because `B` is `len(xb)`. So each batch counts the same in the update, whatever its size.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="train.batch_loss_and_grads" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="train.batch_loss_and_grads" />
+
+The block says "Not stated in the PDF" because the PDF has no equation for this. It describes the idea in prose on p. 14, so the equations here are derived from the code.
+
+**How this reaches a parameter update.** `train.main` receives the mean loss and the mean gradients (<CodeLine id="train.gradient" />). It clips those gradients (<CodeLine id="train.clip" />) and passes them to `opt.step` (<CodeLine id="train.adamw" />). The loss is only printed, so it plays no part in the update. The backward functions themselves are on <PageLink page="mathematics/full-model">Full Model</PageLink>.
+
+## Step counts
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="train.step_counts" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="train.step_counts" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="steps.per-epoch" />
+
+<MathBlock id="steps.total" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="train.step_counts" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<StepCountExample concept="train.step_counts" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+These are plain numbers, so there are no tensors.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="train.steps" />
+
+`iterate_batches` hands out exactly `steps_per_epoch` batches, because it also keeps a short last batch (<PageLink page="mathematics/data-pipeline">Data Pipeline</PageLink>). So the counter `step` ends at exactly `total_steps`, and the last step gets `lr_min`.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="train.step_counts" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="train.step_counts" />
+
+The PDF has no equation for this. These lines appear only in its code listing, on p. 16.
+
+## Validation
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="train.validation_loss" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="train.validation_loss" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Each `L_j` is the cross-entropy from <PageLink page="mathematics/softmax-cross-entropy">Softmax & Cross-Entropy</PageLink>, and it is already a mean over the window's positions.
+
+<MathBlock id="val.mean" />
+
+`train.main` passes that result to `perplexity`, so the `L` in this equation is `v`:
+
+<MathBlock id="perplexity.value" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="train.validation_loss" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<ValidationExample concept="train.validation_loss" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="train.validation_loss" shape="validation-windows" />
+
+`W` here is the number of validation windows, which depends on the corpus.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="train.validation_loss" />
+
+<CodeStep id="train.validation" />
+
+It runs at the end of every epoch, on all validation windows, one at a time. It calls `forward` and discards the cache (<CodeLine id="model.discard-cache-validation" />), so no backward pass runs and the parameters do not change.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="train.validation_loss" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="train.validation_loss" />
+
+The PDF has no equation for this function. It appears only in the code listing, on p. 15-16, under the name `train.evaluate`. The PDF's Eq. 62 is a different quantity, over the whole corpus with its full history, and the code does not compute it.
+
+## The sample printed each epoch
+
+After validation, `train.main` generates a short text so that a person can look at it. Nothing reads the result.
+
+<CodeStep id="train.sample" />
+
+- **The seed tokens are the first 3 tokens of the first validation window**, `va_x.iloc[0][:3]`. So the seed is the same on every epoch.
+- **It generates 30 new tokens.** This is a literal in the call, and `max_new_tokens` in `config.py` is not used here. It applies only to `talk.py`.
+- **The window, temperature, `top_k` and `top_p` come from `config.py`:** `seq_len` is <ConfigValue name="seq_len" />, `temperature` is <ConfigValue name="temperature" />, `top_k` is <ConfigValue name="top_k" /> and `top_p` is <ConfigValue name="top_p" />.
+- **The printed text includes the seed.** `generate` returns the seed ids followed by the new ids, and `tok.decode(out)` decodes them all. `repr` shows newlines as `\n` and adds quotes.
+- **It uses the same `rng` as the batch shuffling** (<CodeLine id="loop.shuffle-rng" />). So drawing the sample changes the order of the next epoch's batches.
+
+<PageLink page="generation/sampling">Sampling</PageLink> and
+<PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink> explain
+how the tokens are chosen.
+
+## Logging lines
+
+`train.py` prints these lines, and nothing else. The output column comes from evaluating the file's own format strings with the values of one real step on a hand-picked text and a tiny model. It is not output from a training run.
+
+<LogLines />
+
+## Checkpoint
+
+After the last epoch, `train.main` saves the model once. It saves nothing during training, so stopping a run early leaves no checkpoint from that run.
+
+<CodeStep id="train.checkpoint" />
+
+`save_checkpoint` writes three files with the same prefix: the weights, the model shape and the tokenizer. When `train.py` runs as a script, the prefix is always the default, `checkpoints/model`, because the file calls `main()` with no arguments. <PageLink page="code/checkpoints-tests">Checkpoints & Tests</PageLink> documents the files.

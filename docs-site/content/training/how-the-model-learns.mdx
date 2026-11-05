@@ -1,0 +1,52 @@
+---
+title: How the Model Learns
+description: One full learning step from text to updated parameters, with each stage linked to its page and to its call site in train.main.
+sourceFile: transformer.py
+status: published
+---
+
+Training repeats one step many times. This page follows that step from the text to the changed parameters. It adds no new mathematics: each stage links to the page that explains it.
+
+## One learning step
+
+Every stage below names the line of `train.main` it runs from, and the path from there to its own line. The numbers come from one real step on a hand-picked text with a tiny model, so they are labelled Illustrative Example and say nothing about the trained model.
+
+<LearningPipelineDiagram />
+
+Stages 1 to 3 run once, before the loop. Stages 4 to 12 run for every batch. Several of them share one line of `train.main`, because `batch_loss_and_grads` does all of stages 4 to 8 inside one call.
+
+## The order in train.main
+
+These are the lines of the loop, as they are in the file. The comment above the loop states the same order.
+
+<CodeStep id="loop.body" />
+
+The order is the gradient, then clipping, then the learning rate, then the optimizer step:
+
+1. `batch_loss_and_grads` computes the mean loss and the mean gradient of the batch (<CodeLine id="train.gradient" />).
+2. `clip_grad_norm` may scale those gradients in place (<CodeLine id="train.clip" />).
+3. `step` goes up by one, and `lr_schedule` gives the learning rate for that step (<CodeLine id="train.lr" />).
+4. `opt.step` changes the parameters (<CodeLine id="train.adamw" />).
+
+<PageLink page="training/adamw-learning-rate-clipping">AdamW / Learning Rate / Clipping</PageLink>
+covers steps 2 to 4, and <PageLink page="training/training-loop">Training Loop</PageLink> covers the
+batches, validation and printed lines.
+
+## One weight over two steps
+
+This follows a single weight through the part of the loop after the gradient. The table is computed by this site's copy of `clip_grad_norm`, `lr_schedule` and `Adam.step`, which tests compare with the real functions.
+
+<WeightWalkthroughExample />
+
+Two things to read from the table:
+
+- **Clipping changes the first step's gradient but not the second's.** The second gradient is smaller than `grad_clip`, so it passes through as it is.
+- **The move depends on more than the current gradient.** It is `lr` times `update`. `lr` doubles from step 1 to step 2, and `update` comes from the history in `self.m[k]` and `self.v[k]`.
+
+## What each number means
+
+`train.py` prints one line every 50 steps, and also at step 1, with `loss`, `|g|` and `lr`. It prints one line per epoch with the validation loss and `ppl`.
+
+<LogMeanings />
+
+<PageLink page="training/training-loop">Training Loop</PageLink> lists every line `train.py` prints.

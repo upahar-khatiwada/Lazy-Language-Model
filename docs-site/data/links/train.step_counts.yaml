@@ -1,0 +1,16 @@
+links:
+  - equationId: steps.per-epoch
+    file: train.py
+    symbol: train.main
+    match: steps_per_epoch = math.ceil(len(tr_x) / config.batch_size)
+    role: implements
+  - equationId: steps.total
+    file: train.py
+    symbol: train.main
+    match: total_steps = config.epochs * steps_per_epoch
+    role: implements
+  - equationId: steps.total
+    file: train.py
+    symbol: train.main
+    match: lr = lr_schedule(step, config.warmup_steps, total_steps,
+    role: call

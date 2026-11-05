@@ -1,0 +1,197 @@
+---
+title: AdamW / Learning Rate / Clipping
+description: The optimizer, the learning-rate schedule and gradient clipping as optim.py implements them, with their order in train.main.
+sourceFile: optim.py
+status: published
+---
+
+Three functions in `optim.py` turn a batch's mean gradient into changed parameters. This page documents them as they are coded. `train.main` runs them in this order:
+
+<CodeStep id="loop.after-gradient" />
+
+So clipping comes first, then the learning rate, then the optimizer step. <PageLink page="training/how-the-model-learns">How the Model Learns</PageLink> shows how they fit into one whole step. `optim.py` has no other optimizer, schedule or clipping mode.
+
+The sections below are in the order of the code in `optim.py`.
+
+## AdamW
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="optim.Adam.step" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="optim.Adam.step" />
+
+### m and v
+
+The class keeps two arrays per parameter, both starting at zero (<CodeLine id="adam.init-moments" />). In general, these are called the first moment and the second moment. The code calls them `m` and `v`:
+
+- **`m` is momentum.** It is a running average of the gradient, so it holds the direction of recent batches. `beta1` is how much of the old average it keeps on each step.
+- **`v` is the second moment.** It is a running average of the squared gradient, so it holds the typical size of the gradient for each number. `beta2` is how much of the old average it keeps.
+
+The update divides `mhat` by the square root of `vhat`. A number whose gradient is always large gets a large `vhat`, and the division brings its move back to about `lr`. So does a number whose gradient is always small. This is what the comment on that line says: every number moves about `lr` per step.
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Powers, squares, square roots and divisions here apply to each number of the array separately.
+
+<MathBlock id="adam.m" />
+
+<MathBlock id="adam.v" />
+
+`m` and `v` start at zero, so on early steps they are too small. Bias correction divides them by the amount they fall short. `self.t` goes up by one at the start of each call, so `t` is 1 on the first step and `1 - beta1 ** t` is never zero.
+
+<MathBlock id="adam.mhat" />
+
+<MathBlock id="adam.vhat" />
+
+<MathBlock id="adam.update" />
+
+<MathBlock id="adam.decay" />
+
+<MathBlock id="adam.param" />
+
+Decay is decoupled: it is added to `update` after `m` and `v` are computed, so it never enters those averages, and clipping never sees it. Since the gradient plays no part in it, a parameter whose gradient is zero still shrinks. <PageLink page="mathematics/embeddings">Embeddings</PageLink> shows this on the unused rows of `pos_emb`.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="optim.Adam.step" />
+
+### Which parameters get weight decay
+
+The rule is one line, `params[k].ndim >= 2` (<CodeLine id="adam.ndim" />). The rule depends only on the number of dimensions, so the two embedding tables get decay too, although `config.py` calls this "weight matrices". The table lists every name `init_params` creates. "Weight decay" comes from running the real `Adam.step` on all ones with zero gradients, where only decay can change a value.
+
+<DecayTable />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<AdamTwoStepExample concept="optim.Adam.step" />
+
+Read the first column of each pair against the second. `w` and `b` start equal and get the same gradients, so `self.m[k]` and `self.v[k]` stay equal. They differ only in `update`, because `w` also has `self.wd * params[k]`. The values for `b` round to the `0.9000` and `0.8068` that `test_adam_two_step_hand_trace` asserts.
+
+On the first step, the correction makes `mhat` equal to `g` and `vhat` equal to `g` squared. So `update` before decay is close to the sign of `g`, whatever its size. A test checks this (<CodeLine id="adam.first-step" />).
+
+### One step for one number
+
+<AdamCalculatorExample />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+There is one set of arrays per key, and each has the shape of its parameter. `V` depends on the corpus, so it stays a symbol.
+
+<TensorShape concept="optim.Adam.step" shape="adam-matrix" />
+
+<TensorShape concept="optim.Adam.step" shape="adam-vector" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="optim.Adam.__init__" />
+
+<CodeReference symbol="optim.Adam.step" />
+
+`params[k] -= lr * update` changes the array in place, and `step` returns nothing. `train.main` creates the object once (<CodeLine id="adam.create" />) and passes it the same `params` dictionary on every step.
+
+The default for `weight_decay` in the class is `0.0`, but `train.main` passes <ConfigValue name="weight_decay" />. So the pipeline always applies decay.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="optim.Adam.step" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="optim.Adam.step" />
+
+## Learning-rate schedule
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="optim.lr_schedule" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="optim.lr_schedule" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="lr.warmup" />
+
+<MathBlock id="lr.frac" />
+
+<MathBlock id="lr.cosine" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="optim.lr_schedule" />
+
+`warmup_steps` is <ConfigValue name="warmup_steps" />, `lr_max` is <ConfigValue name="lr_max" /> and `lr_min` is <ConfigValue name="lr_min" /> in `config.py`. `total_steps` is computed by `train.main` from the number of windows, so it depends on the corpus. <PageLink page="training/training-loop">Training Loop</PageLink> shows that calculation.
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Edit the four values to see the curve change. The table lists the values at the key steps.
+
+<ScheduleLabExample concept="optim.lr_schedule" />
+
+`train.main` adds one to `step` before calling the schedule (<CodeLine id="loop.step-count" />), so step 0 is what the function would return, not a value training uses.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+The schedule takes numbers and returns one number, so it has no tensors. `Adam.step` multiplies every update by that same number.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="optim.lr_schedule" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="optim.lr_schedule" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="optim.lr_schedule" />
+
+## Gradient clipping
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="optim.clip_grad_norm" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="optim.clip_grad_norm" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="clip.norm" />
+
+<MathBlock id="clip.factor" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="optim.clip_grad_norm" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Change the values or the limit. The two tensors start with one length of 3 and one of 4, which gives a norm of 5. With a limit of <ConfigValue name="grad_clip" />, each is scaled by the same factor.
+
+<ClipLabExample concept="optim.clip_grad_norm" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="optim.clip_grad_norm" shape="clip-tensor" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="optim.clip_grad_norm" />
+
+The function has two results. It changes `grads` in place, and it returns the norm from before clipping as a Python float. `train.main` stores that as `norm` and prints it as `|g|` (<CodeLine id="train.log" />). So `|g|` can be above `grad_clip`, although the gradients that reach `opt.step` have a length of at most `grad_clip`.
+
+It runs right after `batch_loss_and_grads` and before the learning rate and `opt.step`, so `m` and `v` only ever see clipped gradients.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="optim.clip_grad_norm" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="optim.clip_grad_norm" />
