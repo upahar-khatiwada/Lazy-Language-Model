@@ -9,8 +9,8 @@ summary: >-
   reaching it exactly at step total_steps.
 why: >-
   In general, large moves right after initialisation can do harm, and smaller moves near the end make
-  the parameters settle. The schedule gives small steps first, the largest steps after warmup, and
-  smaller steps toward the end.
+  the parameters settle. The schedule gives small steps first, the largest step at the end of warmup,
+  and smaller steps toward the end.
 equations:
   - id: lr.warmup
     latex: \eta(t) = \eta_{\max} \cdot \frac{t}{t_{\text{warm}}} \qquad t \le t_{\text{warm}}

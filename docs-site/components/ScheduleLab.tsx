@@ -46,7 +46,7 @@ export function ScheduleLab({ start }: { start: ScheduleSettings }) {
   const keys = settings ? scheduleKeyPoints(settings) : [];
   const labelled = settings
     ? keys
-        .filter((key) => key.id !== "first")
+        .filter((key) => key.id !== "first" && key.id !== "after")
         .map((key) => points.findIndex((point) => point.x === key.step))
     : [];
 

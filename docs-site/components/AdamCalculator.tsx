@@ -59,28 +59,42 @@ export function AdamCalculator({ start, settings }: { start: AdamStart; settings
     const next = adamStep(state, params, { w: wrap(values.g) }, values.lr);
     const trace = next.trace.w!;
     rows = [
-      { label: "self.t", code: "self.t += 1", value: next.state.t, testId: "calc-t" },
+      { code: "self.t += 1", value: next.state.t, testId: "calc-t" },
       {
-        label: "self.m[k]",
-        code: "self.m[k] = ...",
+        code: "self.m[k] = self.b1 * self.m[k] + (1 - self.b1) * g",
         value: entry(next.state.m.w!),
         testId: "calc-m",
       },
       {
-        label: "self.v[k]",
-        code: "self.v[k] = ...",
+        code: "self.v[k] = self.b2 * self.v[k] + (1 - self.b2) * g * g",
         value: entry(next.state.v.w!),
         testId: "calc-v",
       },
-      { label: "mhat", code: "mhat = ...", value: entry(trace.mhat), testId: "calc-mhat" },
-      { label: "vhat", code: "vhat = ...", value: entry(trace.vhat), testId: "calc-vhat" },
-      { label: "update", code: "update = ...", value: entry(trace.update), testId: "calc-update" },
       {
-        label: "params[k]",
-        code: "params[k] -= lr * update",
-        value: entry(next.params.w!),
-        testId: "calc-w",
+        code: "mhat = self.m[k] / (1 - self.b1 ** self.t)",
+        value: entry(trace.mhat),
+        testId: "calc-mhat",
       },
+      {
+        code: "vhat = self.v[k] / (1 - self.b2 ** self.t)",
+        value: entry(trace.vhat),
+        testId: "calc-vhat",
+      },
+      {
+        code: "update = mhat / (np.sqrt(vhat) + self.eps)",
+        value: entry(trace.raw),
+        testId: "calc-raw",
+      },
+      ...(matrix
+        ? [
+            {
+              code: "update = update + self.wd * params[k]",
+              value: entry(trace.update),
+              testId: "calc-update",
+            },
+          ]
+        : []),
+      { code: "params[k] -= lr * update", value: entry(next.params.w!), testId: "calc-w" },
     ];
   }
 

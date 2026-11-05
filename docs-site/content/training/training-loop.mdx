@@ -187,7 +187,7 @@ how the tokens are chosen.
 
 ## Logging lines
 
-`train.py` prints these lines, and nothing else. The output column comes from evaluating the file's own format strings with the values of one real step on a hand-picked text and a tiny model. It is not output from a training run.
+`train.py` prints these lines, and nothing else. The output column comes from evaluating the file's own format strings with the values of one real step on a hand-picked text and a tiny model. The sampled ids are stored from one earlier run of `generate`. It is not output from a training run.
 
 <LogLines />
 

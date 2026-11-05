@@ -69,6 +69,21 @@ export const CODE_REFS: Record<string, CodeTarget> = {
   },
   "train.checkpoint": { ...MAIN, match: "save_checkpoint(prefix, params, cfg, tok)" },
 
+  "schedule.warmup-if": {
+    file: "optim.py",
+    symbol: "optim.lr_schedule",
+    match: "if step <= warmup:",
+  },
+  "schedule.warmup-return": {
+    file: "optim.py",
+    symbol: "optim.lr_schedule",
+    match: "return lr_max * step / warmup",
+  },
+  "schedule.config-comment": {
+    file: "config.py",
+    symbol: "config.lr_max",
+    match: "lr_max       = 1e-3",
+  },
   "adam.init-moments": {
     file: "optim.py",
     symbol: "optim.Adam.__init__",

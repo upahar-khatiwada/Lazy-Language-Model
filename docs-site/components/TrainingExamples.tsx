@@ -317,7 +317,7 @@ export function LogMeanings() {
         kind="illustrative"
         caption="Printed by evaluating the real format strings of train.main with the values of one real step on a hand-picked text and a tiny model. train.main itself did not run, and these are not numbers from a training run."
       >
-        <pre className={examples.log} data-testid="log-sample" tabIndex={0}>
+        <pre className={examples.log} data-testid="log-sample">
           {lines.join("\n")}
         </pre>
       </VizFigure>
@@ -535,26 +535,28 @@ export function DecayTable() {
         <thead>
           <tr>
             <th scope="col">Key</th>
-            <th scope="col">Shape</th>
-            <th scope="col">With config.py values</th>
-            <th scope="col">Dimensions</th>
             <th scope="col">Weight decay</th>
+            <th scope="col">
+              <code>ndim</code>
+            </th>
+            <th scope="col">Shape</th>
+            <th scope="col">Shape in config.py values</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.name} data-decay={row.shrunk} data-key={row.name}>
               <td>
-                <code>{row.name}</code>
+                <code className={examples.nowrap}>{row.name}</code>
               </td>
-              <td>
-                <code>{row.symbolic}</code>
-              </td>
-              <td>
-                <code>{row.real}</code>
-              </td>
-              <td>{row.ndim}</td>
               <td>{row.shrunk ? "Yes" : "No"}</td>
+              <td>{row.ndim}</td>
+              <td>
+                <code className={examples.nowrap}>{row.symbolic}</code>
+              </td>
+              <td>
+                <code className={examples.nowrap}>{row.real}</code>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -799,7 +801,7 @@ export function LogLines() {
                   {target.symbol.file}:{formatLineRange(target.startLine, target.endLine)}
                 </a>
               </p>
-              <pre className={examples.log} data-testid={`log-output-${index}`} tabIndex={0}>
+              <pre className={examples.log} data-testid={`log-output-${index}`}>
                 {printed[index]!}
               </pre>
               <p>

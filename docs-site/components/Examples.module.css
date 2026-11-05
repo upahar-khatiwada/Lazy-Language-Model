@@ -124,7 +124,7 @@
   max-width: none;
 }
 
-/* Printed lines from train.py, as they are: wide lines scroll here, not on the page. */
+/* Printed lines from train.py: they wrap, so a phone shows every number, and spaces are kept. */
 .log {
   background: var(--code-bg);
   border: var(--border-width) solid var(--line);
@@ -132,9 +132,9 @@
   font-family: var(--font-code);
   font-size: var(--fs-sm);
   margin: 0;
-  overflow-x: auto;
+  overflow-wrap: anywhere;
   padding: var(--space-2) var(--space-3);
-  white-space: pre;
+  white-space: pre-wrap;
 }
 
 .status {
@@ -157,6 +157,15 @@
   display: block;
   padding-left: 2ch;
   text-indent: -2ch;
+}
+
+/* A file:line link on a phone is a touch target. */
+@media (max-width: 859px) {
+  .logList :global(.code-link) {
+    align-items: center;
+    display: inline-flex;
+    min-height: var(--touch-target);
+  }
 }
 
 /* On a phone the table keeps its size and scrolls here, so it adds no width or great height to the page. */

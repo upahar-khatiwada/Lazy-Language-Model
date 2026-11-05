@@ -8,6 +8,13 @@ tests/math.golden.test.ts compares lib/math with these files. Inputs are hand-pi
 is an Illustrative Example. Repository modules are imported read-only, nothing is written outside
 data/golden/, and training is not run: train.main is never called. One real step on a hand-picked
 text, with a tiny model, is the most that happens here. data.py needs pandas.
+
+Each golden file records the Python, NumPy and pandas versions that wrote it. verify:golden compares
+floats with a tolerance and whole numbers and text exactly. A different version is reported, not failed.
+
+The one-step case's shuffled batch and sampled text depend on the pandas and NumPy versions, so they are
+stored in data/golden/learning-step.fixture.json. Neither command regenerates them. The file is checked
+against the real windows and the real tok.decode, and edited by hand only if LEARNING_TEXT changes.
 """
 
 import ast
@@ -15,6 +22,7 @@ import copy
 import io
 import json
 import math
+import platform
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -39,7 +47,9 @@ import train  # noqa: E402
 import transformer  # noqa: E402
 from tests.test_gradcheck import tiny_setup  # noqa: E402
 
-TOLERANCE = 1e-12
+# Relative and absolute, the same 1e-9 that tests/math.golden.test.ts allows the engine.
+FLOAT_TOLERANCE = 1e-9
+FIXTURE = OUT / "learning-step.fixture.json"
 
 
 def arr(value):
@@ -1853,6 +1863,25 @@ LEARNING_T = 4
 LEARNING_B = 2
 
 
+def learning_fixture(tok, tr_x, tr_y, seed_ids):
+    """The stored batch and sample. They are not regenerated, so they are checked instead: each row must
+    be a real window with its real targets, and the sample must be the seed, 30 ids, and their decoding."""
+    fixture = json.loads(FIXTURE.read_text(encoding="ascii"))
+    xb, yb = fixture["xb"], fixture["yb"]
+    windows = set(zip(map(tuple, tr_x.to_numpy().tolist()), map(tuple, tr_y.to_numpy().tolist())))
+    ids = fixture["sample_ids"]
+    problems = [
+        *([] if len(xb) == len(yb) == LEARNING_B else ["the batch has the wrong size"]),
+        *([] if all((tuple(x), tuple(y)) in windows for x, y in zip(xb, yb)) else ["a row is not a real window"]),
+        *([] if ids[: len(seed_ids)] == seed_ids else ["the sample does not start with the seed"]),
+        *([] if len(ids) == len(seed_ids) + 30 else ["the sample does not have 30 new ids"]),
+        *([] if tok.decode(ids) == fixture["sample_text"] else ["sample_text is not the decoding of sample_ids"]),
+    ]
+    if problems:
+        raise ValueError(f"{FIXTURE.name}: {'; '.join(problems)}")
+    return np.array(xb), np.array(yb), ids
+
+
 def main_function():
     tree = ast.parse((ROOT / "train.py").read_text(encoding="utf-8"))
     return next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "main")
@@ -1962,7 +1991,8 @@ def validation_case():
 
 def learning_step_case():
     """One real step from text to updated parameters, calling what train.main calls in the same order,
-    on a hand-picked text and a tiny model. train.main is not called, and nothing is saved."""
+    on a hand-picked text and a tiny model. train.main is not called, and nothing is saved. The batch and
+    the sampled ids come from the fixture, so this case does not depend on the shuffle or on rng.choice."""
     rng = np.random.default_rng(config.seed)
     tok = tokenizer.build_tokenizer(LEARNING_TEXT, LEARNING_MERGES)
     ids = data.encode_corpus(LEARNING_TEXT, tok)
@@ -1975,7 +2005,8 @@ def learning_step_case():
     opt = optim.Adam(params, **config_adam_settings())
     steps_per_epoch, total_steps = real_step_counts(len(tr_x), LEARNING_B, config.epochs)
 
-    xb, yb = next(data.iterate_batches(tr_x, tr_y, LEARNING_B, rng))
+    seed_ids = [int(i) for i in va_x.iloc[0][:3]]
+    xb, yb, out = learning_fixture(tok, tr_x, tr_y, seed_ids)
     logits, _ = transformer.forward(params, xb[0], cfg)
     _, probs = ops.cross_entropy_forward(logits, yb[0])
     loss, grads = train.batch_loss_and_grads(params, xb, yb, cfg)
@@ -1986,10 +2017,6 @@ def learning_step_case():
     opt.step(params, grads, lr)
 
     v = train.validation_loss(params, cfg, va_x, va_y)
-    seed_ids = [int(i) for i in va_x.iloc[0][:3]]
-    out = generate.generate(
-        params, cfg, seed_ids, 30, LEARNING_T, config.temperature, config.top_k, config.top_p, rng
-    )
     printed = real_print_lines(
         {
             "math": math, "cfg": cfg, "step": step, "loss": loss, "norm": norm, "lr": lr, "epoch": 0, "v": v,
@@ -2095,9 +2122,15 @@ def comparable(case_data):
     return result
 
 
+def same_number(a, b):
+    if isinstance(a, int) and isinstance(b, int):
+        return a == b
+    return math.isclose(a, b, rel_tol=FLOAT_TOLERANCE, abs_tol=FLOAT_TOLERANCE)
+
+
 def differences(path, a, b):
     if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not isinstance(a, bool):
-        return [] if abs(a - b) <= TOLERANCE else [f"{path}: stored {a}, computed {b}"]
+        return [] if same_number(a, b) else [f"{path}: stored {a}, computed {b}"]
     if isinstance(a, dict) and isinstance(b, dict):
         return [item for key in sorted({*a, *b}) for item in differences(f"{path}.{key}", a.get(key), b.get(key))]
     if isinstance(a, list) and isinstance(b, list):
@@ -2107,8 +2140,13 @@ def differences(path, a, b):
     return [] if a == b else [f"{path}: stored {a}, computed {b}"]
 
 
+def environment():
+    return {"python": platform.python_version(), "numpy": np.__version__, "pandas": pd.__version__}
+
+
 def serialise(cases):
-    return json.dumps({"cases": cases}, indent=1, ensure_ascii=True, allow_nan=False) + "\n"
+    document = {"environment": environment(), "cases": cases}
+    return json.dumps(document, indent=1, ensure_ascii=True, allow_nan=False) + "\n"
 
 
 def main():
@@ -2127,8 +2165,10 @@ def main():
         if not path.exists():
             problems.append(f"missing: {path.name}")
             continue
-        stored = json.loads(path.read_text(encoding="ascii"))["cases"]
-        problems += differences(name, [comparable(c) for c in stored], [comparable(c) for c in cases])
+        document = json.loads(path.read_text(encoding="ascii"))
+        if document.get("environment") != environment():
+            print(f"Note: {path.name} was written with {document.get('environment')}, this run is {environment()}.")
+        problems += differences(name, [comparable(c) for c in document["cases"]], [comparable(c) for c in cases])
     if problems:
         print("FAILED: stored golden data differs from a fresh run. Run: bun run sync:golden", file=sys.stderr)
         for problem in problems:

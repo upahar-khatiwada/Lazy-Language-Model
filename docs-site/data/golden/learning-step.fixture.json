@@ -1,0 +1,72 @@
+{
+ "note": "Stored results of one shuffle and one sampling run. make_golden.py reads these and does not regenerate them, because they depend on the pandas and NumPy versions.",
+ "recorded_with": {
+  "python": "3.14.4",
+  "numpy": "2.5.2",
+  "pandas": "3.1.0"
+ },
+ "xb": [
+  [
+   17,
+   4,
+   18,
+   4
+  ],
+  [
+   18,
+   4,
+   8,
+   9
+  ]
+ ],
+ "yb": [
+  [
+   4,
+   18,
+   4,
+   8
+  ],
+  [
+   4,
+   8,
+   9,
+   4
+  ]
+ ],
+ "sample_ids": [
+  16,
+  4,
+  12,
+  15,
+  4,
+  18,
+  2,
+  19,
+  17,
+  12,
+  16,
+  17,
+  18,
+  2,
+  12,
+  1,
+  12,
+  4,
+  12,
+  12,
+  10,
+  12,
+  13,
+  17,
+  12,
+  11,
+  16,
+  4,
+  4,
+  4,
+  13,
+  9,
+  17
+ ],
+ "sample_text": "the dth sathogatdtheatsathdtd ddmdgatd\nthe   gnat"
+}

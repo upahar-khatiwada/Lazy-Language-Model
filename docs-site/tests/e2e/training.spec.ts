@@ -267,6 +267,7 @@ test.describe("AdamW / Learning Rate / Clipping", () => {
     await expectExact(page.getByTestId("schedule-lr-start"), at(0));
     await expectExact(page.getByTestId("schedule-lr-first"), at(1));
     await expectExact(page.getByTestId("schedule-lr-warmup"), at(warmup));
+    await expectExact(page.getByTestId("schedule-lr-after"), at(warmup + 1));
     await expectExact(page.getByTestId("schedule-lr-final"), at(total));
     await expect(page.getByTestId("schedule-warmup")).toHaveValue(
       String(configValue("warmup_steps")),
@@ -472,4 +473,43 @@ test.describe("Training Loop", () => {
       expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
     });
   }
+});
+
+test.describe("layout at 390px", () => {
+  test.use({ viewport: { width: 390, height: 800 } });
+
+  test("the decay answer is on screen, and shapes stay on one line", async ({ page }) => {
+    await page.goto(ADAMW);
+    const table = page.getByTestId("decay-table");
+    const header = table.locator("th", { hasText: "Weight decay" });
+    await header.scrollIntoViewIfNeeded();
+    const box = await header.boundingBox();
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+    const shape = table.locator('[data-key="pos_emb"] td code').nth(1);
+    const lineHeight = await shape.evaluate((el) => {
+      const rects = el.getClientRects();
+      return rects.length;
+    });
+    expect(lineHeight).toBe(1);
+  });
+
+  test("printed lines show every number, and links are touch targets", async ({ page }) => {
+    await page.goto(LOOP);
+    const output = page.getByTestId("log-output-1");
+    const sizes = await output.evaluate((el) => [el.scrollWidth, el.clientWidth]);
+    expect(sizes[0]).toBeLessThanOrEqual(sizes[1]!);
+    await expect(output).toContainText("lr 0.00002");
+    const link = page.getByTestId("log-line-1").locator("a.code-link");
+    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  });
+
+  test("the calculator shows the decay line only with two dimensions", async ({ page }) => {
+    await page.goto(ADAMW);
+    await expect(page.getByTestId("calc-update")).toBeVisible();
+    const select = page.getByTestId("calc-ndim");
+    await hydrated(select);
+    await select.selectOption("1");
+    await expect(page.getByTestId("calc-update")).toHaveCount(0);
+    await expect(page.getByTestId("calc-raw")).toBeVisible();
+  });
 });

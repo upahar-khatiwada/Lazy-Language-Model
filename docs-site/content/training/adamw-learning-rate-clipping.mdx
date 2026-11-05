@@ -134,6 +134,8 @@ Edit the four values to see the curve change. The table lists the values at the 
 
 `train.main` adds one to `step` before calling the schedule (<CodeLine id="loop.step-count" />), so step 0 is what the function would return, not a value training uses.
 
+**`lr_max` is reached at the last warmup step.** At step `warmup_steps`, the test `step <= warmup` is still true (<CodeLine id="schedule.warmup-if" />), so the function returns `lr_max * step / warmup` (<CodeLine id="schedule.warmup-return" />), which is exactly `lr_max`. The next step is already on the cosine and slightly lower, as the table shows. The comment on `lr_max` in `config.py` says "reached right after warmup" (<CodeLine id="schedule.config-comment" />). This page follows the code.
+
 <ConceptStep>Tensor shapes</ConceptStep>
 
 The schedule takes numbers and returns one number, so it has no tensors. `Adam.step` multiplies every update by that same number.

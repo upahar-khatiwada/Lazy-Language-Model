@@ -731,3 +731,41 @@ Append one entry per finished task. Newest at the bottom.
   - The comment on `lr_max` in `config.py` says it is reached right after warmup. The code reaches it exactly at the last warmup step.
 - Decisions needed from the human: none.
 - Status: Task 12 finished. Nothing was committed.
+
+### Task 12 follow-ups: lr_max, verify:golden, Layout (2026-11-06)
+- Files changed (all under `docs-site/`):
+  - `lr_max`: `contract/DISCREPANCIES.md` section 8 has a new "Code comment vs code behaviour" row. `contract/` is git-ignored, so that row exists only on this machine. `content/training/adamw-learning-rate-clipping.mdx` states that `lr_max` is reached at the last warmup step, with the code lines. Also `data/code-refs.ts`, `data/concepts/optim.lr_schedule.yaml`, `lib/schedule-lab.ts`, `components/ScheduleLab.tsx`. `config.py` was not edited.
+  - `verify:golden`: `scripts/make_golden.py`, `lib/golden.ts`, new `data/golden/learning-step.fixture.json`, all 12 golden files, and two sentences each in `content/training/how-the-model-learns.mdx` and `content/training/training-loop.mdx`.
+  - Layout: `components/ClipLab.tsx`, `components/AdamCalculator.tsx`, `components/WorkedRows.tsx`, `components/TrainingExamples.tsx`, `components/Examples.module.css`.
+  - Tests: `tests/training-pages.test.ts`, `tests/e2e/training.spec.ts`.
+- `verify:golden` now:
+  - Compares floats with a relative and absolute tolerance of `1e-9`. Whole numbers are compared exactly.
+  - Reads the one-step case's shuffled batch and sampled text from the stored fixture, and does not regenerate them. `iterate_batches` and `generate` are no longer called for that case. The fixture is validated (real windows, real targets, starts with the seed, 30 new ids, ids decode to the text), and the golden file must equal it exactly.
+  - Records Python, NumPy and pandas versions in each golden file. Other versions print a note and do not fail the check.
+  - All 12 golden files, compared with HEAD: same cases, only `environment` added.
+- Checks run in this session:
+  - After `rm -rf .next out test-results`: `verify:generated` OK 5 files; `verify:derived` OK 2; `verify:examples` OK 2; `verify:golden`: `OK: 220 golden cases match a fresh run.`; `verify:links`: `OK: 316 links, 55 concepts and 1 pipelines match the code.`; `verify:content`: `not implemented yet` (the stub verifies nothing).
+  - Lint: `All matched files use Prettier code style!`. Typecheck: exit 0. `bun run build`: `Compiled successfully`.
+  - `bun run test`: `Test Files 20 passed (20)`, `Tests 1270 passed (1270)`.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.47s`.
+  - `bunx playwright test tests/e2e/training.spec.ts --reporter=line`: `Running 37 tests using 1 worker`, `37 passed (1.3m)`, exit 0, `.last-run.json` status `passed`, 0 `ERR_CONNECTION_REFUSED`.
+  - Scratchpad proof for `verify:golden`: shuffle and sampler disabled, `differences = []`; float off by `1e-11`, exit 0; float off by `1e-6`, exit 1; other versions recorded, exit 0 with a note; fixture text edited, batch id edited, valid rows reordered, each exit 1.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. HEAD `0c4a16e`. No state-changing git command was run.
+- Full browser suite: NOT passed after these changes.
+  - The first full run failed: 346 of 350 failed, `4 passed (14.5m)`. A background notification showed exit 0, but that was the exit code of `tail`, not Playwright. The one failure inspected was `page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3000/...`, which suggests the test server stopped. The cause is unknown, and a rerun cleared the old results, so only that one failure was inspected.
+  - The rerun was stopped on the human's request at test 25 of 350, with 0 connection errors. Only the 37 training tests were run after that.
+  - So the other 313 tests, covering other pages and the site shell, have no result for these changes.
+- Screenshots seen, 1280 light and 390 dark, page overflow 0 in all:
+  - Clipping: the expression broke across lines. Fixed; fine at both widths.
+  - AdamW calculator: the Code column showed shortened statements. It now shows real `Adam.step` lines in order, and the decay line only with 2 dimensions. Code wraps in its narrow column at 390.
+  - Weight-decay table: at 390 the decay column was scrolled out of view and shapes broke. Key, Weight decay, `ndim` and Shape now show at 390, and the last column scrolls inside its wrapper. Fine at 1280.
+  - Logging list: at 390 `lr` and most of the sample were cut off, and code-links were below touch size. All text now wraps with nothing hidden. The 44px code-links look tall with their highlight, the same as on other pages.
+  - The schedule key table shows step 51, lr 0.000999901. The `lr_max` paragraph itself was not screenshotted.
+- Failures seen on the way: a node one-liner comparing golden files crashed with `Unexpected end of JSON input`, and a scratchpad Python script replaced it.
+- Open issues:
+  - This replaces the Task 12 open issue on `verify:golden`, which is narrowed but not gone. The `data.iterate_batches` golden case still stores batch order exactly, and `init_params` draws depend on NumPy's generator. A different NumPy or pandas could still fail those. `verify:golden` on another machine remains untried.
+  - The fixture has no refresh command. It is edited by hand only if `LEARNING_TEXT` changes.
+  - Why the server stopped during the first full run is unexplained.
+  - `verify:content` is still a stub.
+- Decisions needed from the human: none.
+- Status: follow-ups finished, except the full browser suite as above. Nothing was committed.

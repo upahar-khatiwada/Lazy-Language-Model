@@ -1,9 +1,11 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { CODE_REFS } from "@/data/code-refs";
 import { LEARNING_STAGES, LOG_LINES } from "@/data/learning-step";
 import { getSymbol, loadSymbolIndex, requireTarget, targetLines } from "@/lib/code-targets";
 import { readPageBody } from "@/lib/content";
-import { getGoldenCase } from "@/lib/golden";
+import { getGoldenCase, GOLDEN_FILES } from "@/lib/golden";
 import { expandBlockName, loadInitParams } from "@/lib/parameters";
 import { lrSchedule } from "@/lib/math/optim";
 import { LOOP_STEPS, stepCounts } from "@/lib/math/train";
@@ -498,5 +500,102 @@ describe("Part C: formulas match train.py", () => {
   test("the general explanation is labelled, and the page claims no result", () => {
     expect(sections["Mini-batch gradient"]).toMatch(/In general, one window's gradient/);
     expect(body).not.toMatch(/focus|attends to|understands/i);
+  });
+});
+
+describe("lr_max is reached at the last warmup step", () => {
+  const body = readPageBody("training/adamw-learning-rate-clipping");
+  const item = getGoldenCase("optim", "lr_schedule.key_points");
+  const { steps, warmup, lr_max } = item.inputs as {
+    steps: number[];
+    warmup: number;
+    lr_max: number;
+  };
+  const { lrs } = item.outputs as { lrs: number[] };
+
+  test("the real function gives lr_max at warmup and less on the next step", () => {
+    expect(lrs[steps.indexOf(warmup)]).toBe(lr_max);
+    expect(lrs[steps.indexOf(warmup + 1)]).toBeLessThan(lr_max);
+  });
+
+  test("the page says so, with the code lines, and names the comment", () => {
+    expect(body).toContain("**`lr_max` is reached at the last warmup step.**");
+    for (const id of ["schedule.warmup-if", "schedule.warmup-return", "schedule.config-comment"]) {
+      expect(body).toContain(`<CodeLine id="${id}" />`);
+    }
+    expect(body).toContain('says "reached right after warmup"');
+    expect(
+      getSymbol("config.lr_max").source +
+        requireTarget(CODE_REFS["schedule.config-comment"]!).symbol.file,
+    ).toContain("config.py");
+    const comment = loadConfig().constants.find(({ name }) => name === "lr_max")!.comment;
+    expect(comment).toContain("reached right after warmup");
+  });
+
+  test("the key-point table lists the first cosine step when there is one", () => {
+    const settings = { warmup: 50, lrMax: 1e-3, lrMin: 1e-4 };
+    expect(scheduleKeyPoints({ ...settings, total: 200 }).map((key) => key.id)).toContain("after");
+    expect(scheduleKeyPoints({ ...settings, total: 50 }).map((key) => key.id)).not.toContain(
+      "after",
+    );
+  });
+});
+
+describe("verify:golden stays stable across versions", () => {
+  const fixture = JSON.parse(
+    readFileSync(join(process.cwd(), "data", "golden", "learning-step.fixture.json"), "utf-8"),
+  ) as {
+    recorded_with: Record<string, string>;
+    xb: number[][];
+    yb: number[][];
+    sample_ids: number[];
+    sample_text: string;
+  };
+  const { outputs } = getGoldenCase("train", "learning.one_step");
+
+  test("the one-step case uses the stored batch and sample exactly", () => {
+    expect(outputs.xb).toEqual(fixture.xb);
+    expect(outputs.yb).toEqual(fixture.yb);
+    expect(outputs.seed_ids).toEqual(fixture.sample_ids.slice(0, 3));
+    const shown = fixture.sample_text.replaceAll("\n", "\\n");
+    expect((outputs.printed as string[])[3]).toBe(`  sample: '${shown}'`);
+  });
+
+  test("the fixture and every golden file record their versions", () => {
+    for (const name of ["python", "numpy", "pandas"]) {
+      expect(fixture.recorded_with[name]).toMatch(/^\d+\.\d+/);
+    }
+    for (const file of GOLDEN_FILES) {
+      const { environment } = JSON.parse(
+        readFileSync(join(process.cwd(), "data", "golden", `${file}.json`), "utf-8"),
+      ) as { environment: Record<string, string> };
+      expect(Object.keys(environment).sort(), file).toEqual(["numpy", "pandas", "python"]);
+    }
+  });
+
+  test("the fresh run does not shuffle or sample for this case", () => {
+    const script = readFileSync(join(process.cwd(), "scripts", "make_golden.py"), "utf-8");
+    const body = script.slice(
+      script.indexOf("def learning_step_case"),
+      script.indexOf("def train_file_cases"),
+    );
+    expect(body).not.toContain("iterate_batches");
+    expect(body).not.toContain("generate.generate");
+  });
+});
+
+describe("the AdamW calculator", () => {
+  test("every statement it shows is a real line of Adam.step, in that order", () => {
+    const source = readFileSync(join(process.cwd(), "components", "AdamCalculator.tsx"), "utf-8");
+    const shown = [...source.matchAll(/code: "([^"]+)"/g)].map((match) => match[1]!);
+    expect(shown.length).toBeGreaterThan(6);
+    const lines = getSymbol("optim.Adam.step")
+      .source.split(/\r?\n/)
+      .map((line) => line.trim());
+    const positions = shown.map((statement) =>
+      lines.findIndex((line) => line.startsWith(statement)),
+    );
+    positions.forEach((position, i) => expect(position, shown[i]).toBeGreaterThanOrEqual(0));
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 });

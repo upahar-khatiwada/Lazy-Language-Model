@@ -9,21 +9,19 @@ export function WorkedRows({
   rows,
 }: {
   label: string;
-  rows: { label: string; code: string; value: number; testId: string }[];
+  rows: { code: string; value: number; testId: string }[];
 }) {
   return (
-    <DataTable label={label}>
+    <DataTable label={label} data-testid="calc-rows">
       <thead>
         <tr>
-          <th scope="col">Value</th>
-          <th scope="col">Code</th>
+          <th scope="col">Code, in order</th>
           <th scope="col">Result</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
           <tr key={row.testId}>
-            <td>{row.label}</td>
             <td>
               <code>{row.code}</code>
             </td>

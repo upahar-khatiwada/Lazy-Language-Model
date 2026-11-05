@@ -30,6 +30,16 @@ export function scheduleKeyPoints({ total, warmup, lrMax, lrMin }: ScheduleSetti
     ...(warmup <= total
       ? [{ id: "warmup", label: "The last warmup step", step: warmup, lr: at(warmup) }]
       : []),
+    ...(warmup < total
+      ? [
+          {
+            id: "after",
+            label: "The first step on the cosine",
+            step: warmup + 1,
+            lr: at(warmup + 1),
+          },
+        ]
+      : []),
     { id: "final", label: "The last step", step: total, lr: at(total) },
   ];
 }

@@ -88,9 +88,14 @@ export function ClipLab({ a, b, maxNorm }: { a: number[]; b: number[]; maxNorm: 
       </div>
       <p className={styles.status} role="status" data-testid="clip-status">
         {problem ??
-          (clipped
-            ? `norm > max_norm, so every tensor is multiplied by max_norm / norm = ${Number(factor!.toFixed(6))}.`
-            : "norm is not above max_norm, so no tensor changes.")}
+          (clipped ? (
+            <>
+              <code>norm</code> is above <code>max_norm</code>, so every tensor is multiplied by{" "}
+              <code className={styles.nowrap}>max_norm / norm = {Number(factor!.toFixed(6))}</code>.
+            </>
+          ) : (
+            "norm is not above max_norm, so no tensor changes."
+          ))}
       </p>
       {result ? (
         <>

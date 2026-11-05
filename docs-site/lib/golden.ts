@@ -18,7 +18,11 @@ const CaseSchema = z.strictObject({
   }),
 });
 
-const FileSchema = z.strictObject({ cases: z.array(CaseSchema) });
+// The versions that wrote the file. verify:golden reports a difference and does not fail on it.
+const FileSchema = z.strictObject({
+  environment: z.strictObject({ python: z.string(), numpy: z.string(), pandas: z.string() }),
+  cases: z.array(CaseSchema),
+});
 
 export type GoldenCase = z.infer<typeof CaseSchema>;
 
