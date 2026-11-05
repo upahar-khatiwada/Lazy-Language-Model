@@ -1,0 +1,57 @@
+id: transformer.embed_forward
+title: Embedding sum
+category: embeddings
+inventory: [M28]
+status: implemented
+summary: >-
+  embed_forward adds the two lookups, row by row. The result, X0, is the first thing the blocks read.
+why: >-
+  Every block expects a matrix of shape (T, d). This is where a list of ids becomes that matrix, and
+  where the model gets both what each token is and where it stands.
+equations:
+  - id: emb.sum
+    latex: X^{(0)}_t = E_{i_t} + P_t
+    role: forward
+    label: One row of the sum
+  - id: emb.sum-matrix
+    latex: X^{(0)} = E[\text{ids}] + P[:T]
+    role: forward
+    label: The whole sum, as the code writes it
+symbols:
+  - symbol: X^{(0)}
+    meaning: The input of the first block. The code calls it X in forward, and dX0 names its gradient
+    codeName: X
+    shape: (T, d)
+  - symbol: E_{i_t}
+    meaning: The token row for the id at position t
+    codeName: params["tok_emb"][ids][t]
+    shape: (d,)
+  - symbol: P_t
+    meaning: The position row for position t
+    codeName: params["pos_emb"][t]
+    shape: (d,)
+example: null
+shapes:
+  - id: embedding-sum
+    label: Both terms have the same shape, and so does their sum
+    stages:
+      - name: tok_emb[ids]
+        dims: [T, d]
+      - name: pos_emb[:T]
+        dims: [T, d]
+      - name: X0
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.embed_forward
+      match: 'return params["tok_emb"][ids] + params["pos_emb"][: len(ids)]'
+source:
+  - file: transformer.py
+    symbol: transformer.embed_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["39"]
+  page: 10
+notes:
+  - The PDF numbers positions from 1 in Eq. 40. The code numbers them from 0.

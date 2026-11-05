@@ -184,6 +184,62 @@ export const CODE_REFS: Record<string, CodeTarget> = {
     match: "return dX1 + dX_branch",
   },
 
+  "update.ln1": {
+    file: "transformer.py",
+    symbol: "transformer.block_backward",
+    match: 'grads[p + "ln1_g"] += dg',
+  },
+  "update.ff2": { ...FFN_BACKWARD, match: 'grads[p + "ff2_w"] += dW2' },
+  "embed.back-tok": {
+    file: "transformer.py",
+    symbol: "transformer.embed_backward",
+    match: 'np.add.at(grads["tok_emb"], ids, dX0)',
+  },
+  "embed.back-pos": {
+    file: "transformer.py",
+    symbol: "transformer.embed_backward",
+    match: 'grads["pos_emb"][: len(ids)] += dX0',
+  },
+
+  "embed.tok-table": { ...INIT, match: '"tok_emb": xavier_uniform(V, d, rng)' },
+  "embed.pos-table": { ...INIT, match: '"pos_emb": xavier_uniform(cfg.context_len, d, rng)' },
+  "embed.back-call": {
+    file: "transformer.py",
+    symbol: "transformer.loss_and_grads",
+    match: "embed_backward(dX, ids, grads)",
+  },
+  "embed.config-field": {
+    file: "transformer.py",
+    symbol: "transformer.ModelConfig",
+    match: "context_len: int",
+  },
+  "embed.generate-window": {
+    file: "generate.py",
+    symbol: "generate.generate",
+    match: "logits, _ = forward(params, np.array(ids[-window:]), cfg)",
+  },
+
+  "gradcheck.default-h": {
+    file: "gradcheck.py",
+    symbol: "gradcheck.numerical_grad",
+    match: "def numerical_grad(f, x, h = 1e-5):",
+  },
+  "gradcheck.sample": {
+    file: "gradcheck.py",
+    symbol: "gradcheck.check_params",
+    match: "idx = tuple(int(rng.integers(s)) for s in W.shape)",
+  },
+  "gradcheck.test-quadratic": {
+    file: "tests/test_gradcheck.py",
+    symbol: "tests.test_gradcheck.test_numerical_grad_on_quadratic",
+    match: "assert np.allclose(g, 2 * x, atol=1e-8)",
+  },
+  "gradcheck.test-bk": {
+    file: "tests/test_gradcheck.py",
+    symbol: "tests.test_gradcheck.test_key_bias_gradient_is_zero",
+    match: 'assert np.abs(grads[f"b{l}.bk"]).max() < 1e-12',
+  },
+
   "ln.block-first": {
     ...BLOCK,
     match:

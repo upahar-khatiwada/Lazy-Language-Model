@@ -30,10 +30,22 @@ import { VizFigure } from "./VizFigure";
 
 type Nested = number | Nested[];
 
-export function Value({ value, testId }: { value: Nested; testId?: string }) {
+const plainNumbers = (value: Nested): string =>
+  typeof value === "number" ? showNumber(value) : `[${value.map(plainNumbers).join(", ")}]`;
+
+// `plain` shows 2 rather than 2.0000, for ids and other values where the extra digits would mislead.
+export function Value({
+  value,
+  testId,
+  plain = false,
+}: {
+  value: Nested;
+  testId?: string;
+  plain?: boolean;
+}) {
   return (
     <code data-testid={testId} data-exact={JSON.stringify(value)}>
-      {formatNumbers(value, 4)}
+      {plain ? plainNumbers(value) : formatNumbers(value, 4)}
     </code>
   );
 }
@@ -45,10 +57,12 @@ export function WorkedTable({
   label,
   testId,
   rows,
+  plain = false,
 }: {
   label: string;
   testId: string;
   rows: WorkedRow[];
+  plain?: boolean;
 }) {
   return (
     <DataTable label={label} data-testid={testId}>
@@ -65,7 +79,7 @@ export function WorkedTable({
             <td>{row.label}</td>
             <td>{row.code ? <code>{row.code}</code> : null}</td>
             <td>
-              <Value value={row.value} testId={row.testId} />
+              <Value value={row.value} testId={row.testId} plain={plain} />
             </td>
           </tr>
         ))}

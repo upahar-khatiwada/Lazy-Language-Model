@@ -1,0 +1,16 @@
+links:
+  - equationId: gradcheck.worst
+    file: gradcheck.py
+    symbol: gradcheck.check_params
+    match: w = max(w, relative_error(grads[name][idx], (fp - fm) / (2 * h)))
+    role: implements
+  - equationId: gradcheck.worst
+    file: gradcheck.py
+    symbol: gradcheck.check_params
+    match: worst[name] = w
+    role: implements
+  - equationId: gradcheck.worst
+    file: tests/test_gradcheck.py
+    symbol: tests.test_gradcheck.test_every_tensor_passes
+    match: worst = check_params(loss_fn, params, grads, rng)
+    role: test

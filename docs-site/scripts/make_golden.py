@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the repository's real functions on fixed small inputs and store the results.
 
-  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data}.json
+  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings}.json
   bun run verify:golden   recomputes and fails if the stored numbers differ
 
 tests/math.golden.test.ts compares lib/math with these files. Inputs are hand-picked, so every case
@@ -32,6 +32,7 @@ import ops  # noqa: E402
 import optim  # noqa: E402
 import tokenizer  # noqa: E402
 import transformer  # noqa: E402
+from tests.test_gradcheck import tiny_setup  # noqa: E402
 
 TOLERANCE = 1e-12
 
@@ -996,6 +997,228 @@ def data_cases():
     ]
 
 
+# Embeddings (transformer.py) ----------------------------------------------------------------------
+
+# tests/test_transformer.py uses these tables and this gradient.
+EMBED_TOK = arr([[0.1, 0.2], [0.3, -0.1], [0.5, 0.4], [-0.2, 0.6]])
+EMBED_POS = arr([[0.0, 0.1], [0.1, 0.0], [0.2, 0.1]])
+EMBED_DX0 = arr([[1.0, 0.0], [0.0, 1.0], [2.0, 2.0]])
+
+
+def embed_forward_case(case_id, ids):
+    ids = np.array(ids)
+    params = {"tok_emb": EMBED_TOK, "pos_emb": EMBED_POS}
+    return case(
+        case_id,
+        "transformer.embed_forward",
+        {"tok_emb": EMBED_TOK, "pos_emb": EMBED_POS, "ids": ids},
+        {
+            "tokens": EMBED_TOK[ids],
+            "positions": EMBED_POS[: len(ids)],
+            "X0": transformer.embed_forward(params, ids),
+        },
+    )
+
+
+def embed_backward_case(case_id, ids):
+    ids = np.array(ids)
+    dX0 = EMBED_DX0[: len(ids)]
+    grads = {"tok_emb": np.zeros_like(EMBED_TOK), "pos_emb": np.zeros_like(EMBED_POS)}
+    transformer.embed_backward(dX0, ids, grads)
+    # What a plain fancy-index add would do. The repository does not do this; the page contrasts it.
+    overwritten = np.zeros_like(EMBED_TOK)
+    overwritten[ids] += dX0
+    return case(
+        case_id,
+        "transformer.embed_backward",
+        {"dX0": dX0, "ids": ids, "V": len(EMBED_TOK), "Tmax": len(EMBED_POS)},
+        {"tok": grads["tok_emb"], "pos": grads["pos_emb"], "overwritten": overwritten},
+    )
+
+
+def embed_gradcheck_case(case_id, ids):
+    """Central differences from the real numerical_grad, on the real embed_forward. The scalar is
+    (X0 * dX0).sum(), whose gradient on X0 is exactly dX0."""
+    ids = np.array(ids)
+    dX0 = EMBED_DX0[: len(ids)]
+
+    def scalar(tok, pos):
+        return float((transformer.embed_forward({"tok_emb": tok, "pos_emb": pos}, ids) * dX0).sum())
+
+    return case(
+        case_id,
+        "gradcheck.numerical_grad",
+        {"problem": "embedding", "tok_emb": EMBED_TOK, "pos_emb": EMBED_POS, "ids": ids, "dX0": dX0},
+        {
+            "tok": numeric(lambda v: scalar(v, EMBED_POS), EMBED_TOK),
+            "pos": numeric(lambda v: scalar(EMBED_TOK, v), EMBED_POS),
+        },
+    )
+
+
+def embed_config_sizes_case():
+    """The real init_params and embed_forward at the sizes in config.py. V has no config value, so it
+    is hand-picked. Only shapes are stored: the values are random draws, not learned numbers."""
+    V = 7
+    cfg = transformer.ModelConfig(
+        V, config.context_len, config.emb_dim, config.num_heads, config.ff_dim, config.num_layers
+    )
+    params = transformer.init_params(cfg, np.random.default_rng(config.seed))
+    X0 = transformer.embed_forward(params, np.arange(config.seq_len) % V)
+    at_limit = transformer.embed_forward(params, np.arange(config.context_len) % V)
+    transformer.forward(params, np.arange(config.context_len) % V, cfg)
+    try:
+        transformer.forward(params, np.arange(config.context_len + 1) % V, cfg)
+        too_long = None
+    except AssertionError as error:
+        too_long = str(error)
+    return case(
+        "embed_forward.config_sizes",
+        "transformer.embed_forward",
+        {
+            "problem": "config_sizes",
+            "V": V,
+            "seq_len": config.seq_len,
+            "context_len": config.context_len,
+            "emb_dim": config.emb_dim,
+        },
+        {
+            "tok_emb_shape": list(params["tok_emb"].shape),
+            "pos_emb_shape": list(params["pos_emb"].shape),
+            "X0_shape": list(X0.shape),
+            "at_limit_shape": list(at_limit.shape),
+            "too_long_message": too_long,
+        },
+    )
+
+
+def position_update_case(case_id, weight_decay):
+    """One real backward and Adam step on the setup of tests/test_gradcheck.py: which rows of pos_emb
+    change? The setup has T = 5 and a table of 8 rows."""
+    cfg, params, ids, targets, _rng = tiny_setup()
+    before = params["pos_emb"].copy()
+    _, grads = transformer.loss_and_grads(params, ids, targets, cfg)
+    opt = optim.Adam(params, weight_decay=weight_decay)
+    opt.step(params, grads, 1e-3)
+    return case(
+        case_id,
+        "transformer.embed_backward",
+        {"problem": "position_update", "T": len(ids), "Tmax": cfg.context_len, "weight_decay": weight_decay},
+        {
+            "gradient_nonzero": (grads["pos_emb"] != 0).any(axis=1).tolist(),
+            "row_changed": (params["pos_emb"] != before).any(axis=1).tolist(),
+        },
+    )
+
+
+def embedding_cases():
+    return [
+        embed_forward_case("embed_forward.test_file", [2, 0, 2]),
+        embed_forward_case("embed_forward.two_positions", [3, 3]),
+        embed_forward_case("embed_forward.no_repeat", [0, 1, 3]),
+        embed_config_sizes_case(),
+        embed_backward_case("embed_backward.test_file", [2, 0, 2]),
+        embed_backward_case("embed_backward.all_same", [1, 1, 1]),
+        embed_backward_case("embed_backward.no_repeat", [0, 1, 3]),
+        embed_backward_case("embed_backward.short", [2, 2]),
+        embed_gradcheck_case("gradcheck.embedding", [2, 0, 2]),
+        position_update_case("position_update.no_decay", 0.0),
+        position_update_case("position_update.with_decay", config.weight_decay),
+    ]
+
+
+# gradcheck.py -------------------------------------------------------------------------------------
+
+
+def relative_error_case(case_id, a, b):
+    return case(
+        case_id,
+        "gradcheck.relative_error",
+        {"a": a, "b": b},
+        {"error": gradcheck.relative_error(a, b)},
+    )
+
+
+def power_case(case_id, power, x, h):
+    """One number, f(x) = x * x or x * x * x. Only multiplication, so Python and JavaScript agree exactly."""
+
+    def f(v):
+        return float((v * v if power == 2 else v * v * v).sum())
+
+    g = gradcheck.numerical_grad(f, np.array([x], dtype=float), h)
+    analytic = power * x ** (power - 1)
+    return case(
+        case_id,
+        "gradcheck.numerical_grad",
+        {"problem": "power", "power": power, "x": x, "h": h},
+        {"g": g, "analytic": float(analytic), "error": gradcheck.relative_error(analytic, g[0])},
+    )
+
+
+def check_params_case(case_id, tamper=None, factor=1.01):
+    """The real check_params on the real setup of tests/test_gradcheck.py.
+
+    tamper "tensor" scales one finished gradient. tamper "backward" scales what block 1 hands back to
+    block 0, for this call only. Neither touches the repository: the patch is undone before returning.
+    """
+    cfg, params, ids, targets, rng = tiny_setup()
+    calls = [0]
+
+    def loss_fn(p):
+        calls[0] += 1
+        return transformer.loss_and_grads(p, ids, targets, cfg)[0]
+
+    real_block_backward = transformer.block_backward
+
+    def scaled_block_backward(dY, c, p, l, config_, grads_):
+        result = real_block_backward(dY, c, p, l, config_, grads_)
+        return result * factor if l == 1 else result
+
+    if tamper == "backward":
+        transformer.block_backward = scaled_block_backward
+    try:
+        _, grads = transformer.loss_and_grads(params, ids, targets, cfg)
+    finally:
+        transformer.block_backward = real_block_backward
+    if tamper == "tensor":
+        grads["b1.wq"] = grads["b1.wq"] * factor
+
+    worst = gradcheck.check_params(loss_fn, params, grads, rng)
+    return case(
+        case_id,
+        "gradcheck.check_params",
+        {"tamper": tamper or "none", "factor": factor if tamper else 1.0},
+        {"worst": worst, "names": list(worst), "loss_evaluations": calls[0]},
+    )
+
+
+def gradcheck_file_cases():
+    x = arr([1.0, -2.0, 3.0])
+    return [
+        # The test's own function and input.
+        case(
+            "numerical_grad.test_quadratic",
+            "gradcheck.numerical_grad",
+            {"problem": "quadratic", "x": x},
+            {"g": gradcheck.numerical_grad(lambda v: float((v ** 2).sum()), x.copy())},
+        ),
+        power_case("numerical_grad.square_default_h", 2, 1.5, 1e-5),
+        power_case("numerical_grad.square_large_h", 2, 1.5, 1e-1),
+        power_case("numerical_grad.cube_default_h", 3, 1.5, 1e-5),
+        power_case("numerical_grad.cube_large_h", 3, 1.5, 1e-1),
+        power_case("numerical_grad.cube_tiny_h", 3, 1.5, 1e-13),
+        relative_error_case("relative_error.close", 1.0, 1.0001),
+        relative_error_case("relative_error.equal", 2.5, 2.5),
+        relative_error_case("relative_error.opposite_signs", 1.0, -1.0),
+        relative_error_case("relative_error.both_zero", 0.0, 0.0),
+        relative_error_case("relative_error.guard_used", 1e-13, 0.0),
+        relative_error_case("relative_error.tiny_against_small", 1e-17, 4e-12),
+        check_params_case("check_params.correct"),
+        check_params_case("check_params.one_tensor_wrong", "tensor"),
+        check_params_case("check_params.block_output_wrong", "backward"),
+    ]
+
+
 # Writing and checking -----------------------------------------------------------------------------
 
 
@@ -1008,15 +1231,27 @@ def build():
         "bpe": bpe_cases(),
         "params": params_cases(),
         "data": data_cases(),
+        "gradcheck": gradcheck_file_cases(),
+        "embeddings": embedding_cases(),
     }
 
 
 def comparable(case_data):
     """NumPy's default sort is not stable, and its tie order may differ between machines, so `order`
-    is not compared. Where the cutoff splits a tie, the kept tokens are compared as sorted values."""
+    is not compared. Where the cutoff splits a tie, the kept tokens are compared as sorted values.
+
+    check_params reports differences of round-off, which depend on the machine's arithmetic library.
+    Values below the test's 1e-4 are compared only as "below 1e-4", larger ones to 4 decimals, and the
+    key biases, whose true gradient is 0, not at all: their value is pure round-off."""
     result = copy.deepcopy(case_data)
     outputs = result["outputs"]
     outputs.pop("order", None)
+    if result["mirrors"] == "gradcheck.check_params":
+        outputs["worst"] = {
+            name: 0 if value < 1e-4 else round(value, 4)
+            for name, value in outputs["worst"].items()
+            if not name.endswith(".bk")
+        }
     if outputs.get("tie_split"):
         outputs["p"] = sorted(outputs["p"])
     return result

@@ -1,0 +1,63 @@
+id: embedding.token
+title: Token embedding
+category: embeddings
+inventory: [M28]
+status: implemented
+summary: >-
+  tok_emb is a table with one row for each token in the vocabulary. To turn an id into a vector, the
+  model reads that row. The whole step is NumPy indexing, tok_emb[ids], with no arithmetic.
+why: >-
+  An id is only a row number, and the layers that follow multiply and add vectors. The table gives each
+  token a vector of width d. Its entries are parameters, so training can change them.
+equations:
+  - id: emb.lookup
+    latex: \left(E[\text{ids}]\right)_t = E_{i_t}
+    role: forward
+    label: Row t of the lookup is the table row of the t-th id
+symbols:
+  - symbol: E
+    meaning: The token table. A parameter
+    codeName: params["tok_emb"]
+    shape: (V, d)
+  - symbol: i_t
+    meaning: The id at position t
+    codeName: ids[t]
+    shape: scalar
+  - symbol: E[\text{ids}]
+    meaning: One table row for each id. The code does not give this array a name
+    codeName: null
+    shape: (T, d)
+example: null
+shapes:
+  - id: token-lookup
+    label: From ids to vectors
+    stages:
+      - name: ids
+        dims: [T]
+      - name: tok_emb[ids]
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.embed_forward
+      match: params["tok_emb"][ids]
+  - id: token-table
+    label: The table itself. V depends on the corpus
+    stages:
+      - name: rows
+        dims: [V]
+      - name: tok_emb
+        dims: [V, d]
+    target:
+      file: transformer.py
+      symbol: transformer.init_params
+      match: '"tok_emb": xavier_uniform(V, d, rng)'
+source:
+  - file: transformer.py
+    symbol: transformer.embed_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["39"]
+  page: 10
+notes:
+  - head_w is a separate matrix. It is not tied to tok_emb.

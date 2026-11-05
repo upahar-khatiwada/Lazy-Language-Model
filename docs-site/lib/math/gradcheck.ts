@@ -22,6 +22,11 @@ export function numericalGradVector(f: (x: Vector) => number, x: Vector, h = 1e-
   return numericalGrad((m) => f(m[0]!), [x], h)[0]!;
 }
 
+// Mirrors gradcheck.relative_error.
+export function relativeError(a: number, b: number, eps = 1e-12): number {
+  return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), eps);
+}
+
 // Mirrors the scalar that make_golden.py hands to gradcheck.numerical_grad for a backward function
 // that takes dY and no loss: (Y * dY).sum(), whose gradient on Y is exactly dY.
 export function outputDot(Y: Matrix, dY: Matrix): number {

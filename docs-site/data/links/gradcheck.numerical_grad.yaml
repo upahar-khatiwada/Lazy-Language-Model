@@ -1,0 +1,16 @@
+links:
+  - equationId: gradcheck.central
+    file: gradcheck.py
+    symbol: gradcheck.numerical_grad
+    match: g[idx] = (fp - fm) / (2 * h)
+    role: implements
+  - equationId: gradcheck.central
+    file: gradcheck.py
+    symbol: gradcheck.check_params
+    match: (fp - fm) / (2 * h)
+    role: inline
+  - equationId: gradcheck.central
+    file: tests/test_gradcheck.py
+    symbol: tests.test_gradcheck.test_numerical_grad_on_quadratic
+    match: "g = numerical_grad(lambda v: float((v ** 2).sum()), x)"
+    role: test

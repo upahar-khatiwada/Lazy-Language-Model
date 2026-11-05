@@ -43,6 +43,7 @@ import {
   numericalGrad,
   numericalGradVector as row,
   outputDot as dotted,
+  relativeError,
 } from "@/lib/math/gradcheck";
 import {
   adamStep,
@@ -62,6 +63,7 @@ import {
   windowCount,
   windowStarts,
 } from "@/lib/math/data";
+import { embedBackward, embedForward, overwritingBackward } from "@/lib/math/embeddings";
 import { blockParameterCount, parameterCount, type ParameterDims } from "@/lib/math/params";
 import { sampleNextDistribution, type SampleResult } from "@/lib/math/sampling";
 import type { Matrix, Tensor3, Vector } from "@/lib/math/tensor";
@@ -265,6 +267,54 @@ const RUNNERS: Record<string, Runner> = {
       }
     }
   },
+  "transformer.embed_forward": (item) => {
+    const inputs = item.inputs as Record<string, unknown>;
+    if (inputs.problem === "config_sizes") {
+      const { V, seq_len, context_len, emb_dim } = inputs as Record<string, number>;
+      expect(item.outputs.tok_emb_shape).toEqual([V, emb_dim]);
+      expect(item.outputs.pos_emb_shape).toEqual([context_len, emb_dim]);
+      expect(item.outputs.X0_shape).toEqual([seq_len, emb_dim]);
+      expect(item.outputs.at_limit_shape).toEqual([context_len, emb_dim]);
+      expect(item.outputs.too_long_message).toBe("sequence longer than the position table");
+      return;
+    }
+    const { tok_emb, pos_emb, ids } = inputs as { tok_emb: Matrix; pos_emb: Matrix; ids: number[] };
+    check(item, embedForward(tok_emb, pos_emb, ids));
+  },
+  "transformer.embed_backward": (item) => {
+    const inputs = item.inputs as Record<string, unknown>;
+    if (inputs.problem === "position_update") {
+      const { gradient_nonzero, row_changed } = item.outputs as {
+        gradient_nonzero: boolean[];
+        row_changed: boolean[];
+      };
+      const { T, Tmax, weight_decay } = inputs as Record<string, number>;
+      const inWindow = Array.from({ length: Tmax! }, (_, t) => t < T!);
+      expect(gradient_nonzero).toEqual(inWindow);
+      expect(row_changed).toEqual(weight_decay! > 0 ? inWindow.map(() => true) : inWindow);
+      return;
+    }
+    const { dX0, ids, V, Tmax } = inputs as { dX0: Matrix; ids: number[]; V: number; Tmax: number };
+    check(item, {
+      ...embedBackward(dX0, ids, V, Tmax),
+      overwritten: overwritingBackward(dX0, ids, V),
+    });
+  },
+  "gradcheck.relative_error": (item) => {
+    const { a, b } = item.inputs as { a: number; b: number };
+    check(item, { error: relativeError(a, b) });
+  },
+  // NumPy's generator picks the entries and has no mirror, so this checks the report's form.
+  "gradcheck.check_params": (item) => {
+    const { worst, names, loss_evaluations } = item.outputs as {
+      worst: Record<string, number>;
+      names: string[];
+      loss_evaluations: number;
+    };
+    expect(Object.keys(worst)).toEqual(names);
+    expect(loss_evaluations).toBe(names.length * 5 * 2);
+    for (const name of names) expect(worst[name], name).toBeGreaterThanOrEqual(0);
+  },
   "gradcheck.numerical_grad": (item) => {
     const inputs = item.inputs as Record<string, unknown>;
     if (inputs.problem === "linear") {
@@ -274,6 +324,26 @@ const RUNNERS: Record<string, Runner> = {
         dW: numericalGrad((v) => dotted(linearForward(X, v, b), dY), W),
         db: row((v) => dotted(linearForward(X, W, v), dY), b),
       });
+    } else if (inputs.problem === "embedding") {
+      const { tok_emb, pos_emb, ids, dX0 } = inputs as {
+        tok_emb: Matrix;
+        pos_emb: Matrix;
+        ids: number[];
+        dX0: Matrix;
+      };
+      check(item, {
+        tok: numericalGrad((v) => dotted(embedForward(v, pos_emb, ids).X0, dX0), tok_emb),
+        pos: numericalGrad((v) => dotted(embedForward(tok_emb, v, ids).X0, dX0), pos_emb),
+      });
+    } else if (inputs.problem === "quadratic") {
+      const { x } = inputs as { x: Vector };
+      check(item, { g: row((v) => v.reduce((total, value) => total + value * value, 0), x) });
+    } else if (inputs.problem === "power") {
+      const { power, x, h } = inputs as { power: 2 | 3; x: number; h: number };
+      const f = (v: Vector) => (power === 2 ? v[0]! * v[0]! : v[0]! * v[0]! * v[0]!);
+      const analytic = power === 2 ? 2 * x : 3 * x * x;
+      const g = row(f, [x], h);
+      check(item, { g, analytic, error: relativeError(analytic, g[0]!) });
     } else if (inputs.problem === "cross_entropy") {
       const { logits, targets } = inputs as { logits: Matrix; targets: number[] };
       check(item, { dZ: numericalGrad((v) => crossEntropy(v, targets).loss, logits) });
@@ -499,6 +569,8 @@ const REQUIRED = [
   "ops.xavier_uniform",
   "transformer.init_params",
   "gradcheck.numerical_grad",
+  "gradcheck.relative_error",
+  "gradcheck.check_params",
   "transformer.split_heads",
   "transformer.merge_heads",
   "transformer.attention_forward",
@@ -519,6 +591,8 @@ const REQUIRED = [
   "tokenizer.Tokenizer.encode",
   "tokenizer.Tokenizer.decode",
   "transformer.count_params",
+  "transformer.embed_forward",
+  "transformer.embed_backward",
 ];
 
 const allCases = GOLDEN_FILES.flatMap((file) => loadGolden(file).map((item) => ({ file, item })));

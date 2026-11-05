@@ -1,0 +1,988 @@
+{
+ "cases": [
+  {
+   "id": "embed_forward.test_file",
+   "mirrors": "transformer.embed_forward",
+   "kind": "illustrative",
+   "inputs": {
+    "tok_emb": [
+     [
+      0.1,
+      0.2
+     ],
+     [
+      0.3,
+      -0.1
+     ],
+     [
+      0.5,
+      0.4
+     ],
+     [
+      -0.2,
+      0.6
+     ]
+    ],
+    "pos_emb": [
+     [
+      0.0,
+      0.1
+     ],
+     [
+      0.1,
+      0.0
+     ],
+     [
+      0.2,
+      0.1
+     ]
+    ],
+    "ids": [
+     2,
+     0,
+     2
+    ]
+   },
+   "outputs": {
+    "tokens": [
+     [
+      0.5,
+      0.4
+     ],
+     [
+      0.1,
+      0.2
+     ],
+     [
+      0.5,
+      0.4
+     ]
+    ],
+    "positions": [
+     [
+      0.0,
+      0.1
+     ],
+     [
+      0.1,
+      0.0
+     ],
+     [
+      0.2,
+      0.1
+     ]
+    ],
+    "X0": [
+     [
+      0.5,
+      0.5
+     ],
+     [
+      0.2,
+      0.2
+     ],
+     [
+      0.7,
+      0.5
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "tok_emb": [
+      4,
+      2
+     ],
+     "pos_emb": [
+      3,
+      2
+     ],
+     "ids": [
+      3
+     ]
+    },
+    "outputs": {
+     "tokens": [
+      3,
+      2
+     ],
+     "positions": [
+      3,
+      2
+     ],
+     "X0": [
+      3,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "embed_forward.two_positions",
+   "mirrors": "transformer.embed_forward",
+   "kind": "illustrative",
+   "inputs": {
+    "tok_emb": [
+     [
+      0.1,
+      0.2
+     ],
+     [
+      0.3,
+      -0.1
+     ],
+     [
+      0.5,
+      0.4
+     ],
+     [
+      -0.2,
+      0.6
+     ]
+    ],
+    "pos_emb": [
+     [
+      0.0,
+      0.1
+     ],
+     [
+      0.1,
+      0.0
+     ],
+     [
+      0.2,
+      0.1
+     ]
+    ],
+    "ids": [
+     3,
+     3
+    ]
+   },
+   "outputs": {
+    "tokens": [
+     [
+      -0.2,
+      0.6
+     ],
+     [
+      -0.2,
+      0.6
+     ]
+    ],
+    "positions": [
+     [
+      0.0,
+      0.1
+     ],
+     [
+      0.1,
+      0.0
+     ]
+    ],
+    "X0": [
+     [
+      -0.2,
+      0.7
+     ],
+     [
+      -0.1,
+      0.6
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "tok_emb": [
+      4,
+      2
+     ],
+     "pos_emb": [
+      3,
+      2
+     ],
+     "ids": [
+      2
+     ]
+    },
+    "outputs": {
+     "tokens": [
+      2,
+      2
+     ],
+     "positions": [
+      2,
+      2
+     ],
+     "X0": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "embed_forward.no_repeat",
+   "mirrors": "transformer.embed_forward",
+   "kind": "illustrative",
+   "inputs": {
+    "tok_emb": [
+     [
+      0.1,
+      0.2
+     ],
+     [
+      0.3,
+      -0.1
+     ],
+     [
+      0.5,
+      0.4
+     ],
+     [
+      -0.2,
+      0.6
+     ]
+    ],
+    "pos_emb": [
+     [
+      0.0,
+      0.1
+     ],
+     [
+      0.1,
+      0.0
+     ],
+     [
+      0.2,
+      0.1
+     ]
+    ],
+    "ids": [
+     0,
+     1,
+     3
+    ]
+   },
+   "outputs": {
+    "tokens": [
+     [
+      0.1,
+      0.2
+     ],
+     [
+      0.3,
+      -0.1
+     ],
+     [
+      -0.2,
+      0.6
+     ]
+    ],
+    "positions": [
+     [
+      0.0,
+      0.1
+     ],
+     [
+      0.1,
+      0.0
+     ],
+     [
+      0.2,
+      0.1
+     ]
+    ],
+    "X0": [
+     [
+      0.1,
+      0.30000000000000004
+     ],
+     [
+      0.4,
+      -0.1
+     ],
+     [
+      0.0,
+      0.7
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "tok_emb": [
+      4,
+      2
+     ],
+     "pos_emb": [
+      3,
+      2
+     ],
+     "ids": [
+      3
+     ]
+    },
+    "outputs": {
+     "tokens": [
+      3,
+      2
+     ],
+     "positions": [
+      3,
+      2
+     ],
+     "X0": [
+      3,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "embed_forward.config_sizes",
+   "mirrors": "transformer.embed_forward",
+   "kind": "illustrative",
+   "inputs": {
+    "problem": "config_sizes",
+    "V": 7,
+    "seq_len": 16,
+    "context_len": 32,
+    "emb_dim": 32
+   },
+   "outputs": {
+    "tok_emb_shape": [
+     7,
+     32
+    ],
+    "pos_emb_shape": [
+     32,
+     32
+    ],
+    "X0_shape": [
+     16,
+     32
+    ],
+    "at_limit_shape": [
+     32,
+     32
+    ],
+    "too_long_message": "sequence longer than the position table"
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "embed_backward.test_file",
+   "mirrors": "transformer.embed_backward",
+   "kind": "illustrative",
+   "inputs": {
+    "dX0": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ],
+    "ids": [
+     2,
+     0,
+     2
+    ],
+    "V": 4,
+    "Tmax": 3
+   },
+   "outputs": {
+    "tok": [
+     [
+      0.0,
+      1.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      3.0,
+      2.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "pos": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ],
+    "overwritten": [
+     [
+      0.0,
+      1.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      2.0,
+      2.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "dX0": [
+      3,
+      2
+     ],
+     "ids": [
+      3
+     ]
+    },
+    "outputs": {
+     "tok": [
+      4,
+      2
+     ],
+     "pos": [
+      3,
+      2
+     ],
+     "overwritten": [
+      4,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "embed_backward.all_same",
+   "mirrors": "transformer.embed_backward",
+   "kind": "illustrative",
+   "inputs": {
+    "dX0": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ],
+    "ids": [
+     1,
+     1,
+     1
+    ],
+    "V": 4,
+    "Tmax": 3
+   },
+   "outputs": {
+    "tok": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      3.0,
+      3.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "pos": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ],
+    "overwritten": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      2.0,
+      2.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "dX0": [
+      3,
+      2
+     ],
+     "ids": [
+      3
+     ]
+    },
+    "outputs": {
+     "tok": [
+      4,
+      2
+     ],
+     "pos": [
+      3,
+      2
+     ],
+     "overwritten": [
+      4,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "embed_backward.no_repeat",
+   "mirrors": "transformer.embed_backward",
+   "kind": "illustrative",
+   "inputs": {
+    "dX0": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ],
+    "ids": [
+     0,
+     1,
+     3
+    ],
+    "V": 4,
+    "Tmax": 3
+   },
+   "outputs": {
+    "tok": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ],
+    "pos": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ],
+    "overwritten": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "dX0": [
+      3,
+      2
+     ],
+     "ids": [
+      3
+     ]
+    },
+    "outputs": {
+     "tok": [
+      4,
+      2
+     ],
+     "pos": [
+      3,
+      2
+     ],
+     "overwritten": [
+      4,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "embed_backward.short",
+   "mirrors": "transformer.embed_backward",
+   "kind": "illustrative",
+   "inputs": {
+    "dX0": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ]
+    ],
+    "ids": [
+     2,
+     2
+    ],
+    "V": 4,
+    "Tmax": 3
+   },
+   "outputs": {
+    "tok": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      1.0,
+      1.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "pos": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "overwritten": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "dX0": [
+      2,
+      2
+     ],
+     "ids": [
+      2
+     ]
+    },
+    "outputs": {
+     "tok": [
+      4,
+      2
+     ],
+     "pos": [
+      3,
+      2
+     ],
+     "overwritten": [
+      4,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "gradcheck.embedding",
+   "mirrors": "gradcheck.numerical_grad",
+   "kind": "illustrative",
+   "inputs": {
+    "problem": "embedding",
+    "tok_emb": [
+     [
+      0.1,
+      0.2
+     ],
+     [
+      0.3,
+      -0.1
+     ],
+     [
+      0.5,
+      0.4
+     ],
+     [
+      -0.2,
+      0.6
+     ]
+    ],
+    "pos_emb": [
+     [
+      0.0,
+      0.1
+     ],
+     [
+      0.1,
+      0.0
+     ],
+     [
+      0.2,
+      0.1
+     ]
+    ],
+    "ids": [
+     2,
+     0,
+     2
+    ],
+    "dX0": [
+     [
+      1.0,
+      0.0
+     ],
+     [
+      0.0,
+      1.0
+     ],
+     [
+      2.0,
+      2.0
+     ]
+    ]
+   },
+   "outputs": {
+    "tok": [
+     [
+      0.0,
+      1.0000000000065512
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      3.000000000019653,
+      2.0000000000131024
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "pos": [
+     [
+      1.0000000000065512,
+      0.0
+     ],
+     [
+      0.0,
+      1.0000000000065512
+     ],
+     [
+      1.9999999999908977,
+      2.0000000000131024
+     ]
+    ]
+   },
+   "shapes": {
+    "inputs": {
+     "tok_emb": [
+      4,
+      2
+     ],
+     "pos_emb": [
+      3,
+      2
+     ],
+     "ids": [
+      3
+     ],
+     "dX0": [
+      3,
+      2
+     ]
+    },
+    "outputs": {
+     "tok": [
+      4,
+      2
+     ],
+     "pos": [
+      3,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "id": "position_update.no_decay",
+   "mirrors": "transformer.embed_backward",
+   "kind": "illustrative",
+   "inputs": {
+    "problem": "position_update",
+    "T": 5,
+    "Tmax": 8,
+    "weight_decay": 0.0
+   },
+   "outputs": {
+    "gradient_nonzero": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     false,
+     false
+    ],
+    "row_changed": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     false,
+     false
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  },
+  {
+   "id": "position_update.with_decay",
+   "mirrors": "transformer.embed_backward",
+   "kind": "illustrative",
+   "inputs": {
+    "problem": "position_update",
+    "T": 5,
+    "Tmax": 8,
+    "weight_decay": 0.01
+   },
+   "outputs": {
+    "gradient_nonzero": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     false,
+     false
+    ],
+    "row_changed": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  }
+ ]
+}

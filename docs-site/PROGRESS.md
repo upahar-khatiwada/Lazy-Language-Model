@@ -448,3 +448,63 @@ Append one entry per finished task. Newest at the bottom.
 - Decisions needed from the human:
   - Still open from Task 07: `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while that task labelled them Derived.
 - Status: Task 08 written, with browser verification outstanding. Nothing was committed.
+
+### Task 09: Gradient Checking & Embeddings Pages (2026-11-05)
+- Files created or changed (all under `docs-site/`):
+  - Pages: new `content/testing/gradient-checking.mdx`, `content/mathematics/embeddings.mdx`.
+  - Concepts and links, one file each in `data/concepts/` and `data/links/`: `gradcheck.numerical_grad`, `gradcheck.relative_error`, `gradcheck.check_params`, `embedding.token`, `embedding.position`, `transformer.embed_forward`, `transformer.embed_backward`. Changed: `data/code-refs.ts`.
+  - Engine: new `lib/math/embeddings.ts`; `lib/math/gradcheck.ts` gains `relativeError`.
+  - Golden: `scripts/make_golden.py` (imports `tiny_setup` from `tests/test_gradcheck.py`, read-only), `lib/golden.ts`; new `data/golden/gradcheck.json`, `data/golden/embeddings.json`. 192 cases in 9 files. The other golden files have no content change.
+  - New components: `CentralDifferenceLab`, `GradcheckExamples`, `EmbeddingLab`, `EmbeddingExamples`. Changed: `OpsExamples` (`Value` and `WorkedTable` take `plain`, which shows 2 rather than 2.0000), `mdx.tsx`.
+  - Tests: new `tests/gradient-checking.test.ts`, `tests/embeddings.test.ts`, `tests/e2e/gradcheck-embeddings.spec.ts`. Changed: `tests/math.golden.test.ts`, `tests/math.mirrors.test.ts`, `tests/e2e/shell.spec.ts` (the pager test assumed the page after the last Mathematics page is Mathematics Reference; it now works out the next written page).
+  - `contract/DISCREPANCIES.md` section 4: one new row, position numbering in Eq. 40. `contract/` is git-ignored, so this edit exists only on this machine.
+  - Nothing outside `docs-site/` was changed. Nothing was committed. No dependency was added.
+- Commands run and results (Node v26.13.0 prepended to PATH for each process, Bun 1.3.13; `.next`, `out` and `test-results` deleted before the final run; HEAD `2e54f99`, `sha` `66da45b`):
+  - `bun install --frozen-lockfile`: `Checked 528 installs across 596 packages (no changes)`.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:derived`: `OK: 2 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 192 golden cases match a fresh run.`
+  - `bun run verify:links`: `OK: 190 links, 33 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `verify:content: not implemented yet`, exit 0. It is still the stub from Task 02, so this run checks nothing.
+  - `bun run typecheck`: exit 0. `bun run lint`: `All matched files use Prettier code style!`, exit 0.
+  - `bun run test`: `Test Files 16 passed (16)`, `Tests 946 passed (946)`.
+  - `bun run build`: `Compiled successfully`, exit 0.
+  - `bun run test:e2e`: `254 passed (11.9m)`, exit 0, on the final build. This is the full suite, so it also closes the e2e item Task 08 left open, including the LayerNorm browser tests. Axe at 1280 light and dark, 1000 light, and 390 light and dark on the two new pages: no findings, and no sideways page scroll.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.30s`.
+  - Acceptance, tamper: a scratchpad script applied 20 changes one at a time, ran the tests, restored and compared hashes. 19 were caught, including `accumulation becomes overwrite: Tests 6 failed`, `relative error drops eps: Tests 2 failed`, `wrong limit quoted on the page: Tests 2 failed`, `page stops saying learned: Tests 1 failed`, `position slice has the wrong shape: Tests 1 failed`, and an edited stored gradient (`Tests 5 failed`, `verify:golden` exit 1). The 20th changed the first `1e-12` on the page, a prose sentence nothing checked. A test was added, and both that sentence and the table row were then changed: `Tests 1 failed` each. Restored.
+  - By hand, reading `gradcheck.py` and the test file: `h = 1e-5`, `eps = 1e-12`, `samples_per_param = 5`, limits `1e-4`, `1e-12`, `atol=1e-8`. Tests compare each with the source.
+  - Screenshots reviewed by eye: lab at 1280 and 390 dark, report table at 1280, backward table at 1280, update table at 390 dark, tests and failure sections at 1280, on the build before the visual fixes; central-difference lab at 390 dark, backward table at 1280 and shape at 390 dark again on the final build. The lab's removed caption and the token table were not viewed afterwards.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. `git diff --stat -- ':(top)*.py'`: empty. Root `__pycache__` has 9 files, the same as before. No state-changing git command was run.
+  - Failures seen on the way:
+    - Long Git Bash heredocs failed again. A patch script also stopped halfway on a non-unique match, leaving 3 of its files patched. The rest was applied by a script that validates every pattern before writing.
+    - YAML rejected an unquoted `match` holding `: `. `verify:links` reported it. Fixed by quoting.
+    - Screenshots showed what the tests had missed: ids shown as `2.0000`, `x * x * x` wrapping one character per line at 390, and the `h` input cutting off its value at 390. All fixed. The lab now has plain `x` and `h` fields, so it does not use `MatrixInput`.
+- Findings, from running the real functions:
+  - `check_params` gives `.bk` values such as `1.0` and `2.8e-5` with correct gradients. They are round-off, one above `eps` and one guarded by it. The test skips these names, and the page explains why.
+  - `test_every_tensor_passes` stops at the first failing name. With a wrong value passed back from block 1, the report would name only `tok_emb`, far from the mistake. The page says so.
+  - `check_params` samples 5 entries per name, so a mistake in one entry of a large tensor can go unnoticed. The page says so.
+- Assumptions:
+  - Status labels: all seven concepts are Implemented, as the task says. `emb.chain` carries its own Derived from implementation badge, because the PDF gives only the result.
+  - `pdfRef` for `check_params` is section 4.4, p. 9, with no equation number, from E043 and row M62 in the contract. The PDF was not reopened (D4). The Trace block shows "Not stated in the PDF" only where `pdfRef` is null, and no concept here has that.
+  - All examples are Illustrative Example, including stored results of the real functions, because their inputs are hand-picked (Task 04's rule). The tiny model is labelled as not the trained model.
+  - `check_params.*` golden cases scale a gradient by 1.01 inside `make_golden.py`, including a temporary patch of `transformer.block_backward` in that process. The repository's files are not touched, and the caption discloses it.
+  - `verify:golden` compares `check_params` loosely: below `1e-4` as one value, above it to 4 decimals, and `.bk` not at all. Those values are round-off and may differ by machine. `verify:golden` on another machine was not tried.
+  - `numerical_grad` and `relative_error` show no `TensorShape`, because no parameter passes through them: the only caller of the first passes a vector of 3, and the second takes scalars. The prose under "Tensor shapes" says this. `check_params` shows `pos_emb` at `config.py` sizes, and its label says the test uses a smaller model.
+  - Token and position lookups are separate concepts, though both name M28, so each follows the nine steps. There is no `CodeReference` for them, since they are one expression of `embed_forward`, which the next section shows in full.
+  - The optional Part A interaction was included, because `x * x * x` shows the effect of `h` that a sentence cannot.
+  - "Why 32 rows and not 16" is stated as not available from the implementation. The page gives only what the code shows: `seq_len` is not a field of `ModelConfig`, and the table must fit the longest sequence.
+  - "In general" text on central differences follows the rule for E040 and E041: no equation, no claim about this project.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the task's parts.
+- Open issues:
+  - `verify:content` is still a stub. The task's final check therefore verifies nothing by itself; the checks live in the tests above.
+  - `/reference/sources` does not exist (the nav slug is `reference/sources-discrepancies`), so this entry's new row and Task 08's are only in `contract/DISCREPANCIES.md`. The page's task must include them.
+  - `TensorShape` draws arrows between stages, so `tok_emb[ids]`, `pos_emb[:T]` and `X0` read as a sequence rather than two terms and a sum. Its label says they are terms and a sum.
+  - At 390px, wide tables on these pages scroll inside their own wrapper, so the last columns of the central-difference table and the update table need a sideways scroll.
+  - Links to unwritten pages (Attention, How the Model Learns) show as disabled text until those pages exist.
+  - The `__next.!KGRvY3Mp.__PAGE__.txt` 404 still appears in server logs.
+  - GitHub links were not opened, because the working rules allow no requests to other sites.
+- LLM observations, reported only and nothing changed: no new bugs. The comment on `transformer.py` line 22 is already in `contract/HYPERPARAMETERS.md` section 5; the Embeddings page shows that line, so it states that the comment does not describe the code.
+- Decisions needed from the human:
+  - Still open from Task 07: `contract/MATH_INVENTORY.md` marks M08 and M15 Implemented, while that task labelled them Derived.
+- Status: Task 09 finished. Task 08's e2e item is closed by the full run above. Nothing was committed.

@@ -1,0 +1,54 @@
+id: embedding.position
+title: Positional embedding
+category: embeddings
+inventory: [M28]
+status: implemented
+summary: >-
+  pos_emb is a second learned table, with one row for each position. init_params creates it with
+  xavier_uniform, like any other matrix, and training changes it. It is not computed from a fixed
+  formula. A sequence of length T uses the first T rows.
+why: >-
+  The token table gives an id the same row wherever it appears. Adding a row chosen by position makes
+  the vectors differ, so the same token at two positions enters the first block as two different
+  vectors.
+equations:
+  - id: emb.position
+    latex: \left(P[:T]\right)_t = P_t, \quad t = 0, \ldots, T - 1
+    role: forward
+    label: The first T rows of the position table
+symbols:
+  - symbol: P
+    meaning: The position table. A parameter
+    codeName: params["pos_emb"]
+    shape: (Tmax, d)
+  - symbol: T
+    meaning: The length of this sequence
+    codeName: len(ids)
+    shape: scalar
+  - symbol: P[:T]
+    meaning: The rows this sequence uses. The code does not give this array a name
+    codeName: null
+    shape: (T, d)
+example: null
+shapes:
+  - id: position-slice
+    label: The table is cut to the length of the sequence
+    stages:
+      - name: pos_emb
+        dims: [Tmax, d]
+      - name: pos_emb[:T]
+        dims: [T, d]
+    target:
+      file: transformer.py
+      symbol: transformer.embed_forward
+      match: 'params["pos_emb"][: len(ids)]'
+source:
+  - file: transformer.py
+    symbol: transformer.embed_forward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["39"]
+  page: 10
+notes:
+  - A comment on the line that creates the table calls it a weighted average of values. The code draws a plain table.

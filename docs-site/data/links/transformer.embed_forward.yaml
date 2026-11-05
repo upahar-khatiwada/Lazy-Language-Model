@@ -1,0 +1,21 @@
+links:
+  - equationId: emb.sum
+    file: transformer.py
+    symbol: transformer.embed_forward
+    match: 'return params["tok_emb"][ids] + params["pos_emb"][: len(ids)]'
+    role: implements
+  - equationId: emb.sum-matrix
+    file: transformer.py
+    symbol: transformer.embed_forward
+    match: 'return params["tok_emb"][ids] + params["pos_emb"][: len(ids)]'
+    role: implements
+  - equationId: emb.sum-matrix
+    file: transformer.py
+    symbol: transformer.forward
+    match: X = embed_forward(params, ids)
+    role: call
+  - equationId: emb.sum-matrix
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_embedding_worked_example
+    match: X0 = embed_forward(params, np.array([2, 0, 2]))
+    role: test

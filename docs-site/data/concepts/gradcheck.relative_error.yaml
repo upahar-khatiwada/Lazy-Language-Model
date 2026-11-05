@@ -1,0 +1,42 @@
+id: gradcheck.relative_error
+title: Relative error
+category: gradient-checking
+inventory: [M61]
+status: implemented
+summary: >-
+  relative_error compares two numbers. It divides their absolute difference by the larger of their two
+  sizes, or by a small constant eps if that is larger still.
+why: >-
+  In general, gradients can differ in size by many orders of magnitude, so a single absolute limit
+  would suit some entries and not others. A relative measure allows one limit for all of them. The eps
+  guard keeps the division defined when both numbers are 0.
+equations:
+  - id: gradcheck.relative
+    latex: \operatorname{rel}(a, b) = \frac{|a - b|}{\max\left(|a|,\, |b|,\, \varepsilon\right)}
+    role: none
+    label: Relative error with the epsilon guard
+symbols:
+  - symbol: a
+    meaning: First number. check_params passes the gradient from the backward code
+    codeName: a
+    shape: scalar
+  - symbol: b
+    meaning: Second number. check_params passes the central difference
+    codeName: b
+    shape: scalar
+  - symbol: \varepsilon
+    meaning: The guard on the denominator. The default is 1e-12
+    codeName: eps
+    shape: scalar
+example: null
+shapes: []
+source:
+  - file: gradcheck.py
+    symbol: gradcheck.relative_error
+usedBy: []
+pdfRef:
+  section: "4.4"
+  equations: ["38"]
+  page: 8
+notes:
+  - The PDF lists three error bands. The repository has none of them, only the limit in the test.

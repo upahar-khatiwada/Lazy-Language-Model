@@ -1,0 +1,206 @@
+---
+title: Gradient Checking
+description: How gradcheck.py estimates gradients with central differences, how it compares them with the hand-written backward code, what the tests assert, and how to read a failure.
+sourceFile: gradcheck.py
+status: published
+---
+
+<Callout kind="note">
+
+This whole page is test-only mathematics. `gradcheck.py` is not part of the pipeline: neither training nor generation imports it. Only `tests/test_gradcheck.py` does.
+
+</Callout>
+
+The project has no autograd. Every backward function is written by hand, so the tests need another way to tell whether a gradient is right. They estimate each gradient from the loss alone, using only forward evaluations, and compare the two.
+
+## Central differences
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="gradcheck.numerical_grad" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="gradcheck.numerical_grad" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="gradcheck.central" />
+
+The default step is `h = 1e-5` (<CodeLine id="gradcheck.default-h" />). `check_params` has its own `h` argument with the same default, and the tests leave both at their defaults.
+
+<Callout kind="note">
+
+In general, a central difference is more accurate than a one-sided one, because its leading error term cancels. The error from the formula shrinks as `h` gets smaller, but round-off grows, because `fp - fm` becomes a tiny difference between two nearly equal numbers. So `h` should be neither very large nor very small. This is a general explanation. The repository only fixes one value, and it does not study this trade-off.
+
+</Callout>
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="gradcheck.numerical_grad" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Try `h = 0.1`, then `h = 1e-13`. For `x * x * x`, the error grows in both directions. For `x * x`, the formula's error is exactly 0, so only round-off shows.
+
+<CentralDifferenceExample concept="gradcheck.numerical_grad" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`g` starts as `np.zeros_like(x)`, so it has the shape of `x`, whatever that is. The only caller, `test_numerical_grad_on_quadratic`, passes a vector of 3 numbers. No test runs `numerical_grad` on a model parameter. That is the job of `check_params`, below.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="gradcheck.numerical_grad" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="gradcheck.numerical_grad" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="gradcheck.numerical_grad" />
+
+## Relative error
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="gradcheck.relative_error" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="gradcheck.relative_error" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="gradcheck.relative" />
+
+**The epsilon guard.** If `a` and `b` are both 0, the denominator would be 0 without `eps`. With it, the result is `0 / 1e-12`, which is 0. This happens in practice: at any entry the loss does not depend on, both the gradient and the central difference are exactly 0.
+
+The guard only helps below `1e-12`. If both numbers are near 0, but one is above `eps`, the result is close to 1. The last row of the example shows this, and it is why the test skips one kind of parameter, as described under [What the tests assert](#what-the-tests-assert).
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="gradcheck.relative_error" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<RelativeErrorExample concept="gradcheck.relative_error" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+Both arguments are scalars, and so is the result. `check_params` calls it once for each sampled entry.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="gradcheck.relative_error" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="gradcheck.relative_error" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+Its only caller is `check_params`, which only a test calls, so the pipeline never reaches it. No test calls it directly.
+
+<Trace concept="gradcheck.relative_error" />
+
+## Checking every parameter
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="gradcheck.check_params" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="gradcheck.check_params" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="gradcheck.worst" />
+
+For each name, the function draws `samples_per_param` random entries, 5 by default. Each entry takes one random integer per axis (<CodeLine id="gradcheck.sample" />). It nudges that entry in place, runs the loss twice, restores the entry, and keeps the largest relative error so far.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="gradcheck.check_params" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+The example is in [Reading a failure](#reading-a-failure), where its columns can be compared.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+`grads[name]` has the shape of the parameter with that name, because `loss_and_grads` builds `grads` with `np.zeros_like`. Each `idx` has one integer per axis of that shape.
+
+<TensorShape concept="gradcheck.check_params" shape="check-params-position" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="gradcheck.check_params" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="gradcheck.check_params" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="gradcheck.check_params" />
+
+## What the tests assert
+
+`tests/test_gradcheck.py` builds a small model, smaller than the one in `config.py`, and passes `check_params` a function that returns only the loss:
+
+<CodeReference symbol="tests.test_gradcheck.tiny_setup" />
+
+<CodeReference symbol="tests.test_gradcheck.test_every_tensor_passes" />
+
+The file has three limits, and these are all of them:
+
+| Test                               | Compares                                                      | Limit                       |
+| ---------------------------------- | ------------------------------------------------------------- | --------------------------- |
+| `test_every_tensor_passes`         | Worst relative error for every name except those ending `.bk` | below `1e-4`                |
+| `test_key_bias_gradient_is_zero`   | Largest absolute value in the gradient of each `b{l}.bk`      | below `1e-12`               |
+| `test_numerical_grad_on_quadratic` | `numerical_grad` of a sum of squares against `2 * x`          | `atol=1e-8` (`np.allclose`) |
+
+The last one also applies the default relative tolerance of `np.allclose`.
+
+**Why `.bk` is skipped.** The key bias adds the same amount to every score in a row, and softmax ignores that, so its true gradient is 0. Both the backward code and the central difference then give only round-off, and as the Relative error section shows, the ratio of two such numbers says nothing useful. So a separate test checks the backward value directly:
+
+<CodeStep id="gradcheck.test-bk" />
+
+**Limits of these checks.**
+
+- Each name gets only 5 random entries, so a mistake in a single entry of a large tensor can go unnoticed.
+- The test runs one setup with one seed, on the tiny model, not at the sizes in `config.py`.
+- The test `test_numerical_grad_on_quadratic` checks `numerical_grad` itself. `check_params` repeats the same formula in its own code and does not call `numerical_grad`.
+
+## Reading a failure
+
+A failed assertion prints the name and the error, because of the second part of `assert err < 1e-4, (name, err)`. The name is a key of the parameter dictionary, and it tells you which tensor to look at:
+
+| Name in the report                                               | What it is                        | Where its gradient is filled      |
+| ---------------------------------------------------------------- | --------------------------------- | --------------------------------- |
+| `tok_emb`                                                        | Token table                       | <CodeLine id="embed.back-tok" />  |
+| `pos_emb`                                                        | Position table                    | <CodeLine id="embed.back-pos" />  |
+| `b{l}.ln1_g`, `b{l}.ln1_b`                                       | First LayerNorm of block `l`      | <CodeLine id="update.ln1" />      |
+| `b{l}.wq`, `b{l}.bq`, `b{l}.wk`, `b{l}.bk`, `b{l}.wv`, `b{l}.bv` | Query, key and value of block `l` | <CodeLine id="linear.back-qkv" /> |
+| `b{l}.wo`, `b{l}.bo`                                             | Attention output of block `l`     | <CodeLine id="linear.back-out" /> |
+| `b{l}.ln2_g`, `b{l}.ln2_b`                                       | Second LayerNorm of block `l`     | <CodeLine id="update.ln2" />      |
+| `b{l}.ff1_w`, `b{l}.ff1_b`                                       | First feed-forward layer          | <CodeLine id="update.ff" />       |
+| `b{l}.ff2_w`, `b{l}.ff2_b`                                       | Second feed-forward layer         | <CodeLine id="update.ff2" />      |
+| `lnf_g`, `lnf_b`                                                 | Final LayerNorm                   | <CodeLine id="update.lnf" />      |
+| `head_w`, `head_b`                                               | Head                              | <CodeLine id="update.head" />     |
+
+The pattern of names says more than one name does. Backward runs from the head to the embeddings, so a wrong gradient that is passed along affects everything computed after it:
+
+- **One name fails.** Look at the line that fills that tensor. In the second column below, only `b1.wq` is above the limit.
+- **Many names fail together.** Go through the names in backward order, and look between the last one that passes and the first one that fails. In the third column, the value `block_backward` returns for block 1 is wrong. Block 1 still passes, because its gradients are filled before it returns. Block 0 and both embedding tables fail.
+
+<CheckParamsExample concept="gradcheck.check_params" />
+
+The `.bk` rows hold round-off, as explained above, so their values are not a failure.
+
+**The assertion stops at the first failure.** `test_every_tensor_passes` loops over `worst` in the order `init_params` created the names, and the first failure ends the test. With the third column, the report names only `tok_emb`, the first name in the dictionary, even though the mistake is elsewhere. To see the pattern, print the whole dictionary that `check_params` returns.
+
+Note that a check can only point to where a gradient disagrees with the loss. It cannot say whether the mistake is in the forward or the backward code, because the loss comes from the forward code, and the check treats it as correct.

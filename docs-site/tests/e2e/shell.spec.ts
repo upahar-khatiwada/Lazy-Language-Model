@@ -20,6 +20,11 @@ const LAST_WRITTEN_MATHEMATICS = `/${
     .at(-1)!.slug
 }/`;
 
+const LAST_MATHEMATICS_SLUG = LAST_WRITTEN_MATHEMATICS.slice(1, -1);
+const NEXT_WRITTEN_AFTER_MATHEMATICS = NAV_PAGES.slice(
+  NAV_PAGES.findIndex(({ slug }) => slug === LAST_MATHEMATICS_SLUG) + 1,
+).find(({ slug }) => isWritten(slug))!;
+
 const repoMeta = JSON.parse(readFileSync("data/generated/repo-meta.json", "utf-8")) as {
   sha: string;
   shortSha: string;
@@ -137,8 +142,8 @@ test.describe("desktop, 1280px", () => {
     // to the next written one.
     await page.goto(LAST_WRITTEN_MATHEMATICS);
     await expect(pager.getByRole("link", { name: new RegExp(NAV_FIRST_UNWRITTEN) })).toHaveCount(0);
-    await pager.getByRole("link", { name: /Mathematics Reference/ }).click();
-    await expect(page).toHaveURL(/\/reference\/mathematics\/$/);
+    await pager.getByRole("link", { name: NEXT_WRITTEN_AFTER_MATHEMATICS.title }).click();
+    await expect(page).toHaveURL(new RegExp(`/${NEXT_WRITTEN_AFTER_MATHEMATICS.slug}/$`));
   });
 
   test("the rail lists h2 and h3 headings and follows scrolling in both directions", async ({

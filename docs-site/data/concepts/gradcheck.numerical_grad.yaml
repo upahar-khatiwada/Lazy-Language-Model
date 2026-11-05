@@ -1,0 +1,55 @@
+id: gradcheck.numerical_grad
+title: Central difference
+category: gradient-checking
+inventory: [M60]
+status: implemented
+summary: >-
+  numerical_grad estimates a gradient without using any backward code. For each entry of x, it raises
+  the entry by h, evaluates f, lowers it by h, evaluates f again, and divides the change by 2h. It
+  then puts the entry back. Only tests call it.
+why: >-
+  This project has no autograd, so every backward function is written by hand and could be wrong.
+  Central differences use only forward evaluations, so they give an estimate that does not depend on
+  the backward code being checked.
+equations:
+  - id: gradcheck.central
+    latex: g_i = \frac{f(x + h\, e_i) - f(x - h\, e_i)}{2h}
+    role: none
+    label: Central difference for one entry
+symbols:
+  - symbol: f
+    meaning: A function of x that returns one number
+    codeName: f
+    shape: scalar
+  - symbol: x
+    meaning: The array being varied. It is changed in place and restored
+    codeName: x
+    shape: any
+  - symbol: h
+    meaning: The step. The default is 1e-5
+    codeName: h
+    shape: scalar
+  - symbol: e_i
+    meaning: One at entry i and zero elsewhere. The code writes this by editing x[idx] directly
+    codeName: idx
+    shape: index into x
+  - symbol: f(x + h\, e_i),\ f(x - h\, e_i)
+    meaning: The two evaluations
+    codeName: fp, fm
+    shape: scalar
+  - symbol: g
+    meaning: The estimated gradient
+    codeName: g
+    shape: same as x
+example: null
+shapes: []
+source:
+  - file: gradcheck.py
+    symbol: gradcheck.numerical_grad
+usedBy: []
+pdfRef:
+  section: "4.4"
+  equations: ["37"]
+  page: 8
+notes:
+  - Only the left side of the PDF's Eq. 37 is in the code. Its expansion in powers of h is not.

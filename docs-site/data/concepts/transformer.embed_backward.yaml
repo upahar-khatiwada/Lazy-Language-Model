@@ -1,0 +1,85 @@
+id: transformer.embed_backward
+title: Embedding backward
+category: embeddings
+inventory: [M29]
+status: implemented
+summary: >-
+  embed_backward takes dX0, the gradient of the loss on the first block's input, and fills the gradients
+  of both tables. Each row of dX0 is added to the token row of its id and to the position row of its
+  position. Nothing is returned, because the backward pass ends here.
+why: >-
+  tok_emb and pos_emb are parameters, so the optimizer needs a gradient for each of them. The ids are
+  integers and have no gradient, so these two tables are the last place a gradient can go.
+equations:
+  - id: emb.chain
+    latex: >-
+      \frac{\partial L}{\partial E_{vj}} = \sum_{t} dX^{(0)}_{tj}\, \frac{\partial X^{(0)}_{tj}}{\partial E_{vj}},
+      \qquad \frac{\partial X^{(0)}_{tj}}{\partial E_{vj}} =
+      \begin{cases} 1 & i_t = v \\ 0 & \text{otherwise} \end{cases}
+    role: backward
+    label: The chain rule for one entry of the token table
+    derived: true
+  - id: emb.dtok
+    latex: dE_v = \sum_{t\,:\, i_t = v} dX^{(0)}_t
+    role: backward
+    label: Gradient accumulation per token row
+  - id: emb.dpos
+    latex: >-
+      dP_t = \begin{cases} dX^{(0)}_t & t < T \\ 0 & t \geq T \end{cases}
+    role: backward
+    label: Gradient on the position table
+symbols:
+  - symbol: dX^{(0)}
+    meaning: Gradient of the loss on the first block's input. loss_and_grads calls it dX, and the function's parameter is dX0
+    codeName: dX0
+    shape: (T, d)
+  - symbol: dE
+    meaning: Gradient on the token table
+    codeName: grads["tok_emb"]
+    shape: (V, d)
+  - symbol: dP
+    meaning: Gradient on the position table
+    codeName: grads["pos_emb"]
+    shape: (Tmax, d)
+  - symbol: v
+    meaning: A row of the token table
+    codeName: null
+    shape: scalar
+  - symbol: i_t
+    meaning: The id at position t
+    codeName: ids[t]
+    shape: scalar
+example: null
+shapes:
+  - id: embed-backward-token
+    label: Into the token table. Rows of ids not in this window stay 0
+    stages:
+      - name: dX0
+        dims: [T, d]
+      - name: grads["tok_emb"]
+        dims: [V, d]
+    target:
+      file: transformer.py
+      symbol: transformer.embed_backward
+      match: np.add.at(grads["tok_emb"], ids, dX0)
+  - id: embed-backward-position
+    label: Into the position table. Rows from T onward stay 0
+    stages:
+      - name: dX0
+        dims: [T, d]
+      - name: grads["pos_emb"]
+        dims: [Tmax, d]
+    target:
+      file: transformer.py
+      symbol: transformer.embed_backward
+      match: 'grads["pos_emb"][: len(ids)] += dX0'
+source:
+  - file: transformer.py
+    symbol: transformer.embed_backward
+usedBy: []
+pdfRef:
+  section: "4.5"
+  equations: ["40"]
+  page: 10
+notes:
+  - The PDF numbers positions from 1 in Eq. 40. The code numbers them from 0.

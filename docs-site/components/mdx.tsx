@@ -16,12 +16,25 @@ import {
   WindowExample,
 } from "./DataExamples";
 import { DataTable } from "./DataTable";
+import {
+  EmbeddingBackwardExample,
+  EmbeddingLabExample,
+  PositionExample,
+  PositionUpdateExample,
+  TokenLookupExample,
+  UnusedPositionRows,
+} from "./EmbeddingExamples";
 import { EquationCode } from "./EquationCode";
 import {
   LayerNormBackwardExample,
   LayerNormDerivationExample,
   LayerNormLabExample,
 } from "./LayerNormExamples";
+import {
+  CentralDifferenceExample,
+  CheckParamsExample,
+  RelativeErrorExample,
+} from "./GradcheckExamples";
 import { MathBlock } from "./MathBlock";
 import { MathCodeLink } from "./MathCodeLink";
 import { MathReference } from "./MathReference";
@@ -63,6 +76,8 @@ export const mdxComponents: MDXComponents = {
   BatchExample,
   BpeExample,
   Callout,
+  CentralDifferenceExample,
+  CheckParamsExample,
   CodeLine,
   CodeReference,
   CodeStep,
@@ -73,6 +88,8 @@ export const mdxComponents: MDXComponents = {
   CorpusExample,
   CrossEntropyBackwardExample,
   CrossEntropyExample,
+  EmbeddingBackwardExample,
+  EmbeddingLabExample,
   EncodeExample,
   EquationCode,
   FullPipelineDiagram,
@@ -97,6 +114,9 @@ export const mdxComponents: MDXComponents = {
   ParameterTable,
   PerplexityExample,
   PipelineDiagram,
+  PositionExample,
+  PositionUpdateExample,
+  RelativeErrorExample,
   ReluExample,
   RepoMap,
   SoftmaxBackwardExample,
@@ -107,7 +127,9 @@ export const mdxComponents: MDXComponents = {
   SymbolCoverage,
   Symbols,
   TensorShape,
+  TokenLookupExample,
   Trace,
+  UnusedPositionRows,
   VocabularyExample,
   WindowCountExample,
   WindowExample,

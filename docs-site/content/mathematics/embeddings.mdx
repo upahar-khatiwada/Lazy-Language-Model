@@ -1,0 +1,218 @@
+---
+title: Embeddings
+description: The token table, the learned position table, their sum, why the position table has more rows than a training window, and the backward pass that accumulates gradients for repeated ids.
+sourceFile: transformer.py
+status: published
+---
+
+Embeddings turn a list of token ids into the matrix the first block reads. The model does this with two learned tables and one addition. This page covers each table, the sum, the size of the position table and the backward pass.
+
+## Token embedding
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="embedding.token" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="embedding.token" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="emb.lookup" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="embedding.token" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Id 2 appears twice, so its row appears twice.
+
+<TokenLookupExample concept="embedding.token" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="embedding.token" shape="token-lookup" />
+
+<TensorShape concept="embedding.token" shape="token-table" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+`init_params` creates the table, and the lookup is the first term of `embed_forward`, shown under [Embedding sum](#embedding-sum).
+
+<CodeStep id="embed.tok-table" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="embedding.token" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="embedding.token" />
+
+## Positional embedding
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="embedding.position" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="embedding.position" />
+
+<Callout kind="note">
+
+In general, attention compares vectors by their contents, so two identical vectors get the same query, key and value. The causal mask limits which earlier rows each row can read, but it does not say how far back a row is. Position information gives the model a way to tell these cases apart. This is a general explanation. Nothing in this repository measures that effect.
+
+</Callout>
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="emb.position" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="embedding.position" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<PositionExample concept="embedding.position" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="embedding.position" shape="position-slice" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+The positions are learned because the code makes them so. This line puts `pos_emb` in the same parameter dictionary as every other matrix, and `embed_backward` gives it a gradient:
+
+<CodeStep id="embed.pos-table" />
+
+The comment on that line says "weighted average of values". That does not describe the code, which draws a plain table with one row per position.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="embedding.position" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="embedding.position" />
+
+## Embedding sum
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.embed_forward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.embed_forward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="emb.sum" />
+
+<MathBlock id="emb.sum-matrix" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.embed_forward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+Pick ids and a length. Choose the same id twice to see two things. The rows of `X0` differ, because their positions differ. And the token gradient for that id collects both rows of `dX0`, which the [backward section](#embedding-backward) explains.
+
+<EmbeddingLabExample concept="transformer.embed_forward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="transformer.embed_forward" shape="embedding-sum" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.embed_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.embed_forward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="transformer.embed_forward" />
+
+## Why the position table is longer than a window
+
+The table has <ConfigValue name="context_len" /> rows, set by `context_len`. Training windows have <ConfigValue name="seq_len" /> tokens, set by `seq_len`. These are separate settings, and they do different jobs.
+
+**`context_len` is a size in the model.** It decides the shape of `pos_emb`, and it is a field of `ModelConfig` (<CodeLine id="embed.config-field" />). `seq_len` is not a field of `ModelConfig`, so the model does not know how long a window is. All it checks is that a sequence fits the table:
+
+<CodeStep id="forward.assert" />
+
+`config.py` also asserts, on import, that `seq_len` is not above `context_len`.
+
+**`seq_len` is how the callers cut their sequences.** Training uses it to cut the windows (<CodeLine id="train.windows" />), and `talk.py` passes it as the generation window (<CodeLine id="talk.generate" />). `generate` then keeps only that many of the latest ids:
+
+<CodeStep id="embed.generate-window" />
+
+**So the table has to be at least as long as the longest sequence, and it can be longer.** `embed_forward` slices the table to the length of its input, so a sequence of any length up to `context_len` works. A short prompt relies on this. Why this project sets the two to different values is not available from the implementation.
+
+**What this means at the values in `config.py`.** No sequence goes past `seq_len`, so rows <UnusedPositionRows /> of `pos_emb` are never read. They are still created, saved in checkpoints and updated. They get a gradient of 0 from `embed_backward`, but `Adam.step` applies weight decay whatever the gradient is, so they shrink a little at each step. The table below shows this on a small model:
+
+<PositionUpdateExample />
+
+## Embedding backward
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="transformer.embed_backward" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="transformer.embed_backward" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+Each row of the sum depends on one token row, with a derivative of 1. So the chain rule keeps only the positions that hold that id.
+
+<MathBlock id="emb.chain" />
+
+<MathBlock id="emb.dtok" />
+
+Each position has its own row, so there is nothing to accumulate in the position table.
+
+<MathBlock id="emb.dpos" />
+
+**Why repeated ids must accumulate.** If an id appears at two positions, the loss depends on its table row twice, once through each position. The derivative is the sum of both effects, so both rows of `dX0` belong in the gradient. Dropping either one gives a wrong gradient.
+
+`np.add.at` does one addition for each element of `ids`, so it gets this right. The shorter `g[ids] += dX0` does not. NumPy reads each selected row once, adds, and writes back, so for a repeated id the last write replaces the earlier ones. The code uses `np.add.at` for the token table. The position table can use a plain slice because its rows are never repeated.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="transformer.embed_backward" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<EmbeddingBackwardExample concept="transformer.embed_backward" />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="transformer.embed_backward" shape="embed-backward-token" />
+
+<TensorShape concept="transformer.embed_backward" shape="embed-backward-position" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="transformer.embed_backward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="transformer.embed_backward" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+It is the last step of `loss_and_grads`, after every block has run backward (<CodeLine id="embed.back-call" />).
+
+<Trace concept="transformer.embed_backward" />
+
+**How this reaches a parameter update.** `embed_backward` fills `grads` directly. `batch_loss_and_grads` averages the gradients over the batch (<CodeLine id="train.gradient" />), `clip_grad_norm` may scale them (<CodeLine id="train.clip" />), and `opt.step` uses them (<CodeLine id="train.adamw" />). Both tables are matrices, so both also get weight decay. A token row with no id in the batch has a gradient of 0 for that step. It can still move, through what Adam holds from earlier steps and through weight decay.

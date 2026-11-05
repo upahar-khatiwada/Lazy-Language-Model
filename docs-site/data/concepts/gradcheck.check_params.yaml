@@ -1,0 +1,75 @@
+id: gradcheck.check_params
+title: Checking every parameter
+category: gradient-checking
+inventory: [M62]
+status: implemented
+summary: >-
+  check_params goes through the parameter dictionary one name at a time. For each name it picks a few
+  random entries, compares the gradient from the backward code with a central difference at each one,
+  and keeps the worst relative error. It returns a dictionary from parameter name to worst error.
+why: >-
+  It checks the whole forward and backward pass against the loss, for every parameter. Sampling keeps
+  the test quick, because each sampled entry costs two evaluations of the loss. Reporting by name says
+  which tensor disagrees.
+equations:
+  - id: gradcheck.worst
+    latex: >-
+      \operatorname{worst}[n] = \max_{s = 1,\ldots,S}\ \operatorname{rel}\!\left(\frac{\partial L}{\partial \theta_n}[i_s],\ \frac{L(\theta_n[i_s] + h) - L(\theta_n[i_s] - h)}{2h}\right)
+    role: none
+    label: Worst relative error for one parameter name
+symbols:
+  - symbol: n
+    meaning: A key of the parameter dictionary, such as pos_emb or b0.wq
+    codeName: name
+    shape: string
+  - symbol: \theta_n
+    meaning: The parameter with that name
+    codeName: W
+    shape: that parameter's own shape
+  - symbol: S
+    meaning: Samples for each name. The default is 5
+    codeName: samples_per_param
+    shape: scalar
+  - symbol: i_s
+    meaning: A random entry, one random integer per axis. Samples can repeat, because they are drawn with replacement
+    codeName: idx
+    shape: tuple, one integer per axis
+  - symbol: L
+    meaning: The loss, as a function of the parameters
+    codeName: loss_fn
+    shape: scalar
+  - symbol: \frac{\partial L}{\partial \theta_n}
+    meaning: The gradient from the backward code, computed once before the call
+    codeName: grads[name]
+    shape: same as W
+  - symbol: h
+    meaning: The step. The default is 1e-5, the same as numerical_grad
+    codeName: h
+    shape: scalar
+  - symbol: \operatorname{worst}[n]
+    meaning: The value returned for that name. It starts at 0.0
+    codeName: worst[name]
+    shape: scalar
+example: null
+shapes:
+  - id: check-params-position
+    label: One name, at the sizes in config.py. The test itself uses a smaller ModelConfig
+    stages:
+      - name: W = pos_emb
+        dims: [Tmax, d]
+      - name: grads["pos_emb"]
+        dims: [Tmax, d]
+    target:
+      file: gradcheck.py
+      symbol: gradcheck.check_params
+      match: idx = tuple(int(rng.integers(s)) for s in W.shape)
+source:
+  - file: gradcheck.py
+    symbol: gradcheck.check_params
+usedBy: []
+pdfRef:
+  section: "4.4"
+  equations: []
+  page: 9
+notes:
+  - The inventory records this as prose in the PDF, with no equation number of its own.

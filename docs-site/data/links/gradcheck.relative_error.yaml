@@ -1,0 +1,11 @@
+links:
+  - equationId: gradcheck.relative
+    file: gradcheck.py
+    symbol: gradcheck.relative_error
+    match: return abs(a - b) / max(abs(a), abs(b), eps)
+    role: implements
+  - equationId: gradcheck.relative
+    file: gradcheck.py
+    symbol: gradcheck.check_params
+    match: relative_error(grads[name][idx], (fp - fm) / (2 * h))
+    role: call

@@ -1,0 +1,11 @@
+links:
+  - equationId: emb.lookup
+    file: transformer.py
+    symbol: transformer.embed_forward
+    match: params["tok_emb"][ids]
+    role: implements
+  - equationId: emb.lookup
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_embedding_worked_example
+    match: X0 = embed_forward(params, np.array([2, 0, 2]))
+    role: test

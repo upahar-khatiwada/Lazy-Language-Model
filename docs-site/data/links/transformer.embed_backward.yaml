@@ -1,0 +1,31 @@
+links:
+  - equationId: emb.chain
+    file: transformer.py
+    symbol: transformer.embed_backward
+    match: np.add.at(grads["tok_emb"], ids, dX0)
+    role: implements
+  - equationId: emb.dtok
+    file: transformer.py
+    symbol: transformer.embed_backward
+    match: np.add.at(grads["tok_emb"], ids, dX0)
+    role: implements
+  - equationId: emb.dpos
+    file: transformer.py
+    symbol: transformer.embed_backward
+    match: 'grads["pos_emb"][: len(ids)] += dX0'
+    role: implements
+  - equationId: emb.dtok
+    file: transformer.py
+    symbol: transformer.loss_and_grads
+    match: embed_backward(dX, ids, grads)
+    role: call
+  - equationId: emb.dtok
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_embedding_backward_sums_repeated_ids
+    match: assert np.allclose(grads["tok_emb"][2], [3, 2])
+    role: test
+  - equationId: emb.dpos
+    file: tests/test_transformer.py
+    symbol: tests.test_transformer.test_embedding_backward_sums_repeated_ids
+    match: assert np.allclose(grads["pos_emb"], dX0)
+    role: test
