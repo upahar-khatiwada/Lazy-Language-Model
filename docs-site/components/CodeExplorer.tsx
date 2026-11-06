@@ -35,9 +35,11 @@ import {
   type TreeNode,
 } from "@/lib/code-explorer";
 import { highlightPython, type CodeToken } from "@/lib/highlight";
+import { equationsByLine } from "@/lib/links";
 import { Badge } from "./Badge";
 import codeStyles from "./CodeBlock.module.css";
 import styles from "./CodeExplorer.module.css";
+import { EquationMark } from "./CodeFrame";
 import { CopyButton } from "./CopyButton";
 import { DataTable } from "./DataTable";
 import { InlineCode } from "./InlineCode";
@@ -610,7 +612,11 @@ function ConstantsTable({ file, symbols }: { file: ExplorerFile; symbols: FileSy
 
 // ---------- source ----------
 
-function renderSource(nodes: SourceNode[], lines: CodeToken[][]): ReactNode {
+function renderSource(
+  nodes: SourceNode[],
+  lines: CodeToken[][],
+  equations: ReadonlyMap<number, string[]>,
+): ReactNode {
   return nodes.map((node) => {
     if (node.kind === "symbol") {
       return (
@@ -622,17 +628,20 @@ function renderSource(nodes: SourceNode[], lines: CodeToken[][]): ReactNode {
           data-end={node.endLine}
           key={`${node.anchor}`}
         >
-          {renderSource(node.children, lines)}
+          {renderSource(node.children, lines, equations)}
         </span>
       );
     }
+    const slugs = equations.get(node.line);
     return (
       <span
         className={`${codeStyles.line} ${styles.sourceLine}`}
         id={`L${node.line}`}
         data-line={node.line}
+        data-eqs={slugs?.join(" ")}
         key={node.line}
       >
+        {slugs ? <EquationMark line={node.line} slugs={slugs} /> : null}
         <span className={codeStyles.number} aria-hidden="true">
           {node.line}
         </span>
@@ -673,7 +682,7 @@ export async function SourceListing({
         aria-label={`Source of ${file.path}`}
       >
         <code className={codeStyles.code}>
-          {renderSource(sourceTree(file.lineCount, symbols), lines)}
+          {renderSource(sourceTree(file.lineCount, symbols), lines, equationsByLine(file.path))}
         </code>
       </pre>
     </figure>

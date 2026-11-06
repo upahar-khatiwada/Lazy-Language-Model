@@ -1,4 +1,5 @@
 import type { MDXComponents } from "mdx/types";
+import { ActualEmbeddingsPanel, ActualGenerationPanel, ActualTokenizerPanel } from "./ActualPanels";
 import { InitialValues, ParameterCount, ParameterTable, RepoMap } from "./ArchitectureTables";
 import {
   ActualModelOutputSlot,
@@ -133,7 +134,10 @@ import {
 // Only id-based components are offered for equations and code, so a page cannot inline either.
 export const mdxComponents: MDXComponents = {
   table: (props) => <DataTable {...props} />,
+  ActualEmbeddingsPanel,
+  ActualGenerationPanel,
   ActualModelOutputSlot,
+  ActualTokenizerPanel,
   AdamCalculatorExample,
   AdamTwoStepExample,
   AttentionBackwardExample,

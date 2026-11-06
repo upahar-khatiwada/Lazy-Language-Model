@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
+import { loadActual, provenanceLine } from "@/lib/actual";
 import { LAB_STEPS, LAB_TOKENS, type LabInputs, type LabStepId } from "@/lib/attention-lab";
 import { getSymbol } from "@/lib/code-targets";
 import { exampleAnchor } from "@/lib/concepts";
 import { resolveDimension } from "@/lib/dimensions";
 import { getGoldenCase } from "@/lib/golden";
 import { highlightPython } from "@/lib/highlight";
-import { highlightedLines } from "@/lib/links";
+import { highlightedLines, lineEquations } from "@/lib/links";
 import { attentionBackward, attentionForward, type AttentionParams } from "@/lib/math/attention";
 import { numericalGrad, outputDot } from "@/lib/math/gradcheck";
 import { matmul, type Matrix } from "@/lib/math/tensor";
+import { ActualAttentionSummary } from "./ActualPanels";
 import { AttentionLab } from "./AttentionLab";
 import styles from "./AttentionLab.module.css";
 import { Badge } from "./Badge";
@@ -407,23 +409,32 @@ export async function AttentionLabExample() {
       step.equations.flatMap((equation) => [...highlightedLines(symbol.id, equation)]),
     ]),
   ) as Record<LabStepId, number[]>;
+  const lines = await highlightPython(symbol.source);
+  const actual = loadActual();
   return (
     <AttentionLab
       inputs={forwardInputs()}
       stepLines={stepLines}
+      actual={
+        actual.available
+          ? { data: actual.attention, provenance: provenanceLine(actual.meta.provenance) }
+          : null
+      }
       code={{
-        lines: await highlightPython(symbol.source),
+        lines,
         source: symbol.source,
         filePath: symbol.file,
         functionName: symbol.name,
         startLine: symbol.startLine,
         permalink: symbol.permalink,
+        lineEquations: lineEquations(symbol.file, symbol.startLine, lines.length),
       }}
     />
   );
 }
 
 export function ActualModelOutputSlot() {
+  const actual = loadActual();
   return (
     <section
       className={styles.slot}
@@ -432,8 +443,16 @@ export function ActualModelOutputSlot() {
     >
       <div className={styles.slotTop}>
         <Badge kind="actual" />
-        <span>No data yet</span>
+        <span>{actual.available ? "One real window" : "No data yet"}</span>
       </div>
+      {actual.available ? <ActualAttentionSummary /> : <EmptyActualSlot />}
+    </section>
+  );
+}
+
+function EmptyActualSlot() {
+  return (
+    <>
       <p>
         This slot is empty, and the matching option in the lab is disabled. Nothing on this page
         comes from a run of the model.
@@ -448,7 +467,7 @@ export function ActualModelOutputSlot() {
         that the checkpoint is an ignored local file, trained on a corpus that is not in the pinned
         commit, with training settings that by inference differ from <code>config.py</code>.
       </p>
-    </section>
+    </>
   );
 }
 

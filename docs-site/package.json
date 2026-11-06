@@ -19,6 +19,8 @@
     "verify:golden": "python -B scripts/make_golden.py --check",
     "sync:derived": "python -B scripts/sync_derived.py",
     "verify:derived": "python -B scripts/sync_derived.py --check",
+    "export:actual": "python -B scripts/export_actual.py",
+    "verify:actual": "python -B scripts/export_actual.py --check",
     "verify:content": "bun scripts/verify_content.ts"
   },
   "dependencies": {

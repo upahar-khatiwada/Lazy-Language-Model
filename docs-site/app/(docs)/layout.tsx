@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { DocsChrome } from "@/components/DocsChrome";
 import { SiteFooter } from "@/components/DocMain";
+import { MathCodeNavigator } from "@/components/MathCodeNavigator";
 import { NAV } from "@/data/nav";
 import { listContentSlugs } from "@/lib/content";
 import { resolveNav } from "@/lib/nav";
@@ -11,6 +12,10 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
   return (
     <DocsChrome nav={resolveNav(NAV, listContentSlugs())} githubUrl={repo.githubBaseUrl}>
       {children}
+      {/* It reads ?eq= from the address, which a static page only knows in the browser. */}
+      <Suspense fallback={null}>
+        <MathCodeNavigator />
+      </Suspense>
       <SiteFooter sha={repo.sha} shortSha={repo.shortSha} baseUrl={repo.githubBaseUrl} />
     </DocsChrome>
   );

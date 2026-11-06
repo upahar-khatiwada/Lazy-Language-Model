@@ -1,0 +1,85 @@
+{
+  "rows": [
+    {
+      "index": 0,
+      "loss": 2.029743187504696,
+      "perplexity": 7.61213121732584,
+      "split": "validation",
+      "text": " back to the game.\n'You can'",
+      "windows": 24997
+    },
+    {
+      "index": 6249,
+      "loss": 3.6848300731104464,
+      "perplexity": 39.83835226737393,
+      "split": "validation",
+      "text": "it you myself,' the Mock Tur",
+      "windows": 24997
+    },
+    {
+      "index": 12498,
+      "loss": 3.318773912082988,
+      "perplexity": 27.626457319208182,
+      "split": "validation",
+      "text": "ended tone, 'Hm! No acc",
+      "windows": 24997
+    },
+    {
+      "index": 18747,
+      "loss": 1.9248935547498172,
+      "perplexity": 6.8544190067194615,
+      "split": "validation",
+      "text": "!'\n'Here!' cried Alice, ",
+      "windows": 24997
+    },
+    {
+      "index": 24996,
+      "loss": 2.598319182852478,
+      "perplexity": 13.441126961106379,
+      "split": "validation",
+      "text": " and the happy summer days.",
+      "windows": 24997
+    },
+    {
+      "index": 0,
+      "loss": 2.6230464162819116,
+      "perplexity": 13.777632120061465,
+      "split": "training",
+      "text": "There's a garden that I ken, ",
+      "windows": 225099
+    },
+    {
+      "index": 56274,
+      "loss": 2.203818145007113,
+      "perplexity": 9.059538177837963,
+      "split": "training",
+      "text": "ther Tiger; you promised to ",
+      "windows": 225099
+    },
+    {
+      "index": 112549,
+      "loss": 2.039896012737832,
+      "perplexity": 7.689809515063187,
+      "split": "training",
+      "text": "s, and the new steed began to",
+      "windows": 225099
+    },
+    {
+      "index": 168823,
+      "loss": 3.161065949834286,
+      "perplexity": 23.59573439768567,
+      "split": "training",
+      "text": "t one tenth so quick tempered",
+      "windows": 225099
+    },
+    {
+      "index": 225098,
+      "loss": 2.265210432163056,
+      "perplexity": 9.63315151274898,
+      "split": "training",
+      "text": " while the rest of the party ",
+      "windows": 225099
+    }
+  ],
+  "uniformLoss": 6.354370040797351
+}

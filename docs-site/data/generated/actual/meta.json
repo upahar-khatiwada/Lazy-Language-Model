@@ -1,0 +1,82 @@
+{
+  "actualAvailable": true,
+  "paramCount": 63871,
+  "provenance": {
+    "checkpointFiles": [
+      {
+        "bytes": 520294,
+        "name": "model.npz",
+        "sha256": "74de2ec88a63ceb131a27e03cc63070c6d8c4174cc78bc189195e9356e84550e"
+      },
+      {
+        "bytes": 118,
+        "name": "model.json",
+        "sha256": "f93002949162068d573aab9b38990b12aec7f32b468ec9eaaef986075df7d3b4"
+      },
+      {
+        "bytes": 33274,
+        "name": "model.tok.json",
+        "sha256": "bf874ab4e4de2b61cb936f38635a7c589c5c0d29879947a5b45d13be2456b17d"
+      }
+    ],
+    "checkpointPrefix": "checkpoints/model",
+    "config": {
+      "adam_eps": 1e-08,
+      "batch_size": 16,
+      "beta1": 0.9,
+      "beta2": 0.999,
+      "context_len": 32,
+      "corpus_column": "text",
+      "corpus_path": "data/corpus.csv",
+      "emb_dim": 32,
+      "epochs": 20,
+      "ff_dim": 128,
+      "grad_clip": 1.0,
+      "head_dim": 16,
+      "ln_eps": 1e-05,
+      "lr_max": 0.001,
+      "lr_min": 0.0001,
+      "max_new_tokens": 50,
+      "max_rows": 2000,
+      "num_heads": 2,
+      "num_layers": 2,
+      "num_merges": 500,
+      "seed": 42,
+      "seq_len": 16,
+      "stride": 1,
+      "temperature": 0.8,
+      "top_k": 0,
+      "top_p": 0.9,
+      "val_fraction": 0.1,
+      "warmup_steps": 50,
+      "weight_decay": 0.01
+    },
+    "corpus": {
+      "path": "data/corpus.csv",
+      "sha256": "c1bec80f274294e6ce989fcc63fd7022a206f415e7d3df85e82c410e56dc4f4f"
+    },
+    "disclosure": "Read from checkpoints/model, an ignored local file, trained on data/corpus.csv (git-ignored, and not at the pinned commit), with training settings that by inference differ from config.py.",
+    "environment": {
+      "numpy": "2.5.2",
+      "pandas": "3.1.0",
+      "python": "3.14.4"
+    },
+    "gitDirty": false,
+    "gitSha": "66da45bea72176fa5d2f8dba2ea1c7e597e30dd3",
+    "gitShortSha": "66da45b",
+    "modelConfig": {
+      "context_len": 32,
+      "emb_dim": 32,
+      "ff_dim": 128,
+      "ln_eps": 1e-05,
+      "num_heads": 2,
+      "num_layers": 2,
+      "vocab_size": 575
+    },
+    "seed": 42,
+    "tokenizerMatchesCorpus": true
+  },
+  "schema": 1,
+  "tensorCount": 38,
+  "vocabSize": 575
+}

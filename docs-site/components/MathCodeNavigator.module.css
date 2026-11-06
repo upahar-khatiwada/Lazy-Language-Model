@@ -1,0 +1,77 @@
+/* Stays in view while the code scrolls. */
+.chip {
+  align-items: center;
+  background: var(--surface);
+  border: 2px solid var(--text);
+  border-radius: var(--radius);
+  bottom: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-sm);
+  gap: var(--space-1) var(--space-3);
+  left: 50%;
+  max-width: min(44rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-2) var(--space-3);
+  position: fixed;
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 40;
+}
+
+.clear {
+  background: none;
+  border: var(--border-width) solid var(--muted);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0 var(--space-2);
+}
+
+.clear:hover {
+  background: var(--hover);
+}
+
+.popover {
+  background: var(--surface);
+  border: 2px solid var(--text);
+  border-radius: var(--radius);
+  color: var(--text);
+  display: grid;
+  font-size: var(--fs-sm);
+  gap: var(--space-3);
+  max-height: 24rem;
+  max-width: min(30rem, calc(100vw - 2 * var(--space-4)));
+  overflow: auto;
+  padding: var(--space-3);
+  position: absolute;
+  width: max-content;
+  z-index: 50;
+}
+
+.entry {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.entry + .entry {
+  border-top: var(--border-width) solid var(--line);
+  padding-top: var(--space-3);
+}
+
+.entry p {
+  margin: 0;
+}
+
+.entryTop {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.math {
+  overflow-x: auto;
+}

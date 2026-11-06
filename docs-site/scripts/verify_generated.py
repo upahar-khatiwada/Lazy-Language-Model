@@ -32,8 +32,16 @@ def compare_repo_meta(committed_bytes, fresh_bytes):
     return serialize(fresh) == committed_bytes, notes
 
 
+# data/generated/actual comes from a checkpoint, and verify:actual checks it.
+NOT_FROM_EXTRACTION = {"actual"}
+
+
 def visible_files(folder):
-    return {path.name for path in Path(folder).iterdir() if not path.name.startswith(".")}
+    return {
+        path.name
+        for path in Path(folder).iterdir()
+        if not path.name.startswith(".") and path.name not in NOT_FROM_EXTRACTION
+    }
 
 
 def main():

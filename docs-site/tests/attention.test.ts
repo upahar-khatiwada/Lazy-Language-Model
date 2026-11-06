@@ -368,7 +368,7 @@ describe("the page", () => {
     );
   });
 
-  test("the example is labelled, and the actual slot holds no numbers", () => {
+  test("the example is labelled, and actual numbers stay outside the illustrative lab", () => {
     expect(sections[0]).toContain("Illustrative Example");
     expect(sections[0]).toContain("<ActualModelOutputSlot />");
     const source = readFileSync("components/AttentionExamples.tsx", "utf-8");
@@ -382,7 +382,7 @@ describe("the page", () => {
     expect(text).not.toMatch(/multi-query|grouped.query|rotary|flash.attention/i);
     expect(text).not.toMatch(/model (focuses|looks at|learns to attend)/i);
     expect(text.match(/attends to/g)).toHaveLength(1);
-    expect(text).toContain("Nothing on this page says what the trained model attends to.");
+    expect(text).toContain("Nothing written on this page says what the trained model attends to.");
   });
 
   test("the q, k, v intuition is labelled as general", () => {

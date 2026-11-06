@@ -195,9 +195,14 @@ export function getPipeline(id: string): Pipeline {
   return pipeline;
 }
 
+// The form of an equation id used in addresses: attention.scale gives attention-scale.
+export function equationSlug(id: string): string {
+  return id.replace(/[^a-zA-Z0-9]+/g, "-");
+}
+
 // The anchor of an equation: eq-softmax-shift.
 export function equationAnchor(id: string): string {
-  return `eq-${id.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+  return `eq-${equationSlug(id)}`;
 }
 
 export function conceptAnchor(id: string): string {

@@ -1,5 +1,5 @@
 import { formatLineRange, targetLines } from "@/lib/code-targets";
-import { equationAnchor, getConcept } from "@/lib/concepts";
+import { equationAnchor, equationSlug, getConcept } from "@/lib/concepts";
 import { linksForEquation } from "@/lib/links";
 import { DataTable } from "./DataTable";
 
@@ -28,7 +28,10 @@ export function EquationCode({ concept }: { concept: string }) {
           linksForEquation(equation.id).map((link) => {
             const { resolved } = link;
             return (
-              <tr key={`${equation.id}:${link.symbol}:${link.match}:${link.occurrence ?? 0}`}>
+              <tr
+                key={`${equation.id}:${link.symbol}:${link.match}:${link.occurrence ?? 0}`}
+                data-eq-hover={equationSlug(equation.id)}
+              >
                 <td>
                   <a href={`#${equationAnchor(equation.id)}`}>{equation.label}</a>
                 </td>

@@ -1,11 +1,12 @@
 // Fails the build when hand-written data no longer matches the code at the pinned commit.
 import { loadSymbolIndex } from "@/lib/code-targets";
 import { loadConcepts, loadPipelines } from "@/lib/concepts";
+import { verifyEquationReach } from "@/lib/equation-links";
 import { loadStoredExamples } from "@/lib/examples";
 import { loadLinks } from "@/lib/links";
 import { navSlugs } from "@/lib/pages";
 import { loadInitParams } from "@/lib/parameters";
-import { loadInventory } from "@/lib/reference";
+import { loadInventory, readPageSources } from "@/lib/reference";
 import { loadCallGraph, loadCodeIndex, loadConfig } from "@/lib/repo";
 import { verifySiteData } from "@/lib/site-verify";
 import { verifyData } from "@/lib/verify-links";
@@ -29,6 +30,13 @@ function main(): number {
       repoFiles: loadCodeIndex().files.map((file) => file.path),
       concepts: input.concepts,
       inventoryIds: loadInventory().rows.map((row) => row.id),
+    }),
+    ...verifyEquationReach({
+      concepts: input.concepts,
+      links: input.links,
+      pages: readPageSources(),
+      files: loadCodeIndex().files.map((file) => file.path),
+      symbols: input.symbols,
     }),
   ];
 

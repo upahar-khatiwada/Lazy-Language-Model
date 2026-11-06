@@ -893,3 +893,64 @@ Append one entry per finished task. Newest at the bottom.
 - Open issues: the other specs in `tests/e2e` still have no result for Task 14 and these changes.
 - Decisions needed from the human: none.
 - Status: follow-ups finished. Nothing was committed.
+
+### Task 15: Math-Code Linking & Actual Model Output Export (2026-11-06)
+- Depends on Tasks 10, 13 and 14: all logged, and their output exists. All six contract files present. HEAD `01344b1`, pinned `sha` `66da45b`.
+- Part A, files created: `lib/math-code.ts` (pure logic), `lib/equation-links.ts` (server logic), `app/math-code/[file]/route.ts` (one static JSON file per equation), `components/MathCodeNavigator.tsx` and CSS module, `components/ImplementedIn.tsx` (`ImplementedIn`, `LinkedUses`), `tests/math-code.test.ts`.
+- Part B, files created: `scripts/export_actual.py`, `data/generated/actual/{meta,tokenizer,embeddings,attention,probabilities,losses}.json` (generated, 81K), `lib/actual.ts`, `lib/actual-view.ts`, `components/ActualAttention.tsx`, `components/ActualPanels.tsx`, `tests/actual.test.ts`.
+- Files changed:
+  - `lib/concepts.ts` (`equationSlug`), `lib/links.ts` (`equationsByLine`, `lineEquations`, `linesCoveredByLink`), `scripts/verify_links.ts` (runs `verifyEquationReach`).
+  - `components/CodeFrame.tsx` (`data-eqs`, `EquationMark`), `CodeBlock.tsx`, `CodeBlock.module.css`, `CodeExplorer.tsx`, `MathBlock.tsx` and CSS (`data-eq`, Show code), `Trace.tsx` and CSS (the "Implementation" row is now "Used by", with the Implemented in panel below it), `EquationCode.tsx`, `AttentionExamples.tsx`, `BlockExamples.tsx`, `TrainingExamples.tsx`, `mdx.tsx`, `app/(docs)/layout.tsx`.
+  - `components/AttentionLab.tsx`: the existing switch now reads the export. The lab was not rebuilt. `ActualModelOutputSlot` shows the real summary, or its existing text when there is no data.
+  - Pages: Actual panels added to `content/mathematics/tokenization.mdx`, `content/mathematics/embeddings.mdx`, `content/generation/sampling.mdx`. Sentences that would have become false were reworded on `attention.mdx` and `sampling.mdx`. `tests/attention.test.ts` follows the reworded sentence.
+  - `scripts/verify_generated.py` ignores `actual/`. `package.json` (`export:actual`, `verify:actual`), `.gitignore` (`.cache/`), `README.md`.
+  - Nothing outside `docs-site/` changed. `contract/` was not changed.
+- Export commands and results (`checkpoints/model`, read-only):
+  - `python -B scripts/export_actual.py`, about 69 seconds: `Wrote data/generated/actual from checkpoints/model, at commit 66da45b.`, `V=575, 63871 parameters.`, `Attention: 2 layers, 2 heads, T=16, largest row-sum gap 3.3e-16, masked cells exactly 0.`, exit 0. The tokenizer rebuilt from the local corpus equals the checkpoint's.
+  - `python -B scripts/export_actual.py --checkpoint docs-site/.cache/none`: `No checkpoint at docs-site/.cache/none. Missing: none.npz, none.json, none.tok.json.`, `Wrote actualAvailable: false.`, prints how to create one, exit 0, and removes the other 5 files. It did not train.
+  - With no data: `bun run test -- tests/actual tests/attention`: `Tests  116 passed | 8 skipped (124)`. `bun run build` passed. In `out/`: both radios present, the Actual one `disabled`, the existing explanation and "No data yet" present, no Actual matrices, and all three other panels show `actual-unavailable`.
+  - Export run again with the checkpoint: all 6 files byte-identical by `sha256sum -c`.
+  - `bun run verify:actual`: `OK: data/generated/actual matches a fresh export from checkpoints/model.` With no-data files against an existing checkpoint it fails, as it should.
+  - `--train --checkpoint checkpoints/model`: `FAILED: --train writes only under docs-site/.cache`, exit 1. `--checkpoint C:/Windows/nope`: `FAILED: --checkpoint must be inside the repository`, exit 1.
+  - `sha256sum -c` on `checkpoints/*`: 3 files OK, before and after every run.
+- Direct Python check, scratchpad script calling `embed_forward`, `layer_norm_forward` and `attention_forward` itself on the exported window: `layer 0 head 0: shape (16, 16), exact match True, largest difference 0.0e+00`, and the same for head 1.
+- Final checks (`.next`, `out`, `test-results` deleted first; Node prepended to PATH):
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`; `verify:derived`: `OK: 3 derived file(s) match a fresh run.`; `verify:examples`: `OK: 2 example(s) match a fresh run.`; `verify:golden`: `OK: 231 golden cases match a fresh run.`; `verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `verify:content: not implemented yet`. It is still the stub, so it checks nothing.
+  - `bun run lint`: `All matched files use Prettier code style!`, exit 0. `bun run typecheck`: exit 0. `bun run test`: `Test Files  25 passed (25)`, `Tests  2048 passed (2048)`. `bun run build`: `Compiled successfully`, exit 0.
+  - `.venv/Scripts/python.exe -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.47s`.
+  - Scratchpad script over `out/`: `equation files 166`, `link records 349 problems 0`. For every record, each covered line in the Code Explorer names the equation, its deep link is on a page, and its equation has a page to open. Every Actual panel holds the commit, the checkpoint hash and the seed.
+  - Tamper, one at a time, restored by hash: `22 of 22 caught`. Among them: a page drops a concept's panel (`verify:links` exit 1), line map leaves out the last line (`Tests  350 failed`), explorer link opens the wrong line (`349 failed`), mask also covers the diagonal (`1 failed`), provenance loses the hash, provenance loses D1, no data no longer disables the switch, the lab shows both sides, a stored row or masked cell edited (`Exported attention weights are wrong`), stored hash edited (`verify:actual` exit 1).
+  - `git status --short -- ':(exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files. No state-changing git command was run.
+- Browser checks: the Playwright suite was NOT run and no spec was written or updated, on the human's standing rule in `CLAUDE.md`, which overrides this task's request for e2e tests. Scratchpad scripts looked at the built site at 1400 wide, on the final code:
+  - Part A: click, Enter, hover and focus each highlight the code and the equation. Escape clears it and removes `?eq=`. `/mathematics/attention/?eq=attention-scale` and `/code/transformer/?eq=attention-scale#L81` restore it. A line's popover shows the equation and a link, and that link opens the equation with the highlight on. Focus moves into the popover. Computed outline: `solid 2px` in both themes, colours `rgb(21, 27, 38)` light and `rgb(231, 234, 240)` dark. Page errors 0, overflow 0.
+  - Part B: the switch is enabled and opens on Illustrative. Choosing Actual removes the illustrative player. All 4 layer and head choices equal the file, `mismatches 0`. No Illustrative label inside the Actual panel. Switching back removes the Actual panel.
+  - Screenshots viewed: code highlight with chip, popover, Implemented in panel, dark equation, Actual matrix, slot, tokenizer panel, generation panel. Not viewed: the embeddings panel, the provenance details opened, the no-data pages (read from HTML only).
+- Failures seen on the way:
+  - A multi-file Git Bash heredoc failed with `unexpected EOF`, before running anything. Files went through the Write tool.
+  - The first look found two real bugs no test could: `replaceState` with `window.history.state` stops Next syncing `useSearchParams`, so pinning did nothing, and the chip's count was empty when the chip mounted after its effect. Both fixed. Two other misses were mistakes in my script.
+  - `react-hooks/preserve-manual-memoization` rejected `useCallback` twice. Replaced by `useEffectEvent`.
+  - The first prompt ended mid-word, so nearly all probability went to a space and sampling kept 1 token. It now ends in a space, which leaves 84 tokens.
+- Findings:
+  - No new PDF-versus-code difference and no new LLM issue. The PDF was not reopened (D4), so this rests on `contract/PDF_VS_CODE.md`.
+  - The real matrices are strongly diagonal in layer 0, head 0. This is stated nowhere as prose, as the task requires. The panel only says the weights belong to one window.
+- Assumptions:
+  - Task text overridden by `CLAUDE.md`: no stacked mobile layout work and no phone checks. The chip is `position: fixed` at every width, and `MathCodeLink` already stacks by its existing CSS, but neither was checked at phone width.
+  - Slugs are the equation id with non-alphanumerics replaced by `-`, as the task's `?eq=attention-scale` shows. `verify:links` fails if two equations share one.
+  - "Reachable from both directions": from an equation through its concept's Implemented in panel (`implements`, `inline`) or Used by list (`call`, `test`) to `/code/<file>/?eq=<slug>#L<line>`; from any line in the Code Explorer through its popover to the page showing the equation.
+  - `git sha` in the provenance is the newest commit outside `docs-site/`, the same rule as `repo-meta.json`, so a docs-only commit does not make the export stale.
+  - Seed is `config.seed`, and the provenance line says the checkpoint does not record its own. D1's disclosure is on every panel. `losses.json` is computed now from the checkpoint, so it is not training history under D1.
+  - Prompt, sentence selection, window choice (first validation window) and loss windows (5 evenly spaced per split) are hand-picked choices in the script. The prompt is labelled hand-picked on the panel.
+  - `--train` was checked with a stand-in for `train.main` (right prefix, repository as working directory, no second run, refused elsewhere). Real training was not run, as the task said.
+- Open issues:
+  - **The export puts corpus text in a tracked folder.** `tokenizer.json`, `attention.json` and `losses.json` hold 3 sentences and 11 short windows of `data/corpus.csv`, which `66da45b` deliberately stopped tracking. The task asks for this, but it is worth a look before committing.
+  - `tests/e2e/attention.spec.ts` lines 232-250 expect a disabled switch and "No data yet", which are no longer true with data present. Other specs have no result for these changes. Under the standing rule they were not updated or run.
+  - `losses.json` is exported and validated but no page shows it, because the task lists no Actual panel for it.
+  - `verify:actual` needs NumPy, pandas and the corpus, and is not part of `build`. `verify:actual` on another machine was not tried; with no checkpoint it notes that it did not compare and exits 0.
+  - Each linked line adds one Tab stop, so a large file in the Code Explorer has many. Tested by keyboard on one line only.
+  - The chip sits over the bottom of the page while an equation is pinned. Clear or Escape removes it.
+  - Tool use: during this task, hash lists were written to the system temp folder rather than the scratchpad. They were removed at the end.
+  - `/code/math-code` remains unwritten and disabled in the sidebar. The task did not ask for that page.
+  - `verify:content` is still a stub. `/reference/sources` does not exist. GitHub links were not opened, because the working rules allow no requests to other sites. The `__next.*.txt` 404s were not rechecked.
+- Decisions needed from the human: whether the corpus excerpts above may be committed.
+- Status: Task 15 finished. Nothing was committed.

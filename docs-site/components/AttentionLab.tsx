@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import type { ActualAttentionData } from "@/lib/actual-view";
 import {
   LAB_STEPS,
   LAB_TOKENS,
@@ -11,6 +12,7 @@ import {
   type LabInputs,
   type LabStepId,
 } from "@/lib/attention-lab";
+import { ActualAttention } from "./ActualAttention";
 import styles from "./AttentionLab.module.css";
 import { BarChart } from "./BarChart";
 import { CodeFrame, type CodeFrameProps } from "./CodeFrame";
@@ -24,18 +26,26 @@ const vector = (values: number[]) => `[${values.map(showNumber).join(", ")}]`;
 const ACTUAL_NOTE =
   "Actual Model Output is not available yet. No attention weights from a real run have been stored for this site.";
 
-// Every number comes from lib/attention-lab, which tests compare with the real attention_forward.
+const ACTUAL_ON_NOTE =
+  "Illustrative Example shows hand-picked numbers. Actual Model Output shows exported weights from one real window. The two are never shown together.";
+
+// Every Illustrative number comes from lib/attention-lab, which tests compare with the real
+// attention_forward. Actual numbers come from data/generated/actual, through ActualAttention only.
 export function AttentionLab({
   inputs,
   code,
   stepLines,
+  actual,
 }: {
   inputs: LabInputs;
   code: Omit<CodeFrameProps, "highlightLines">;
   // Real line numbers per step, resolved from the link records on the server.
   stepLines: Record<LabStepId, number[]>;
+  // Null when nothing has been exported, which keeps the switch disabled.
+  actual: { data: ActualAttentionData; provenance: string } | null;
 }) {
   const id = useId();
+  const [source, setSource] = useState<"illustrative" | "actual">("illustrative");
   const [row, setRow] = useState(2);
   const [head, setHead] = useState(0);
   const run = runLab(inputs);
@@ -120,55 +130,82 @@ export function AttentionLab({
       <fieldset className={styles.source} data-testid="lab-source">
         <legend>Data source</legend>
         <label className={styles.option}>
-          <input type="radio" name={`${id}-source`} defaultChecked />
+          <input
+            type="radio"
+            name={`${id}-source`}
+            checked={source === "illustrative"}
+            onChange={() => setSource("illustrative")}
+          />
           Illustrative Example
         </label>
         {/* Disabled until the site has attention weights from a real run. */}
-        <label className={`${styles.option} ${styles.optionOff}`} title={ACTUAL_NOTE}>
-          <input type="radio" name={`${id}-source`} disabled aria-describedby={`${id}-note`} />
+        <label
+          className={actual ? styles.option : `${styles.option} ${styles.optionOff}`}
+          title={actual ? undefined : ACTUAL_NOTE}
+        >
+          <input
+            type="radio"
+            name={`${id}-source`}
+            disabled={!actual}
+            checked={source === "actual"}
+            onChange={() => setSource("actual")}
+            aria-describedby={`${id}-note`}
+            data-testid="lab-source-actual"
+          />
           Actual Model Output
         </label>
         <p className={styles.sourceNote} id={`${id}-note`}>
-          {ACTUAL_NOTE}
+          {actual ? ACTUAL_ON_NOTE : ACTUAL_NOTE}
         </p>
       </fieldset>
 
-      <div className={styles.row} role="group" aria-label="Selected token">
-        <span className={styles.rowLabel}>Token</span>
-        {tokens.map((token, t) => (
-          <button
-            type="button"
-            className={styles.token}
-            key={token}
-            aria-pressed={t === row}
-            data-testid={`lab-token-${t}`}
-            onClick={() => setRow(t)}
-          >
-            {token}
-          </button>
-        ))}
-      </div>
+      {/* One side or the other, never both: the two sides share no values and no selection. */}
+      {source === "actual" && actual ? (
+        <ActualAttention data={actual.data} provenance={actual.provenance} />
+      ) : (
+        <>
+          <div className={styles.row} role="group" aria-label="Selected token">
+            <span className={styles.rowLabel}>Token</span>
+            {tokens.map((token, t) => (
+              <button
+                type="button"
+                className={styles.token}
+                key={token}
+                aria-pressed={t === row}
+                data-testid={`lab-token-${t}`}
+                onClick={() => setRow(t)}
+              >
+                {token}
+              </button>
+            ))}
+          </div>
 
-      <div className={styles.row} role="group" aria-label="Selected head">
-        <span className={styles.rowLabel}>Head</span>
-        {run.A.map((_, h) => (
-          <button
-            type="button"
-            className={styles.token}
-            key={h}
-            aria-pressed={h === head}
-            data-testid={`lab-head-${h}`}
-            onClick={() => setHead(h)}
-          >
-            {h}
-          </button>
-        ))}
-      </div>
+          <div className={styles.row} role="group" aria-label="Selected head">
+            <span className={styles.rowLabel}>Head</span>
+            {run.A.map((_, h) => (
+              <button
+                type="button"
+                className={styles.token}
+                key={h}
+                aria-pressed={h === head}
+                data-testid={`lab-head-${h}`}
+                onClick={() => setHead(h)}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
 
-      <StepPlayer
-        label="Attention steps"
-        steps={LAB_STEPS.map((step) => ({ id: step.id, title: step.title, content: panel(step) }))}
-      />
+          <StepPlayer
+            label="Attention steps"
+            steps={LAB_STEPS.map((step) => ({
+              id: step.id,
+              title: step.title,
+              content: panel(step),
+            }))}
+          />
+        </>
+      )}
     </div>
   );
 }

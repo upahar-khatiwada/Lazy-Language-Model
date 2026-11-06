@@ -68,6 +68,24 @@ Never store a line number. Lines are resolved at build time from `code-index.jso
 
 An example declares its input and which local variables to capture. `sync:examples` runs the real function and stores the values. Every `<NumericExample>` needs a `kind` that agrees with the data.
 
+## Math and code navigation
+
+`MathBlock` puts `data-eq` on an equation. `CodeFrame` and the Code Explorer put `data-eqs` on each linked line, computed on the server from `data/links` by `lib/links.ts`. One client component, `MathCodeNavigator`, is mounted in the docs layout and reads those attributes, so no page or component wires anything up.
+
+- A click, or Show code, pins the equation in the address as `?eq=attention-scale`. Opening that address restores it. Hover and keyboard focus show the same highlight without moving the page. Escape clears it.
+- A click on a linked line, or Enter on its gutter mark, opens a popover. `/math-code/<slug>.json`, one small static file per equation, holds the rendered equation, so no KaTeX JavaScript reaches the browser.
+- To link a formula written inside another function, or one of several matches in a function, add a record in `data/links` with `role: inline` and `occurrence` if needed. `Implemented in`, `Used by`, the inline equivalent note and both directions of navigation follow from that record.
+
+`verify:links` fails if a link is not reachable both ways: its concept must have a `<Trace>` on a page, its file must be in the Code Explorer, and its equation must have a page to open.
+
+## Actual Model Output
+
+`bun run export:actual` reads a checkpoint, read-only, and writes `data/generated/actual/*.json`: sizes, real tokens and merges, the attention weights of one real window for every layer and head, next-token probabilities for one prompt, and losses on a few windows. `--checkpoint PREFIX` chooses another checkpoint. It takes about a minute.
+
+With no checkpoint it writes `actualAvailable: false`, prints how to create one and exits 0. The site then builds with every Actual panel off. It never trains unless given `--train`, which runs the repository's `train.main` with its prefix in `docs-site/.cache/` and refuses anywhere else. At the committed `config.py` that is a long run.
+
+`bun run verify:actual` compares the stored files with a fresh export. Run the export again after a change to the checkpoint, the corpus or the code, because `build` only reads the files and checks the attention weights. `lib/actual.ts` loads and validates them. Illustrative and Actual values live in separate components, and nothing outside `data/generated/actual` feeds an Actual panel.
+
 ## Math engine and interactive kit
 
 `lib/math/` is a pure TypeScript copy of the repository's NumPy operations, for interactive pages. Each function names the Python function it mirrors, and `tests/math.golden.test.ts` compares it with the real Python to within 1e-9, using `data/golden/*.json`. No number in an example may be typed into JSX: take inputs from data and values from `lib/math`.

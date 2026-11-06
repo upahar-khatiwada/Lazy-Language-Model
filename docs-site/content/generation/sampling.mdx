@@ -17,7 +17,7 @@ status: published
 
 At the settings in `config.py`, steps 2, 4 and 5 run. Step 1 does not fire and step 3 is skipped. <PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink> lists those settings and shows how the loop calls this function.
 
-**This page has no backward pass.** Sampling runs after the model and computes no loss or gradient, and nothing in `generate.py` calls a backward function. Every number here is an Illustrative Example.
+**This page has no backward pass.** Sampling runs after the model and computes no loss or gradient, and nothing in `generate.py` calls a backward function. Every number here is an Illustrative Example, except the panel headed Actual Model Output at the end.
 
 In this page's equations, `z` is the logits and the temperature is written with the Greek letter tau. `T` is not used for it, because on this site `T` is the sequence length.
 
@@ -273,3 +273,9 @@ Edit the logits, `temperature`, `top_k` and `top_p`, or start from a preset. The
 The lab stops at the distribution. It does not draw, because NumPy's generator is not reproduced in this site's engine.
 
 <ProbabilityLabExample />
+
+### Actual Model Output
+
+The distributions of a real model, for one prompt. The lab above does not read these numbers, and these panels do not read the lab.
+
+<ActualGenerationPanel />

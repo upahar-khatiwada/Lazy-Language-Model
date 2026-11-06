@@ -2,10 +2,12 @@ import { z } from "zod";
 import {
   codeTargetShape,
   requireTarget,
+  resolveTarget,
   type CodeTarget,
   type ResolvedTarget,
+  type SymbolIndex,
 } from "./code-targets";
-import { loadConcepts, readYamlFiles } from "./concepts";
+import { equationSlug, loadConcepts, readYamlFiles } from "./concepts";
 
 export const LinkSchema = z.strictObject({
   equationId: z.string().min(1),
@@ -61,4 +63,53 @@ export function highlightedLines(symbolId: string, equationId?: string): Set<num
     for (let line = startLine; line <= endLine; line++) lines.add(line);
   }
   return lines;
+}
+
+// Every line a link covers. Empty when the link does not resolve; verify:links reports that.
+export function linesCoveredByLink(link: Link, symbols?: SymbolIndex): number[] {
+  const result = resolveTarget(link, symbols);
+  if (!result.ok) return [];
+  const { startLine, endLine } = result.value;
+  return Array.from({ length: endLine - startLine + 1 }, (_, index) => startLine + index);
+}
+
+const ROLE_ORDER: Link["role"][] = ["implements", "inline", "call", "test"];
+
+let byFile: Map<string, Map<number, string[]>> | undefined;
+
+// The equations tied to each line of a file, as address slugs. Computed once.
+export function equationsByLine(file: string): ReadonlyMap<number, string[]> {
+  if (!byFile) {
+    const built = new Map<string, Map<number, string[]>>();
+    const ordered = [...loadLinks()].sort(
+      (a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role),
+    );
+    for (const link of ordered) {
+      const lines = built.get(link.file) ?? new Map<number, string[]>();
+      built.set(link.file, lines);
+      const slug = equationSlug(link.equationId);
+      for (const line of linesCoveredByLink(link)) {
+        const slugs = lines.get(line) ?? [];
+        if (!slugs.includes(slug)) slugs.push(slug);
+        lines.set(line, slugs);
+      }
+    }
+    byFile = built;
+  }
+  return byFile.get(file) ?? new Map();
+}
+
+// The same, for a block of code. Plain data, so it can cross to a client component.
+export function lineEquations(
+  file: string,
+  startLine: number,
+  lineCount: number,
+): Record<number, string[]> {
+  const lines = equationsByLine(file);
+  const found: Record<number, string[]> = {};
+  for (let line = startLine; line < startLine + lineCount; line++) {
+    const slugs = lines.get(line);
+    if (slugs) found[line] = slugs;
+  }
+  return found;
 }

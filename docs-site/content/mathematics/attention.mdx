@@ -5,7 +5,7 @@ sourceFile: transformer.py
 status: published
 ---
 
-Attention is the part of a block where positions exchange information. This page goes through `attention_forward` line by line, then `attention_backward`. Every equation links to the code that computes it, and every number is computed from that code's mirror.
+Attention is the part of a block where positions exchange information. This page goes through `attention_forward` line by line, then `attention_backward`. Every equation links to the code that computes it, and every Illustrative Example is computed from that code's mirror.
 
 ## Why attention?
 
@@ -19,7 +19,7 @@ In general, these three names are explained with a question for each one:
 
 Those questions are a way to remember the roles. They are not something this project computes. In the code, a query, a key and a value are three linear projections of one input. A query times a key gives a score, and the scores decide how the values are mixed.
 
-**The example on this page.** The sentence is "The cat sat on the mat", with one row per word and hand-picked numbers: `T = 6`, `d = 4` and `H = 2`, so `d_h = 2`. Every number on this page is labelled Illustrative Example. The real model works differently: it reads sub-word tokens, not words, and it has `H =` <ConfigValue name="num_heads" /> heads of width `d_h =` <ConfigValue name="head_dim" />, inside rows of width `d =` <ConfigValue name="emb_dim" />. Nothing on this page says what the trained model attends to.
+**The example on this page.** The sentence is "The cat sat on the mat", with one row per word and hand-picked numbers: `T = 6`, `d = 4` and `H = 2`, so `d_h = 2`. Every number in this example is labelled Illustrative Example. The real model works differently: it reads sub-word tokens, not words, and it has `H =` <ConfigValue name="num_heads" /> heads of width `d_h =` <ConfigValue name="head_dim" />, inside rows of width `d =` <ConfigValue name="emb_dim" />. Nothing written on this page says what the trained model attends to. The only real numbers are the exported weights of one window, under Actual Model Output, when an export exists.
 
 ### Attention lab
 

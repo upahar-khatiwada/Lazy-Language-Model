@@ -1,5 +1,24 @@
 .block {
+  cursor: pointer;
   min-width: 0;
+}
+
+/* The equation in focus. The outline is the non-colour cue, in both themes. */
+.block[data-eq-active] {
+  background: var(--highlight);
+  border-radius: var(--radius);
+  outline: 2px solid var(--text);
+  outline-offset: var(--space-1);
+}
+
+.showCode {
+  background: none;
+  border: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
 }
 
 .chrome {

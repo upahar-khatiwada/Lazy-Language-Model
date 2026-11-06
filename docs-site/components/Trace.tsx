@@ -2,6 +2,7 @@ import { formatLineRange, getSymbol, loadSymbolIndex, requireTarget } from "@/li
 import { getConcept } from "@/lib/concepts";
 import { loadCallGraph } from "@/lib/repo";
 import { Badge } from "./Badge";
+import { ImplementedIn, LinkedUses } from "./ImplementedIn";
 import styles from "./Trace.module.css";
 
 // Allows a line break after a dot or underscore. The text itself does not change.
@@ -53,63 +54,67 @@ export function Trace({ concept }: { concept: string }) {
   const pdf = found.pdfRef;
 
   return (
-    <dl className={styles.trace} data-testid="trace">
-      <div className={styles.row}>
-        <dt>Source</dt>
-        <dd>
-          {found.source.map(({ symbol }) => {
-            const code = getSymbol(symbol);
-            return (
-              <p key={symbol}>
-                <a href={code.permalink}>
-                  <code>{code.file}</code>, lines {formatLineRange(code.startLine, code.endLine)}
-                </a>
-                , <code>{code.name}</code>
+    <>
+      <dl className={styles.trace} data-testid="trace">
+        <div className={styles.row}>
+          <dt>Source</dt>
+          <dd>
+            {found.source.map(({ symbol }) => {
+              const code = getSymbol(symbol);
+              return (
+                <p key={symbol}>
+                  <a href={code.permalink}>
+                    <code>{code.file}</code>, lines {formatLineRange(code.startLine, code.endLine)}
+                  </a>
+                  , <code>{code.name}</code>
+                </p>
+              );
+            })}
+          </dd>
+        </div>
+        <div className={styles.row}>
+          <dt>PDF reference</dt>
+          <dd>
+            {pdf ? (
+              <p>
+                Section {pdf.section}
+                {pdf.equations.length > 0 ? `, Eq. ${pdf.equations.join(", ")}` : ""}, p. {pdf.page}
               </p>
-            );
-          })}
-        </dd>
-      </div>
-      <div className={styles.row}>
-        <dt>PDF reference</dt>
-        <dd>
-          {pdf ? (
-            <p>
-              Section {pdf.section}
-              {pdf.equations.length > 0 ? `, Eq. ${pdf.equations.join(", ")}` : ""}, p. {pdf.page}
-            </p>
-          ) : (
-            <p>Not stated in the PDF</p>
-          )}
-        </dd>
-      </div>
-      <div className={styles.row}>
-        <dt>Implementation</dt>
-        <dd>
-          {callers.length === 0 ? <p>Not called by the pipeline.</p> : null}
-          <SymbolList title="Called by" ids={callers} />
-          <SymbolList title="Tested by" ids={tests} />
-          {found.usedBy.map((use) => {
-            const target = requireTarget(use);
-            return (
-              <p key={`${use.symbol}:${use.match}`}>
-                Written inline in{" "}
-                <a href={target.permalink}>
-                  <code>{target.symbol.file}</code>, line{" "}
-                  {formatLineRange(target.startLine, target.endLine)}
-                </a>
-                . {use.note}
-              </p>
-            );
-          })}
-        </dd>
-      </div>
-      <div className={styles.row}>
-        <dt>Status</dt>
-        <dd>
-          <Badge kind={found.status} />
-        </dd>
-      </div>
-    </dl>
+            ) : (
+              <p>Not stated in the PDF</p>
+            )}
+          </dd>
+        </div>
+        <div className={styles.row}>
+          <dt>Used by</dt>
+          <dd data-testid="used-by">
+            {callers.length === 0 ? <p>Not called by the pipeline.</p> : null}
+            <SymbolList title="Called by" ids={callers} />
+            <SymbolList title="Tested by" ids={tests} />
+            {found.usedBy.map((use) => {
+              const target = requireTarget(use);
+              return (
+                <p key={`${use.symbol}:${use.match}`}>
+                  Written inline in{" "}
+                  <a href={target.permalink}>
+                    <code>{target.symbol.file}</code>, line{" "}
+                    {formatLineRange(target.startLine, target.endLine)}
+                  </a>
+                  . {use.note}
+                </p>
+              );
+            })}
+            <LinkedUses concept={concept} />
+          </dd>
+        </div>
+        <div className={styles.row}>
+          <dt>Status</dt>
+          <dd>
+            <Badge kind={found.status} />
+          </dd>
+        </div>
+      </dl>
+      <ImplementedIn concept={concept} />
+    </>
   );
 }

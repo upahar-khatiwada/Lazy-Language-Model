@@ -1,20 +1,24 @@
-import { equationAnchor, getEquation } from "@/lib/concepts";
+import { equationAnchor, equationSlug, getEquation } from "@/lib/concepts";
 import { Badge } from "./Badge";
 import { CopyButton } from "./CopyButton";
 import styles from "./MathBlock.module.css";
 import { TexDisplay } from "./TexDisplay";
 
-// Takes an equation id. The equation itself lives in data/concepts.
+// Takes an equation id. The equation itself lives in data/concepts. MathCodeNavigator reads
+// data-eq and handles the clicks, so this stays a server component.
 export function MathBlock({ id }: { id: string }) {
   const { equation } = getEquation(id);
   const anchor = equationAnchor(id);
   return (
-    <figure className={styles.block} id={anchor} data-equation={id}>
+    <figure className={styles.block} id={anchor} data-equation={id} data-eq={equationSlug(id)}>
       <figcaption className={styles.chrome}>
         <span>
           {equation.label} {equation.derived ? <Badge kind="derived" /> : null}
         </span>
         <span className={styles.actions}>
+          <button type="button" className={styles.showCode} data-eq-show>
+            Show code<span className="visually-hidden">: {equation.label}</span>
+          </button>
           <a className={styles.anchor} href={`#${anchor}`}>
             #<span className="visually-hidden">Link to equation: {equation.label}</span>
           </a>

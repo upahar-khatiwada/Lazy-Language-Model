@@ -4,6 +4,7 @@ import { formatLineRange, getSymbol, requireTarget, targetLines } from "@/lib/co
 import { exampleAnchor } from "@/lib/concepts";
 import { getGoldenCase } from "@/lib/golden";
 import { highlightPython } from "@/lib/highlight";
+import { lineEquations } from "@/lib/links";
 import { adamStep, createAdamState, type TensorMap } from "@/lib/math/optim";
 import type { Matrix } from "@/lib/math/tensor";
 import { perplexity } from "@/lib/math/ops";
@@ -151,13 +152,15 @@ function resolveLink(link: LearningLink): ResolvedLearningLink {
 
 async function frame(id: string): Promise<FlowCode> {
   const symbol = getSymbol(id);
+  const lines = await highlightPython(symbol.source);
   return {
-    lines: await highlightPython(symbol.source),
+    lines,
     source: symbol.source,
     filePath: symbol.file,
     functionName: symbol.name,
     startLine: symbol.startLine,
     permalink: symbol.permalink,
+    lineEquations: lineEquations(symbol.file, symbol.startLine, lines.length),
   };
 }
 

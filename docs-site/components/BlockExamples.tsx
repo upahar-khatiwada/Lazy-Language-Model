@@ -7,6 +7,7 @@ import { exampleAnchor } from "@/lib/concepts";
 import { formatShape, resolveDimension } from "@/lib/dimensions";
 import { getGoldenCase } from "@/lib/golden";
 import { highlightPython } from "@/lib/highlight";
+import { lineEquations } from "@/lib/links";
 import {
   blockBackward,
   blockForward,
@@ -412,13 +413,15 @@ function resolveStep(step: FlowStep, l?: number): ResolvedFlowStep {
 
 async function frame(id: string): Promise<FlowCode> {
   const symbol = getSymbol(id);
+  const lines = await highlightPython(symbol.source);
   return {
-    lines: await highlightPython(symbol.source),
+    lines,
     source: symbol.source,
     filePath: symbol.file,
     functionName: symbol.name,
     startLine: symbol.startLine,
     permalink: symbol.permalink,
+    lineEquations: lineEquations(symbol.file, symbol.startLine, lines.length),
   };
 }
 

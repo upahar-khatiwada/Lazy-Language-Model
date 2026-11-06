@@ -79,6 +79,55 @@
   color: var(--text);
 }
 
+/* A line tied to an equation. The gutter mark says so without colour. */
+.line[data-eqs] {
+  cursor: pointer;
+  position: relative;
+}
+
+.eqMark {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7em;
+  height: 100%;
+  left: 0;
+  line-height: 1;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  user-select: none;
+  width: var(--space-3);
+}
+
+.eqMark::before {
+  content: "\25C6";
+}
+
+.eqMark:hover,
+.eqMark:focus-visible {
+  color: var(--text);
+}
+
+/* The equation in focus. The outline is the non-colour cue, in both themes. */
+.line[data-eq-active] {
+  background: var(--highlight);
+  box-shadow: inset 3px 0 0 var(--highlight-line);
+  outline: 2px solid var(--text);
+  outline-offset: -2px;
+
+  /* --syntax-comment does not reach AA on --highlight in the dark theme (3.03:1). */
+  --shiki-token-comment: var(--text);
+}
+
+.line[data-eq-active] .number,
+.line[data-eq-active] .eqMark {
+  color: var(--text);
+}
+
 .number {
   box-sizing: content-box;
   color: var(--muted);
