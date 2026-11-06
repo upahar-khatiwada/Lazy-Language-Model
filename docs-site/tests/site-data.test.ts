@@ -142,8 +142,11 @@ describe("the pipeline", () => {
 test("writtenHref is null until the page exists, and unknown pages fail", () => {
   expect(writtenHref("mathematics/tokenization")).toBe("/mathematics/tokenization/");
   expect(writtenHref("code")).toBe("/code/");
-  expect(writtenHref("code/repository")).toBeNull();
+  expect(writtenHref("code/math-code")).toBeNull();
+  expect(writtenHref("reference/sources-discrepancies")).toBeNull();
   expect(() => writtenHref("nope/nope")).toThrow("not in the navigation");
+  // The Repository entry was removed: /code is the index of the repository's files.
+  expect(() => writtenHref("code/repository")).toThrow("not in the navigation");
 });
 
 describe("the walkthrough and the forward diagram", () => {

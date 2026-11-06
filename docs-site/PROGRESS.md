@@ -874,3 +874,22 @@ Append one entry per finished task. Newest at the bottom.
   - GitHub links were not opened, because the working rules allow no requests to other sites.
 - Decisions needed from the human: none.
 - Status: Task 14 finished. Nothing was committed.
+
+### Task 14 follow-ups: home spec, Repository entry (2026-11-06)
+- Files changed (all under `docs-site/`):
+  - `tests/e2e/home.spec.ts`: the test "Explore the code is disabled until the Code Explorer exists" is now "Explore the code links to the Code Explorer". This closes the Task 14 open issue on that spec. The human asked for this edit, which overrides the standing rule against updating specs for this one change.
+  - `data/nav.ts`: removed the Repository entry (`code/repository`). `/code` stays the explorer index.
+  - `tests/site-data.test.ts`: `code/math-code` and `reference/sources-discrepancies` must be unwritten, and `writtenHref("code/repository")` must now throw.
+  - The line about `/code/repository` in the Task 14 entry was left as written. It no longer applies to that page; `/code/math-code` is still unwritten.
+- Checks run in this session, after deleting `.next` and `out`:
+  - `bun run verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`
+  - `bun run lint`: `All matched files use Prettier code style!`. `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files  23 passed (23)`, `Tests  1641 passed (1641)`. `bun run build`: exit 0.
+  - Search of `*.html` and `*.txt` in `out/`: 0 files contain `code/repository`, and `out/code/repository` does not exist.
+  - Scratchpad script over `out/`: the home page's "Explore the code" link is `/code/`. Prev and next: Autoregressive Generation next is `/code/`; `/code/` prev is `/generation/autoregressive-generation/` and next is `/code/checkpoints-tests/`; `/code/checkpoints-tests/` prev is `/code/`. The Code group lists Code Explorer, Math ↔ Code, Checkpoints & Tests.
+  - In `out/code/index.html`, neither `/code/math-code/` nor `/reference/sources-discrepancies/` appears as a link, so both entries stay disabled.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. No state-changing git command was run.
+- Browser checks: not run, on the human's instruction, so the updated spec has no result yet. To run it from `docs-site/`, after `bun run build`: `bunx playwright test tests/e2e/home.spec.ts -g "Explore the code"`.
+- Open issues: the other specs in `tests/e2e` still have no result for Task 14 and these changes.
+- Decisions needed from the human: none.
+- Status: follow-ups finished. Nothing was committed.

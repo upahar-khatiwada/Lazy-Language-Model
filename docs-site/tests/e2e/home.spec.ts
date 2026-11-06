@@ -34,9 +34,12 @@ test("the reference page exists, so its question is a link", async ({ page }) =>
   await expect(page).toHaveURL(/\/reference\/mathematics\/$/);
 });
 
-test("Explore the code is disabled until the Code Explorer exists", async ({ page }) => {
+test("Explore the code links to the Code Explorer", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Explore the code" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Explore the code" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Explore the code" }).click();
+  await expect(page).toHaveURL(/\/code\/$/);
+  await expect(page.getByRole("heading", { name: "Code Explorer", level: 1 })).toBeVisible();
 });
 
 test("the glance table shows the values in config.json", async ({ page }) => {
