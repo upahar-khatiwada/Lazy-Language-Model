@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import {
   groupHits,
   highlightParts,
+  isExactName,
   nextActive,
   opensSearch,
   RESULT_TYPES,
@@ -72,6 +73,58 @@ describe("the softmax example, from real data", () => {
     expect(concept.href).toContain("/mathematics/softmax-cross-entropy/");
     const equation = search("softmax.shift").flat.find((hit) => hit.type === "equation")!;
     expect(equation.href).toContain("eq=softmax-shift");
+  });
+});
+
+describe("a query that is exactly a function or file name", () => {
+  const first = (query: string) => search(query).flat[0]!;
+
+  test.each([
+    ["softmax_forward", "function", "softmax_forward"],
+    ["SOFTMAX_FORWARD", "function", "softmax_forward"],
+    ["  softmax_forward  ", "function", "softmax_forward"],
+    ["Tokenizer.encode", "function", "Tokenizer.encode"],
+    ["encode", "function", "Tokenizer.encode"],
+    ["ops.py", "file", "ops.py"],
+    ["tests/test_ops.py", "file", "tests/test_ops.py"],
+    ["test_ops.py", "file", "tests/test_ops.py"],
+  ] as const)("%j opens the %s %s", (query, type, title) => {
+    expect(first(query)).toMatchObject({ type, title });
+  });
+
+  test("every function and file in the index ranks first for its own name", () => {
+    for (const doc of documents) {
+      if (doc.type !== "function" && doc.type !== "file") continue;
+      expect(first(doc.title), doc.title).toMatchObject({ type: doc.type, title: doc.title });
+    }
+  });
+
+  test("its group is listed first, so the first row on screen is the one Enter opens", () => {
+    const { groups, flat } = search("softmax_forward");
+    expect(groups[0]!.type).toBe("function");
+    expect(groups[0]!.hits[0]).toBe(flat[0]);
+    expect(groups.map((group) => group.type).slice(1)).toEqual(
+      RESULT_TYPES.filter((type) => type !== "function").filter((type) =>
+        groups.some((group) => group.type === type),
+      ),
+    );
+  });
+
+  test("a partial name or a phrase keeps the usual order", () => {
+    expect(first("softmax").type).toBe("concept");
+    expect(first("softmax forward").type).toBe("concept");
+    expect(first("softmax_forw").type).toBe("concept");
+  });
+
+  test("isExactName takes a file's path or base name, and a function's title or method", () => {
+    const hit = (type: SearchDoc["type"], title: string) => ({ type, title });
+    expect(isExactName(hit("file", "tests/test_ops.py"), "TEST_OPS.PY")).toBe(true);
+    expect(isExactName(hit("file", "tests/test_ops.py"), "test_ops")).toBe(false);
+    expect(isExactName(hit("function", "Adam.step"), "step")).toBe(true);
+    expect(isExactName(hit("function", "Adam.step"), "Adam.step")).toBe(true);
+    expect(isExactName(hit("function", "Adam.step"), "Adam")).toBe(false);
+    expect(isExactName(hit("concept", "Softmax"), "softmax")).toBe(false);
+    expect(isExactName(hit("function", "main"), "   ")).toBe(false);
   });
 });
 

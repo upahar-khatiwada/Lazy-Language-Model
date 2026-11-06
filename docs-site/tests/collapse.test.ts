@@ -281,9 +281,7 @@ describe("the wiring that uses it", () => {
 
 describe("tables stay in their own container", () => {
   test("a DataTable can take keyboard focus to scroll, and has a label", () => {
-    const html = renderToStaticMarkup(
-      createElement(DataTable, { label: "Gradient check" }),
-    );
+    const html = renderToStaticMarkup(createElement(DataTable, { label: "Gradient check" }));
     expect(html).toContain('tabindex="0"');
     expect(html).toContain('aria-label="Gradient check"');
     const css = readFileSync("components/DataTable.module.css", "utf-8");

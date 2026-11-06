@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import { CODE_REFS } from "@/data/code-refs";
-import { ABSENT_TERMS, READER_NOTES, SCAN_EXEMPT, TASK_NAMED_TERMS } from "@/data/not-in-model";
+import { ABSENT_TERMS, READER_NOTES, SCAN_EXEMPT } from "@/data/not-in-model";
 import { SHAPE_STAGE_ALIASES } from "@/data/shape-stages";
 import { loadSymbolIndex } from "@/lib/code-targets";
 import { loadConcepts, type MathConcept } from "@/lib/concepts";
@@ -398,7 +398,6 @@ describe("check 7: forbidden topics", () => {
   const base = {
     absentRows,
     absentTerms: { GELU: ["GELU"], Dropout: ["dropout"] },
-    taskNamedTerms: { RMSNorm: ["RMSNorm"] },
     sources: [],
     repoFiles: [],
     exempt: [{ path: "content/reference/not-in-this-model.mdx", reason: "r" }],
@@ -416,8 +415,33 @@ describe("check 7: forbidden topics", () => {
     );
   });
 
-  test("also catches a word the task names that the contract does not", () => {
-    expect(problems(scan("uses rmsnorm"))).toContain('"rmsnorm" names RMSNorm');
+  test("words with no contract row are reported, and are not scanned for", () => {
+    const check = checkForbiddenTopics({
+      ...base,
+      absentTerms: { ...base.absentTerms, RMSNorm: ["RMSNorm"] },
+      sources: [{ path: "content/x.mdx", text: "uses rmsnorm" }],
+    });
+    expect(check.problems).toEqual([
+      'data/not-in-model.ts has scan words for "RMSNorm", which is not a confirmed-absent row of contract/PDF_VS_CODE.md',
+    ]);
+  });
+
+  test.each([
+    ["Rotary positions", "rotary position embeddings"],
+    ["RMSNorm", "an rmsnorm layer"],
+    ["KV cache", "a KV cache"],
+    ["KV cache", "a key-value cache"],
+  ])("the contract row %s is listed as not in the PDF, and catches %j", (technique, text) => {
+    const rows = loadAbsentTechniques().rows;
+    expect(rows.find((row) => row.technique === technique)?.inPdf).toBe("no");
+    const check = checkForbiddenTopics({
+      absentRows: rows,
+      absentTerms: ABSENT_TERMS,
+      sources: [{ path: "content/x.mdx", text }],
+      repoFiles: [],
+      exempt: [],
+    });
+    expect(problems(check)).toContain(`names ${technique}`);
   });
 
   test("allows the words on the Not in This Model page", () => {
@@ -471,9 +495,7 @@ describe("check 7: forbidden topics", () => {
     );
   });
 
-  test("the terms the task named but the contract does not stay off that page's data", () => {
-    const rows = loadAbsentTechniques().rows.map((row) => row.technique);
-    for (const technique of Object.keys(TASK_NAMED_TERMS)) expect(rows).not.toContain(technique);
+  test("every place the scan skips gives a reason", () => {
     expect(SCAN_EXEMPT.every((entry) => entry.reason.length > 0)).toBe(true);
   });
 

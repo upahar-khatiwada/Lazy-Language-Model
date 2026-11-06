@@ -11,6 +11,11 @@
       "note": ""
     },
     {
+      "technique": "RMSNorm",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
       "technique": "Dropout",
       "inPdf": "no",
       "note": "Do not imply it exists"
@@ -22,6 +27,11 @@
     },
     {
       "technique": "Sinusoidal positions",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
+      "technique": "Rotary positions",
       "inPdf": "no",
       "note": ""
     },
@@ -72,6 +82,11 @@
     },
     {
       "technique": "Beam search, repetition penalty",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
+      "technique": "KV cache",
       "inPdf": "no",
       "note": ""
     },

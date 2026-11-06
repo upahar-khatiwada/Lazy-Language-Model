@@ -43,9 +43,27 @@ export function tokenize(text: string): string[] {
   return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 }
 
-export function groupHits(hits: SearchHit[], limitPerType: number): SearchResults {
+// Whether the query is literally this function's or file's name: a file by its path or base name, a
+// function by its title or, for a method, the part after the class. Any case. Concepts, equations
+// and pages have no such name.
+export function isExactName(hit: Pick<SearchHit, "type" | "title">, query: string): boolean {
+  const wanted = query.trim().toLowerCase();
+  const title = hit.title.toLowerCase();
+  if (hit.type === "file") return wanted === title || wanted === title.split("/").at(-1);
+  if (hit.type === "function") return wanted === title || wanted === title.split(".").at(-1);
+  return false;
+}
+
+// `lead` is listed before the other groups, which keep their usual order. Enter opens the first row
+// of the flat list, so the group holding that row has to come first on screen too.
+export function groupHits(
+  hits: SearchHit[],
+  limitPerType: number,
+  lead?: ResultType,
+): SearchResults {
   const groups: SearchGroup[] = [];
-  for (const type of RESULT_TYPES) {
+  const order = lead ? [lead, ...RESULT_TYPES.filter((type) => type !== lead)] : RESULT_TYPES;
+  for (const type of order) {
     const ofType = hits.filter((hit) => hit.type === type);
     if (ofType.length === 0) continue;
     groups.push({

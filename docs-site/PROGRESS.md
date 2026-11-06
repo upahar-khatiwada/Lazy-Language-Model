@@ -1072,3 +1072,43 @@ Append one entry per finished task. Newest at the bottom.
   - Still open from Task 16: `rotary`, `RMSNorm` and `KV cache` in the contract.
   - Still open from Task 15: `data/generated/actual/` holds corpus excerpts and is already tracked. Should they stay public?
 - Status: Task 17 written. Acceptance is not confirmed: lint failed in the last run, and the checks listed above remain for the human to run. Nothing was committed.
+
+### Task 16 follow-ups (2026-11-06)
+- No new features. HEAD `068e20b`, pinned `sha` `66da45b`.
+- Files changed:
+  - `contract/PDF_VS_CODE.md`: rows for `RMSNorm`, `Rotary positions` and `KV cache` in section 3, all `no`. The heading now says nine techniques the PDF does not mention, and the count is 73. **`contract/` is git-ignored**, so this edit stays on this machine. The committed copy is the snapshot below.
+  - `data/derived/absent-techniques.json`: regenerated with `bun run sync:derived`, now 24 rows.
+  - `data/not-in-model.ts`: `TASK_NAMED_TERMS` removed and its words moved under the three new rows of `ABSENT_TERMS`.
+  - `lib/content-checks.ts`, `lib/content-input.ts`: check 7 builds its word list from the contract's rows. Words with no row are reported and not scanned for.
+  - `lib/search.ts`: new `isExactName`; `groupHits` takes the group to list first. `lib/search-engine.ts`: an exact function or file name ranks first and its group moves to the top.
+  - `tests/search.test.ts`, `tests/content-checks.test.ts`: new tests. The ranking tests failed before the fix (`Tests  9 failed | 44 passed (53)`).
+  - `tests/collapse.test.ts`: Prettier formatting only. This was the lint failure left by Task 17.
+- Commands run, on the final files, from a clean `.next`, `out` and `test-results`:
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:derived`: `OK: 5 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 231 golden cases match a fresh run.`
+  - `bun run verify:shapes`: `OK: data/golden/shapes.json matches a fresh run.`
+  - `bun run verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`
+  - `bun run verify:actual`: `OK: data/generated/actual matches a fresh export from checkpoints/model.`
+  - `bun run verify:content`: `48 words for 24 contract rows, over 312 site files and 19 repository files.`, `Uncovered functions: none.`, `OK: 7 checks passed, 0 with warnings.`
+  - `bun run lint`: `All matched files use Prettier code style!`; `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files  31 passed (31)`, `Tests  2439 passed (2439)`.
+  - `bun run build`: `Search index: 261.6 KB, 551 documents (limit 500.0 KB).`, `Compiled successfully`, exit 0. All three new names are in `out/reference/not-in-this-model/index.html`.
+  - `bun run verify:site`: `OK: 50 pages, 5085 internal links, 3077 anchors, 502 GitHub permalinks. No problems.`
+  - Broken input against the real `verify:content`, scratch script, files restored by hash: 17 of 17 behaved as specified. These are the 13 Task 16 cases plus `rotary` on a page, `RMSNorm` in a concept, a row dropped from the snapshot, and a row with no words. The stale-data case warns with exit 0; the others exit 1.
+  - Removing the `RMSNorm` row from the contract makes `bun run verify:derived` fail with `differs: data/derived/absent-techniques.json. Run: bun run sync:derived`. The contract was restored.
+  - `git status --short` lists 9 paths, all under `docs-site/`, with nothing staged. `contract/PDF_VS_CODE.md` is not among them because it is ignored.
+- Not run: pytest (no Python changed), and the base-path build from `MAINTENANCE.md`, which has still never run. The dialog was not opened in a browser for this change.
+- Skipped under the standing rule in `CLAUDE.md`: Playwright. No spec was written or updated. Neither change has a spec covering it, so the human checks them by hand.
+- Assumptions:
+  - "Not in the PDF" is taken from the human's request. The PDF was not reopened (D4).
+  - `ABSENT_TERMS` stays. The contract decides which techniques are scanned, but a row name such as `Pad, BOS, EOS tokens` cannot be scanned as written, so each row keeps its hand-chosen words, locked to the rows by check 7. Only the separate list was removed.
+  - An exact name is literal, in any case: a file's path or base name (`ops.py`, `test_ops.py`, not `ops`), or a function's title or method part (`Tokenizer.encode`, `encode`).
+- Open issues:
+  - Searching `Perplexity` now opens the function, not the concept or page of that name. It is the only concept, equation or page title in the index that equals a function or file name.
+  - `main` is two functions, in `talk.py` and `train.py`. Enter opens the one in `talk.py`.
+  - `rotary`, `rmsnorm` and `dropout` each return 0 search results, because rows of Not in This Model are not indexed. This was already so, and the follow-up asked for no new features.
+- Closed: the Task 16 decision on `rotary`, `RMSNorm` and `KV cache`, and the Task 16 note that Enter on a function name opens a concept.
+- Still open from Task 17: the Introduction placeholder, and stale specs. Still open from Task 15: whether the corpus excerpts should stay public.
+- Status: follow-ups finished. Nothing was committed.

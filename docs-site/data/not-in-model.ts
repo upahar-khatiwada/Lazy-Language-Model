@@ -7,9 +7,11 @@
 export const ABSENT_TERMS: Record<string, string[]> = {
   "Post-LN": ["post-LN", "post-layer-norm", "post-norm"],
   BatchNorm: ["BatchNorm", "batch norm", "batch normalization", "batch normalisation"],
+  RMSNorm: ["RMSNorm"],
   Dropout: ["dropout"],
   "Label smoothing": ["label smoothing"],
   "Sinusoidal positions": ["sinusoidal"],
+  "Rotary positions": ["rotary"],
   "Weight tying": ["weight tying", "tied weights", "weight-tied"],
   GELU: ["GELU"],
   "Upstream epsilon loss": ["upstream epsilon"],
@@ -20,21 +22,13 @@ export const ABSENT_TERMS: Record<string, string[]> = {
   "L2 penalty in the loss": ["L2 penalty", "L2 regularization", "L2 regularisation"],
   "Plain gradient descent": ["gradient descent"],
   "Beam search, repetition penalty": ["beam search", "repetition penalty"],
+  "KV cache": ["KV cache", "key-value cache"],
   "Six-rung ladder of checks": ["six-rung"],
   "Stop when validation rises": ["early stopping", "stop when validation"],
   "ELIZA chat (`chat.py`)": ["ELIZA", "chat.py"],
   "XOR network (`xor_net.py`)": ["XOR", "xor_net"],
   "Skip-gram (`skipgram.py`)": ["skip-gram", "skipgram"],
   "Instruction following": ["instruction following"],
-};
-
-// Task 16 names these as examples of what the scan must catch, but contract/PDF_VS_CODE.md has no
-// row for them, so they are scanned and do not appear on the Not in This Model page. Check 7 still
-// proves them absent from the repository's Python files.
-export const TASK_NAMED_TERMS: Record<string, string[]> = {
-  "Rotary positions": ["rotary"],
-  RMSNorm: ["RMSNorm"],
-  "KV cache": ["KV cache", "key-value cache"],
 };
 
 // Contract notes addressed to the documentation's author, reworded for a reader. An empty note shows

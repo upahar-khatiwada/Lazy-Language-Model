@@ -1,5 +1,12 @@
 import MiniSearch, { type Options, type SearchOptions } from "minisearch";
-import { groupHits, tokenize, type SearchDoc, type SearchHit, type SearchResults } from "./search";
+import {
+  groupHits,
+  isExactName,
+  tokenize,
+  type SearchDoc,
+  type SearchHit,
+  type SearchResults,
+} from "./search";
 
 // The MiniSearch half of search. The dialog imports this module dynamically on first open, so
 // MiniSearch stays out of the code every page loads.
@@ -55,11 +62,15 @@ export function runSearch(
       } as SearchHit,
       score: result.score,
     }))
-    // MiniSearch has no notion of "this is exactly what was typed", so that comes first.
+    // MiniSearch has no notion of "this is exactly what was typed", so that comes first: a function
+    // or file name above all, then any title.
     .sort(
       (a, b) =>
-        Number(exactTitle(b.hit.title)) - Number(exactTitle(a.hit.title)) || b.score - a.score,
+        Number(isExactName(b.hit, query)) - Number(isExactName(a.hit, query)) ||
+        Number(exactTitle(b.hit.title)) - Number(exactTitle(a.hit.title)) ||
+        b.score - a.score,
     )
     .map(({ hit }) => hit);
-  return groupHits(hits, limitPerType);
+  const top = hits[0];
+  return groupHits(hits, limitPerType, top && isExactName(top, query) ? top.type : undefined);
 }

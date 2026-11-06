@@ -5,7 +5,7 @@ import { parse } from "yaml";
 import { z } from "zod";
 import { CODE_REFS } from "@/data/code-refs";
 import { COVERAGE_ALLOWLIST } from "@/data/coverage-allowlist";
-import { ABSENT_TERMS, SCAN_EXEMPT, TASK_NAMED_TERMS } from "@/data/not-in-model";
+import { ABSENT_TERMS, SCAN_EXEMPT } from "@/data/not-in-model";
 import { SHAPE_RUN_REQUIRED_FUNCTIONS, SHAPE_STAGE_ALIASES } from "@/data/shape-stages";
 import { loadActual } from "./actual";
 import { loadSymbolIndex } from "./code-targets";
@@ -175,7 +175,6 @@ export function runContentChecks(): CheckResult[] {
     checkForbiddenTopics({
       absentRows: loadAbsentTechniques().rows,
       absentTerms: ABSENT_TERMS,
-      taskNamedTerms: TASK_NAMED_TERMS,
       sources: scannedSources(),
       repoFiles: loadCodeIndex().files.map((file) => ({ path: file.path, text: file.source })),
       exempt: SCAN_EXEMPT,

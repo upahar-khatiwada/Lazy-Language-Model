@@ -451,7 +451,6 @@ export function termPattern(term: string): RegExp {
 export function checkForbiddenTopics(input: {
   absentRows: { technique: string }[];
   absentTerms: Record<string, string[]>;
-  taskNamedTerms: Record<string, string[]>;
   sources: TextFile[];
   repoFiles: TextFile[];
   exempt: { path: string; reason: string }[];
@@ -473,8 +472,9 @@ export function checkForbiddenTopics(input: {
     }
   }
 
-  const terms = Object.entries({ ...input.absentTerms, ...input.taskNamedTerms }).flatMap(
-    ([technique, words]) => words.map((term) => ({ technique, term })),
+  // The contract's rows decide what is scanned. Words with no row are a problem above, not a scan.
+  const terms = techniques.flatMap((technique) =>
+    (input.absentTerms[technique] ?? []).map((term) => ({ technique, term })),
   );
   const isExempt = (path: string) =>
     input.exempt.some((entry) =>
@@ -505,7 +505,7 @@ export function checkForbiddenTopics(input: {
   return result(7, "No forbidden topic outside Not in This Model", {
     problems,
     report: [
-      `${terms.length} words for ${techniques.length} contract rows and ${Object.keys(input.taskNamedTerms).length} techniques named by the task, over ${scanned} site files and ${input.repoFiles.length} repository files.`,
+      `${terms.length} words for ${techniques.length} contract rows, over ${scanned} site files and ${input.repoFiles.length} repository files.`,
       ...input.exempt.map((entry) => `Not scanned: ${entry.path} (${entry.reason})`),
     ],
   });
