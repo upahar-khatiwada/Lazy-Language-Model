@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
+import { READER_NOTES } from "@/data/not-in-model";
 
 // Snapshots of contract/PDF_VS_CODE.md and contract/DISCREPANCIES.md, from data/derived. contract/ is
 // git-ignored, so scripts/sync_derived.py copies what the two reference pages need. Reads files, so
@@ -65,4 +66,15 @@ export function inlineParts(text: string): InlinePart[] {
     });
   });
   return parts;
+}
+
+export function plainText(text: string): string {
+  return inlineParts(text)
+    .map((part) => part.text)
+    .join("");
+}
+
+// The note a reader sees for a row: the contract's, unless READER_NOTES rewords it.
+export function readerNote(row: AbsentTechniques["rows"][number]): string {
+  return READER_NOTES[row.technique] ?? row.note;
 }

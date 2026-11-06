@@ -1,8 +1,8 @@
-import { READER_NOTES } from "@/data/not-in-model";
 import {
   inlineParts,
   loadAbsentTechniques,
   loadDiscrepancies,
+  readerNote,
   type DiscrepancyBlock,
 } from "@/lib/contract-pages";
 import { DataTable } from "./DataTable";
@@ -40,7 +40,7 @@ export function AbsentTechniques() {
               <ContractText text={row.inPdf} />
             </td>
             <td>
-              <ContractText text={READER_NOTES[row.technique] ?? row.note} />
+              <ContractText text={readerNote(row)} />
             </td>
           </tr>
         ))}

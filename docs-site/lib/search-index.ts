@@ -1,6 +1,7 @@
 import { compile } from "@mdx-js/mdx";
 import remarkGfm from "remark-gfm";
 import { NAV } from "@/data/nav";
+import { ABSENT_TERMS } from "@/data/not-in-model";
 import {
   callableSymbols,
   explorerFiles,
@@ -10,6 +11,7 @@ import {
 } from "./code-explorer";
 import { equationSlug, loadConcepts } from "./concepts";
 import { listContentSlugs, readPageBody, readPageMeta } from "./content";
+import { loadAbsentTechniques, plainText, readerNote } from "./contract-pages";
 import { equationHome } from "./equation-links";
 import { withEquation } from "./math-code";
 import { pageHref } from "./nav";
@@ -24,6 +26,7 @@ import { createIndex } from "./search-engine";
 export const SEARCH_INDEX_LIMIT_BYTES = 500 * 1024;
 
 const REFERENCE_HREF = pageHref("reference/mathematics");
+const ABSENT_HREF = pageHref("reference/not-in-this-model");
 const DETAIL_LENGTH = 150;
 
 function shorten(text: string): string {
@@ -176,6 +179,24 @@ export function functionDocuments(): SearchDoc[] {
   });
 }
 
+// The rows of Not in This Model. Each result says the code does not use it, whatever was searched.
+export function absentDocuments(): SearchDoc[] {
+  return loadAbsentTechniques().rows.map((row) => {
+    const note = plainText(readerNote(row));
+    return {
+      id: `absent:${row.technique}`,
+      type: "absent",
+      title: plainText(row.technique),
+      names: join(...(ABSENT_TERMS[row.technique] ?? [])),
+      body: note,
+      latex: "",
+      formula: "",
+      detail: shorten(join("Not used by this code.", note)),
+      href: ABSENT_HREF,
+    };
+  });
+}
+
 export async function buildSearchDocuments(): Promise<SearchDoc[]> {
   return [
     ...conceptDocuments(),
@@ -183,6 +204,7 @@ export async function buildSearchDocuments(): Promise<SearchDoc[]> {
     ...(await pageDocuments()),
     ...fileDocuments(),
     ...functionDocuments(),
+    ...absentDocuments(),
   ];
 }
 

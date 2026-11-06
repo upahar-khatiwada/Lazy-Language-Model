@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, test } from "vitest";
+import { loadAbsentTechniques, plainText } from "@/lib/contract-pages";
 import {
   groupHits,
   highlightParts,
@@ -61,7 +62,9 @@ describe("the softmax example, from real data", () => {
       RESULT_TYPES.filter((type) => groups.some((group) => group.type === type)),
     );
     for (const group of groups) expect(group.label).toBe(TYPE_LABELS[group.type]);
-    expect(groups.map((group) => group.type)).toEqual([...RESULT_TYPES]);
+    expect(groups.map((group) => group.type)).toEqual(
+      RESULT_TYPES.filter((type) => type !== "absent"),
+    );
   });
 
   test("each result links to a real route, not a guess", () => {
@@ -125,6 +128,65 @@ describe("a query that is exactly a function or file name", () => {
     expect(isExactName(hit("function", "Adam.step"), "Adam")).toBe(false);
     expect(isExactName(hit("concept", "Softmax"), "softmax")).toBe(false);
     expect(isExactName(hit("function", "main"), "   ")).toBe(false);
+  });
+});
+
+describe("a technique this code does not use", () => {
+  const absent = (query: string) => search(query).flat.filter((hit) => hit.type === "absent");
+
+  test.each([
+    ["rotary", "Rotary positions"],
+    ["RMSNorm", "RMSNorm"],
+    ["KV cache", "KV cache"],
+    ["dropout", "Dropout"],
+    ["early stopping", "Stop when validation rises"],
+    ["BOS", "Pad, BOS, EOS tokens"],
+    ["chat.py", "ELIZA chat (chat.py)"],
+  ])("%j finds the row %s, which opens Not in This Model", (query, title) => {
+    expect(absent(query)[0]).toMatchObject({
+      title,
+      href: "/reference/not-in-this-model/",
+    });
+  });
+
+  test("every row of the page can be found by its own name", () => {
+    const rows = loadAbsentTechniques().rows;
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      const title = plainText(row.technique);
+      expect(
+        absent(title).map((hit) => hit.title),
+        title,
+      ).toContain(title);
+    }
+  });
+
+  test("the result says the code does not use it, and the group says so too", () => {
+    const { groups, flat } = search("rotary");
+    expect(flat[0]!.detail).toContain("Not used by this code.");
+    expect(groups.at(-1)!.label).toBe("Not in This Model");
+  });
+
+  test("the note is the one the page shows, not the contract's note to the author", () => {
+    expect(absent("dropout")[0]!.detail).toBe("Not used by this code.");
+    expect(absent("weight tying")[0]!.detail).toContain("separate matrix");
+  });
+
+  test.each(["positions", "gradient", "loss", "tokens", "embedding", "cache", "encoding"])(
+    "%j opens something the code has, with the rows listed after it",
+    (query) => {
+      const { flat } = search(query);
+      expect(flat[0]!.type).not.toBe("absent");
+      const firstAbsent = flat.findIndex((hit) => hit.type === "absent");
+      if (firstAbsent >= 0) {
+        expect(flat.slice(firstAbsent).every((hit) => hit.type === "absent")).toBe(true);
+      }
+    },
+  );
+
+  test("an exact function or file name still opens that function or file", () => {
+    expect(search("softmax_forward").flat[0]!.type).toBe("function");
+    expect(search("ops.py").flat[0]!.type).toBe("file");
   });
 });
 

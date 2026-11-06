@@ -1137,3 +1137,29 @@ Append one entry per finished task. Newest at the bottom.
   - `Math ↔ Code` has no content file, so it is disabled in the sidebar and in the new list. The home page question "Where is it implemented?" also points at it.
 - Closed: the Task 17 decision on the Introduction placeholder.
 - Status: finished. Nothing was committed.
+
+### Search finds Not in This Model (2026-11-06)
+- The human asked that searching `rotary` find something. HEAD `b9e0365`, pinned `sha` `66da45b`.
+- Files changed:
+  - `lib/search.ts`: new result type `absent`, labelled `Not in This Model`, last in `RESULT_TYPES`.
+  - `lib/search-index.ts`: `absentDocuments()`, one document for each row of `data/derived/absent-techniques.json`. Each row's scan words from `ABSENT_TERMS` are indexed as names, so `early stopping` finds `Stop when validation rises`.
+  - `lib/contract-pages.ts`, `components/ContractPages.tsx`: `plainText` and `readerNote`, so the page and the search result show the same note.
+  - `tests/search.test.ts`: new describe "a technique this code does not use". The test that `softmax` lists every type now leaves out `absent`.
+- Commands run, from a clean `.next` and `out`, on the final code:
+  - `bun run lint`: `All matched files use Prettier code style!`; `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files  32 passed (32)`, `Tests  2465 passed (2465)`.
+  - `bun run verify:content`: `48 words for 24 contract rows, over 313 site files and 19 repository files.`, `OK: 7 checks passed, 0 with warnings.`
+  - `bun run verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`; `bun run verify:derived`: `OK: 5 derived file(s) match a fresh run.`
+  - `bun run build`: `Search index: 270.2 KB, 580 documents (limit 500.0 KB).`, `Compiled successfully`, exit 0.
+  - `bun run verify:site`: `OK: 50 pages, 5147 internal links, 3082 anchors, 502 GitHub permalinks. No problems.`
+  - Leaving the rows out of the index, and separately typing them as pages, each gave `Tests  10 failed | 61 passed (71)` in `tests/search.test.ts`. The file was restored after each.
+  - Observed through `runSearch`: `rotary`, `rmsnorm`, `dropout` and `kv cache` each return 1 result, their row, with href `/reference/not-in-this-model/` and detail `Not used by this code.`
+- Not run: pytest (no Python changed), and the base-path build, which has still never run. The dialog was not opened in a browser for this change.
+- Skipped under the standing rule in `CLAUDE.md`: Playwright. No spec was written or updated.
+- Assumptions:
+  - A result opens the page, not the row. The table has no row anchors, and the request did not ask for them.
+  - Rows are a separate group and not ordinary pages. As pages, `Sinusoidal positions` was the first page listed for `positions`, and `KV cache` the first for `cache`.
+- Open issues:
+  - Searching `not in this model` lists the concept `Token embedding` first, so Enter opens that concept. The page itself is the second of the two results. An exact page title does not move its group to the top, as an exact function or file name does. This was not changed.
+- Closed: the question from the Task 16 follow-ups of whether `rotary` should find something.
+- Status: finished. Nothing was committed.

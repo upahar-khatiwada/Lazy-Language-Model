@@ -4,7 +4,8 @@
 
 export const SEARCH_INDEX_FILE = "search-index.json";
 
-export const RESULT_TYPES = ["concept", "equation", "page", "file", "function"] as const;
+// "absent" is last so that a technique this code does not use never comes before something it has.
+export const RESULT_TYPES = ["concept", "equation", "page", "file", "function", "absent"] as const;
 export type ResultType = (typeof RESULT_TYPES)[number];
 
 export const TYPE_LABELS: Record<ResultType, string> = {
@@ -13,6 +14,7 @@ export const TYPE_LABELS: Record<ResultType, string> = {
   page: "Page",
   file: "File",
   function: "Function",
+  absent: "Not in This Model",
 };
 
 export type SearchDoc = {
