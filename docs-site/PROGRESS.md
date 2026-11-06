@@ -769,3 +769,54 @@ Append one entry per finished task. Newest at the bottom.
   - `verify:content` is still a stub.
 - Decisions needed from the human: none.
 - Status: follow-ups finished, except the full browser suite as above. Nothing was committed.
+
+### Task 13: Generation Documentation (2026-11-06)
+- Depends on Tasks 08 and 12: both logged, and their pages exist. All six contract files present. HEAD `b98150a`.
+- Files created (all under `docs-site/`):
+  - Pages: `content/generation/sampling.mdx`, `content/generation/autoregressive-generation.mdx`.
+  - Concepts and links, one pair each: `sampling.greedy`, `sampling.temperature`, `sampling.top_k`, `sampling.top_p`, `sampling.choice`, `generate.generate` (inventory M54 to M59).
+  - `lib/sampling-lab.ts`, `components/ProbabilityLab.tsx`, `components/GenerationStepper.tsx`, `components/GenerationExamples.tsx`, `tests/generation-pages.test.ts`.
+- Files changed:
+  - `lib/math/sampling.ts`: `topKRuns`, `topKCutoff`, and `generationSteps`, the mirror of `generate.generate`.
+  - `scripts/make_golden.py`, `data/golden/sampling.json`: 10 new cases (7 lab presets, 1 repeated draws, 2 stepper runs), and `cutoff` added to top-k outputs. No other golden file's cases changed.
+  - `tests/math.golden.test.ts`: `checkGenerate`, `checkDraws`, and a check of `cutoff`.
+  - `data/code-refs.ts`, `components/mdx.tsx`, `components/Examples.module.css`.
+  - `contract/DISCREPANCIES.md` section 8 (3 rows) and `contract/HYPERPARAMETERS.md` section 5 (2 rows). `contract/` is git-ignored, so these exist only on this machine.
+  - `CLAUDE.md`: new standing rule, set by the human in this task: desktop only, no browser test suite, no new `tests/e2e` specs.
+- Stepper data: `make_golden.py` runs the real `generate.generate` with `generate.forward` temporarily replaced by a hand-picked table, and a real `default_rng(config.seed)`. The engine computes windows, distributions and greedy picks, and the golden tests compare them. Only the sampled picks are stored, because NumPy's generator has no mirror.
+- Checks run in this session (final state):
+  - `bun run test`: `Test Files 21 passed (21)`, `Tests 1332 passed (1332)`. `bun run test -- tests/math.golden`: `Tests 514 passed (514)`.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`; `verify:derived`: `OK: 2 derived file(s) match a fresh run.`; `verify:examples`: `OK: 2 example(s) match a fresh run.`; `verify:golden`: `OK: 230 golden cases match a fresh run.`; `verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `verify:content: not implemented yet`. It is still the stub, so this run checks nothing.
+  - `bun run lint`: `All matched files use Prettier code style!`. `bun run typecheck`: exit 0. `bun run build`: exit 0.
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<temp>`: `67 passed in 3.34s`.
+  - Tamper, one at a time on `lib/math/sampling.ts`, restored by hash, running `tests/math.golden` and `tests/generation-pages`: top-k `>` for `>=`, 14 failed; top-p drops the crossing token, 22 failed; top-p `>` for `>=`, 2 failed; window from the front, 4 failed; first logits row, 3 failed; guard `<=`, 1 failed.
+  - `git status --short -- ':(top,exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. No state-changing git command was run.
+- Browser checks: the Playwright suite was NOT run and no spec was written, on the human's instruction. So the existing specs have no result for these changes.
+- One desktop look, 1280 wide, with a scratchpad script against the built site:
+  - The lab loads and reads 0.6945120804172973 for token 0, which equals the golden value. Presets and an edited temperature update it. The stepper advances, and the mode switch works.
+  - No page errors. The console shows only 404s for `__next.*.txt` prefetch files, the known issue.
+  - Screenshots viewed: lab, stepper, top-p table. Seen and fixed: the stepper caption said "grey bars", but a removed token has a zero-width bar. Not viewed: the page text, the top-k table, the defaults table, the greedy mode and the dark theme.
+- Failures seen on the way:
+  - Two YAML values containing `: ` failed to parse until quoted.
+  - `tests/math.mirrors.test.ts` failed because the `topKCutoff` comment did not name `generate.sample_next`. Fixed.
+- Findings:
+  - No new PDF-versus-code difference, based on `contract/PDF_VS_CODE.md`. The PDF was not reopened (D4).
+  - Comment-versus-code: the `top_k` comment says k tokens, and ties can leave more. The `top_p` comment says "add up to 0.9", and the kept sum is at least `top_p`. Logged.
+  - `np.argsort(-p)` uses a sort with no promised tie order, so when the top-p cut splits a tie the code does not define which tokens stay. The lab uses lowest index first, says so, and the count and values match. Logged.
+  - At exactly `temperature = 1e-6` the guard does not fire. The result is close to greedy but still draws from the generator. Documented.
+- Assumptions:
+  - The temperature is written as tau in equations, because `T` is the sequence length on this site.
+  - The stepper uses `window = 4`, not the real value, so that the window slides within 6 new tokens. The figure says so. Its settings and seed are those in `config.py`.
+  - All numbers are Illustrative Example, under D1. The stepper's table depends only on the last token, unlike a real model, and the figure says so.
+  - `pdfRef` sections for `sampling.choice` (4.7) and `generate.generate` (4.8) are inferred from neighbouring rows of `PDF_VS_CODE.md`, because the inventory gives only "p.15, code". They should be checked against the PDF if it is reopened.
+  - M56 and M57 are `status: derived` with `pdfRef: null`, as in the inventory. `Trace` prints "Not stated in the PDF", and the page adds a sentence on the worked examples.
+  - "Not an assistant" rests on `talk.py` and on the "instruction following" row of `PDF_VS_CODE.md`.
+- Open issues:
+  - `verify:content` is still a stub.
+  - `/reference/sources` does not exist (nav slug `reference/sources-discrepancies`), so the log has no page to appear on yet.
+  - `stepper.config_defaults` and `choice.repeated_draws` store draws from NumPy's generator, so a different NumPy could fail `verify:golden`, as with `data.iterate_batches`. Not tried on another machine.
+  - GitHub links were not opened, because the working rules allow no requests to other sites.
+- LLM observations, reported only and nothing changed: the two comments and the sort tie order above.
+- Decisions needed from the human: none.
+- Status: Task 13 finished. Nothing was committed.

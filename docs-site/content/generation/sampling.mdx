@@ -1,0 +1,275 @@
+---
+title: Sampling
+description: How generate.sample_next turns one row of logits into one token id, as coded.
+sourceFile: generate.py
+status: published
+---
+
+`sample_next` receives one row of logits and returns one token id. It runs these steps in this order:
+
+1. If `temperature` is below `1e-6`, return the index of the largest logit and stop.
+2. Compute `p`, the softmax of the logits divided by `temperature`.
+3. If `0 < top_k < len(p)`, apply top-k.
+4. If `top_p < 1.0`, apply top-p.
+5. Draw one token from `p` with the generator.
+
+<CodeReference symbol="generate.sample_next" />
+
+At the settings in `config.py`, steps 2, 4 and 5 run. Step 1 does not fire and step 3 is skipped. <PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink> lists those settings and shows how the loop calls this function.
+
+**This page has no backward pass.** Sampling runs after the model and computes no loss or gradient, and nothing in `generate.py` calls a backward function. Every number here is an Illustrative Example.
+
+In this page's equations, `z` is the logits and the temperature is written with the Greek letter tau. `T` is not used for it, because on this site `T` is the sequence length.
+
+## Greedy guard
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="sampling.greedy" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="sampling.greedy" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="sampling.greedy" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="sampling.greedy" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<GreedyExample />
+
+`np.argmax` returns the first index among equal values, so a tie goes to the lowest index. That is the third row of the table.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="sampling.greedy" shape="greedy" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="generation.greedy" />
+
+The return happens before `rng` is touched, so a greedy step draws nothing from the generator. Two tests check this: the same token twenty times, and the same output from two different seeds.
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="sampling.greedy" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="sampling.greedy" />
+
+## Temperature
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="sampling.temperature" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="sampling.temperature" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="sampling.temperature" />
+
+The softmax itself is on <PageLink page="mathematics/softmax-cross-entropy">Softmax & Cross-Entropy</PageLink>. It subtracts the largest value first, so large logits do not overflow.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="sampling.temperature" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<TemperatureExample />
+
+These inputs are the ones in `test_temperature_examples`. At `temperature` 1 the logits pass through unchanged.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="sampling.temperature" shape="temperature" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="outside.sampling" />
+
+<CodeReference symbol="ops.softmax_forward" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="sampling.temperature" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="sampling.temperature" />
+
+## Top-k
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="sampling.top_k" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="sampling.top_k" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="top_k.cutoff" />
+
+<MathBlock id="top_k.keep" />
+
+<MathBlock id="top_k.renormalise" />
+
+The branch runs only if `0 < top_k < len(p)`. So `top_k = 0` skips it, a negative value skips it, and so does a value equal to or above the vocabulary size.
+
+**How the cut-off is computed.** `np.sort(p)` sorts from smallest to largest, and `[-top_k]` counts back from the end (<CodeLine id="generation.cutoff" />). Repeated values each take a place in that list. With `top_k = 2` and `p` holding three equal largest values, the cut-off is that shared value.
+
+**What happens with ties.** The test is `p >= cutoff` (<CodeLine id="generation.keep-ties" />), not a count. Every token equal to the cut-off stays, so more than `top_k` tokens can remain. Nothing breaks the tie.
+
+The PDF gives a worked example of top-k on p. 14 and no equation, so this concept is marked as derived from the implementation.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="sampling.top_k" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<TopKExample />
+
+In the second table `top_k` is 2 and three tokens remain, because all three equal the cut-off.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="sampling.top_k" shape="top-k" />
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="generation.top-k" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="sampling.top_k" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="sampling.top_k" />
+
+## Top-p
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="sampling.top_p" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="sampling.top_p" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="top_p.sort" />
+
+<MathBlock id="top_p.cum" />
+
+<MathBlock id="top_p.prefix" />
+
+<MathBlock id="top_p.renormalise" />
+
+**The prefix rule.** `np.searchsorted(cum, top_p)` returns the first position where `cum` is at least `top_p`, counting from 0. The slice then adds 1, so the token at that position is kept (<CodeLine id="generation.prefix" />). The kept tokens are always a run from the top of the sorted order, and the sum of what is kept is at least `top_p`, not at most.
+
+- If `cum` lands exactly on `top_p`, the prefix ends at that token.
+- If `top_p` is 0 or below, position 0 already qualifies, so one token is kept.
+- If `cum` never reaches `top_p`, for example through rounding at a value just below 1, `searchsorted` returns `len(cum)`, and the slice keeps every token.
+- If top-k ran first, its removed tokens are in the sort as zeros. They sit at the end of the order and add nothing to `cum`.
+
+**Ties at the cut.** The code does not treat ties specially here, unlike top-k. If the cut falls inside a group of equal probabilities, some of them stay and some go. `np.argsort(-p)` (<CodeLine id="generation.argsort" />) uses NumPy's default sort, which does not promise an order for equal values, so the code does not define which ones stay. The number of tokens kept does not depend on that order.
+
+The PDF gives a worked example of top-p on p. 15 and no equation, so this concept is marked as derived from the implementation.
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="sampling.top_p" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<TopPExample />
+
+In the first table `cum` is below `top_p` at position 1 and above it at position 2, so position 2 is the crossing token and it is kept. These are the inputs of `test_top_p_example`. In the second table `cum` equals `top_p` at position 1, so the prefix stops there.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="sampling.top_p" shape="top-p" />
+
+`keep` is the one shorter array, with length `s + 1`. `q` has the full length, so removed tokens remain as zeros.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="generation.top-p" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="sampling.top_p" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="sampling.top_p" />
+
+## Random choice
+
+<ConceptStep>What is it?</ConceptStep>
+
+<ConceptCard concept="sampling.choice" split />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+<ConceptWhy concept="sampling.choice" />
+
+<ConceptStep>Mathematics</ConceptStep>
+
+<MathBlock id="sampling.choice" />
+
+<ConceptStep>What does each symbol mean?</ConceptStep>
+
+<Symbols concept="sampling.choice" />
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<ChoiceExample />
+
+Tokens 3 and 4 have probability 0 and are never drawn. Running the same calls again from the same seed gave the same draws.
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+<TensorShape concept="sampling.choice" shape="choice" />
+
+The draw returns one number, and `int(...)` makes it a plain Python integer.
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeStep id="generation.choice" />
+
+`sample_next` does not create the generator. Its caller passes one in, and both callers create it from <ConfigValue name="seed" />:
+
+<CodeStep id="generation.train-rng" />
+
+<CodeStep id="generation.talk-rng" />
+
+<ConceptStep>Code and math connection</ConceptStep>
+
+<EquationCode concept="sampling.choice" />
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<Trace concept="sampling.choice" />
+
+## Probability lab
+
+Edit the logits, `temperature`, `top_k` and `top_p`, or start from a preset. The first preset uses the settings in `config.py`. Every result comes from this site's mirror of `sample_next`. The presets' results are compared with the real function by the golden tests.
+
+The lab stops at the distribution. It does not draw, because NumPy's generator is not reproduced in this site's engine.
+
+<ProbabilityLabExample />

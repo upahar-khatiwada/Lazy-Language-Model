@@ -1,0 +1,21 @@
+links:
+  - equationId: sampling.greedy
+    file: generate.py
+    symbol: generate.sample_next
+    match: "if temperature < 1e-6:"
+    role: implements
+  - equationId: sampling.greedy
+    file: generate.py
+    symbol: generate.sample_next
+    match: return int(np.argmax(logits))
+    role: implements
+  - equationId: sampling.greedy
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_temperature_zero_is_greedy
+    match: assert all(sample_next(np.array([0.1, 2.0, 1.0]), 0.0, 0, 1.0, rng) == 1
+    role: test
+  - equationId: sampling.greedy
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_greedy_generation_is_deterministic
+    match: assert a == b
+    role: test

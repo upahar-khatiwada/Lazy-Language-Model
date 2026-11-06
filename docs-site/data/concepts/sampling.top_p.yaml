@@ -1,0 +1,76 @@
+id: sampling.top_p
+title: Top-p
+category: sampling
+inventory: [M57]
+status: derived
+summary: >-
+  An optional step that runs only if top_p < 1.0. It sorts the tokens from most to least likely, adds
+  up their probabilities, keeps the shortest run from the top whose sum reaches top_p, and renormalises.
+  The token that crosses top_p is kept.
+why: >-
+  It removes the unlikely tail. The number of tokens kept follows the distribution, so a confident
+  distribution keeps few and an unsure one keeps many. It is on in config.py.
+equations:
+  - id: top_p.sort
+    latex: \pi = \text{token indices sorted by } p \text{, largest first}
+    role: none
+    label: Sort
+  - id: top_p.cum
+    latex: C_m = \sum_{j=0}^{m} p_{\pi_j}
+    role: none
+    label: Cumulative sum
+  - id: top_p.prefix
+    latex: 's = \min \{ m : C_m \geq \rho \}, \qquad \text{keep } \pi_0, \dots, \pi_s'
+    role: none
+    label: The smallest prefix that reaches top_p
+  - id: top_p.renormalise
+    latex: q_i = \frac{p_i}{\sum_{m=0}^{s} p_{\pi_m}} \text{ for kept } i, \qquad q_i = 0 \text{ otherwise}
+    role: none
+    label: Renormalise
+symbols:
+  - symbol: p
+    meaning: The probabilities after temperature and top-k
+    codeName: p
+    shape: (V,)
+  - symbol: \rho
+    meaning: The threshold
+    codeName: top_p
+    shape: scalar
+  - symbol: \pi
+    meaning: Token indices, largest probability first
+    codeName: order
+    shape: (V,)
+  - symbol: C
+    meaning: Running sum of the sorted probabilities
+    codeName: cum
+    shape: (V,)
+  - symbol: s
+    meaning: The first position where C reaches the threshold, counting from 0
+    codeName: np.searchsorted(cum, top_p)
+    shape: scalar
+  - symbol: q
+    meaning: The kept probabilities, scaled to sum to 1
+    codeName: q / q.sum()
+    shape: (V,)
+example: null
+shapes:
+  - id: top-p
+    label: Top-p sorts and sums over all V tokens. Only keep is shorter, and p keeps its shape
+    stages:
+      - name: order
+        dims: [V]
+      - name: cum
+        dims: [V]
+      - name: p
+        dims: [V]
+    target:
+      file: generate.py
+      symbol: generate.sample_next
+      match: "keep = order[: np.searchsorted(cum, top_p) + 1]"
+source:
+  - file: generate.py
+    symbol: generate.sample_next
+usedBy: []
+pdfRef: null
+notes:
+  - The inventory gives a worked example on PDF p.15 and no equation.

@@ -1,0 +1,21 @@
+links:
+  - equationId: sampling.choice
+    file: generate.py
+    symbol: generate.sample_next
+    match: return int(rng.choice(len(p), p=p))
+    role: implements
+  - equationId: sampling.choice
+    file: train.py
+    symbol: train.main
+    match: rng = np.random.default_rng(config.seed)
+    role: call
+  - equationId: sampling.choice
+    file: talk.py
+    symbol: talk.main
+    match: rng = np.random.default_rng(config.seed)
+    role: call
+  - equationId: sampling.choice
+    file: tests/test_generate.py
+    symbol: tests.test_generate.SpyRng.choice
+    match: self.p = np.asarray(p)
+    role: test

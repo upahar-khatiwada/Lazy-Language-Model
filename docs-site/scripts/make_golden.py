@@ -885,6 +885,8 @@ def sample_case(case_id, logits, temperature, top_k, top_p):
     # p is rebound twice in the top-k branch: zeroed, then renormalised.
     top_k_ran = bool(history["cutoff"])
     outputs["after_top_k"] = versions[2] if top_k_ran else versions[0]
+    if top_k_ran:
+        outputs["cutoff"] = history["cutoff"][-1]
     if history["order"]:
         order, keep = history["order"][-1], history["keep"][-1]
         before = outputs["after_top_k"]
@@ -892,6 +894,116 @@ def sample_case(case_id, logits, temperature, top_k, top_p):
         tie_split = bool(len(keep) < len(order) and last == before[order[len(keep)]] and last > 0)
         outputs.update(order=order, cum=history["cum"][-1], keep_count=len(keep), tie_split=tie_split)
     return case(case_id, "generate.sample_next", inputs, outputs)
+
+
+# The probability lab's presets. Hand-picked logits; the settings of the first are those in config.py.
+LAB_LOGITS = [2.0, 1.0, 0.5, 0.0, -1.0]
+
+
+def lab_cases():
+    return [
+        sample_case("lab.config_defaults", LAB_LOGITS, config.temperature, config.top_k, config.top_p),
+        sample_case("lab.greedy", LAB_LOGITS, 0.0, config.top_k, config.top_p),
+        sample_case("lab.no_truncation", LAB_LOGITS, 1.0, 0, 1.0),
+        sample_case("lab.top_k", LAB_LOGITS, 1.0, 2, 1.0),
+        sample_case("lab.top_k_tie", [2.0, 2.0, 2.0, 1.0, 0.0], 1.0, 2, 1.0),
+        sample_case("lab.top_p_tie", [1.0, 1.0, 1.0, 1.0, 0.0], 1.0, 0, 0.5),
+        sample_case("lab.top_k_then_top_p", LAB_LOGITS, config.temperature, 3, 0.7),
+    ]
+
+
+class RecordingRng:
+    """Hands every call to a real generator and records the distribution and the result."""
+
+    def __init__(self, seed):
+        self.rng = np.random.default_rng(seed)
+        self.distributions = []
+        self.draws = []
+
+    def choice(self, n, p):
+        drawn = self.rng.choice(n, p=p)
+        self.distributions.append(np.array(p))
+        self.draws.append(int(drawn))
+        return drawn
+
+
+def choice_case():
+    """The real sample_next, called repeatedly with the real generator at config.seed."""
+    logits = arr(LAB_LOGITS)
+    settings = (config.temperature, config.top_k, config.top_p)
+    rng = np.random.default_rng(config.seed)
+    draws = [generate.sample_next(logits, *settings, rng) for _ in range(1000)]
+    again = np.random.default_rng(config.seed)
+    return case(
+        "choice.repeated_draws",
+        "generate.sample_next.draws",
+        {"logits": logits, "temperature": settings[0], "top_k": settings[1], "top_p": settings[2], "seed": config.seed},
+        {
+            "first_draws": draws[:12],
+            "counts": np.bincount(draws, minlength=len(logits)).tolist(),
+            "total": len(draws),
+            "same_seed_same_draws": draws == [generate.sample_next(logits, *settings, again) for _ in range(1000)],
+        },
+    )
+
+
+# The stepper's model stand-in. Row i holds hand-picked logits for the token after token i, so the
+# logits depend on one token only. A real model's logits depend on the whole window.
+STEPPER_TOKENS = ["the", "cat", "sat", "on", "mat"]
+STEPPER_TABLE = [
+    [-1.0, 2.0, 0.5, 0.0, 1.5],
+    [0.0, -1.0, 2.0, 1.0, -1.0],
+    [0.5, -1.0, -1.0, 2.0, 0.0],
+    [2.5, 0.0, -1.0, -1.0, 0.5],
+    [1.0, 0.0, 1.5, 0.5, -1.0],
+]
+STEPPER_SEED = [0, 1]
+STEPPER_NEW = 6
+STEPPER_WINDOW = 4
+
+
+def stepper_case(case_id, temperature, top_k, top_p):
+    """The real generate.generate, with only `forward` replaced by the table above."""
+    table = arr(STEPPER_TABLE)
+    windows = []
+    rows = []
+
+    def table_forward(_params, ids, _cfg):
+        windows.append(ids.tolist())
+        logits = table[ids]
+        rows.append(logits)
+        return logits, {}
+
+    rng = RecordingRng(config.seed)
+    real_forward = generate.forward
+    generate.forward = table_forward
+    try:
+        ids = generate.generate(None, None, STEPPER_SEED, STEPPER_NEW, STEPPER_WINDOW, temperature, top_k, top_p, rng)
+    finally:
+        generate.forward = real_forward
+
+    return case(
+        case_id,
+        "generate.generate",
+        {
+            "tokens": STEPPER_TOKENS,
+            "table": table,
+            "seed_ids": STEPPER_SEED,
+            "max_new_tokens": STEPPER_NEW,
+            "window": STEPPER_WINDOW,
+            "temperature": temperature,
+            "top_k": top_k,
+            "top_p": top_p,
+            "seed": config.seed,
+        },
+        {
+            "ids": ids,
+            "windows": windows,
+            "logits_shapes": [list(row.shape) for row in rows],
+            "distributions": rng.distributions,
+            "draws": rng.draws,
+        },
+    )
 
 
 def sampling_cases():
@@ -929,6 +1041,10 @@ def sampling_cases():
         sample_case("top_p.many_ties_split", many_ties, 1.0, 0, 0.3),
         sample_case("top_k_then_top_p", z4, 1.0, 3, 0.5),
         sample_case("top_k_then_top_p_with_temperature", z4, 0.8, 3, 0.9),
+        *lab_cases(),
+        choice_case(),
+        stepper_case("stepper.config_defaults", config.temperature, config.top_k, config.top_p),
+        stepper_case("stepper.greedy", 0.0, config.top_k, config.top_p),
     ]
 
 

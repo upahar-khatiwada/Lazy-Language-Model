@@ -29,6 +29,12 @@ Developer documentation. Three columns (sidebar, content, on-this-page). IBM Ple
 Architecture in place
 Next.js (static export) + TypeScript + MDX + KaTeX + Shiki (build time) + MiniSearch. Hand-written structured data in docs-site/data/concepts and docs-site/data/links. Machine-generated data in docs-site/data/generated (never edit by hand). Page content in docs-site/content. Start every task by reading docs-site/contract/ (inventories, architecture, discrepancies) and the files named in the task.
 
+Desktop only, no UI tests (set by the human on 2026-11-06; applies to every task in this series and overrides any task text that asks otherwise)
+- The site only has to work on desktop. Do not build, adjust or check phone or responsive layouts. Existing responsive CSS can stay, and new work does not need to add any.
+- Do NOT run Playwright or any browser test suite (bunx playwright test, bun run test:e2e, axe, viewport or overflow checks), and do not write or update specs in tests/e2e. The suite takes many minutes and is not worth it.
+- Verify with the fast checks instead: bun run test (vitest, including the golden tests), verify:golden, verify:links, verify:content, bun run lint, bun run typecheck, bun run build. Put logic in lib/ so that vitest can test it.
+- If a task asks for browser tests, or for checks at a phone width, skip them and say so in the PROGRESS.md entry. This is not an open issue. One quick look at a new interactive page at desktop width is fine, not more.
+
 CLAUDE CODE WORKING RULES
 - Run from the repository root. All new files go under docs-site/. Never edit any file outside docs-site/ (all root .py files, tests/, data/, config.py, .gitignore, anything else). If a task seems to need that, stop and ask.
 - Read-only access to the LLM code is expected: use Read, Grep and Glob. Python scripts you write under docs-site/scripts/ may import repository modules but must not write outside docs-site/.

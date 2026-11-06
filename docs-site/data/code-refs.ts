@@ -13,6 +13,7 @@ const FFN = { file: "transformer.py", symbol: "transformer.ffn_forward" };
 const FFN_BACKWARD = { file: "transformer.py", symbol: "transformer.ffn_backward" };
 const BLOCK = { file: "transformer.py", symbol: "transformer.block_forward" };
 const INIT = { file: "transformer.py", symbol: "transformer.init_params" };
+const SAMPLE_NEXT = { file: "generate.py", symbol: "generate.sample_next" };
 
 export const CODE_REFS: Record<string, CodeTarget> = {
   "train.seed": { ...MAIN, match: "rng = np.random.default_rng(config.seed)" },
@@ -455,6 +456,53 @@ export const CODE_REFS: Record<string, CodeTarget> = {
     file: "generate.py",
     symbol: "generate.sample_next",
     match: "p = softmax_forward(logits / temperature)",
+  },
+  "generation.greedy": {
+    ...SAMPLE_NEXT,
+    match: "if temperature < 1e-6:[\\s\\S]*?return int\\(np\\.argmax\\(logits\\)\\)",
+    regex: true,
+  },
+  "generation.top-k": {
+    ...SAMPLE_NEXT,
+    match: "if 0 < top_k < len\\(p\\):[\\s\\S]*?p = p / p\\.sum\\(\\)",
+    regex: true,
+  },
+  "generation.cutoff": { ...SAMPLE_NEXT, match: "cutoff = np.sort(p)[-top_k]" },
+  "generation.keep-ties": { ...SAMPLE_NEXT, match: "p = np.where(p >= cutoff, p, 0.0)" },
+  "generation.top-p": {
+    ...SAMPLE_NEXT,
+    match: "if top_p < 1\\.0:[\\s\\S]*?p = q / q\\.sum\\(\\)",
+    regex: true,
+  },
+  "generation.argsort": { ...SAMPLE_NEXT, match: "order = np.argsort(-p)" },
+  "generation.prefix": { ...SAMPLE_NEXT, match: "keep = order[: np.searchsorted(cum, top_p) + 1]" },
+  "generation.choice": { ...SAMPLE_NEXT, match: "return int(rng.choice(len(p), p=p))" },
+  "generation.last-logits": {
+    file: "generate.py",
+    symbol: "generate.generate",
+    match: "ids.append(sample_next(logits[-1], temperature, top_k, top_p, rng))",
+  },
+  "generation.train-seed": { ...MAIN, match: "seed_ids = [int(i) for i in va_x.iloc[0][:3]]" },
+  "generation.train-call": {
+    ...MAIN,
+    match: "out = generate\\(params, cfg, seed_ids, 30, config\\.seq_len,[\\s\\S]*?rng\\)",
+    regex: true,
+  },
+  "generation.train-rng": { ...MAIN, match: "rng = np.random.default_rng(config.seed)" },
+  "generation.talk-rng": { ...TALK, match: "rng = np.random.default_rng(config.seed)" },
+  "generation.talk-prompt": {
+    ...TALK,
+    match: 'print("Type the start of a text and press Enter. Empty line quits.")',
+  },
+  "generation.talk-quit": { ...TALK, match: 'if prompt.strip() == "":' },
+  "generation.mask": {
+    ...ATTENTION,
+    match: "S = np.where(np.triu(np.ones((T, T), dtype=bool), 1), -np.inf, S)",
+  },
+  "generation.position": {
+    file: "transformer.py",
+    symbol: "transformer.embed_forward",
+    match: 'params["pos_emb"][: len(ids)]',
   },
   "inside.attention-softmax": {
     file: "transformer.py",

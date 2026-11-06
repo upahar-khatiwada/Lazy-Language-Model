@@ -23,11 +23,22 @@ export function applyTemperature(logits: Vector, temperature: number): Vector {
   return softmax(logits.map((value) => value / temperature));
 }
 
+// Mirrors the condition of the top-k branch in generate.sample_next.
+export function topKRuns(p: Vector, topK: number): boolean {
+  return 0 < topK && topK < p.length;
+}
+
+// Mirrors generate.sample_next, cutoff = np.sort(p)[-top_k]. Repeats count, so with [.4, .4, .2]
+// the 2nd largest is .4.
+export function topKCutoff(p: Vector, topK: number): number {
+  return [...p].sort((a, b) => a - b)[p.length - topK]!;
+}
+
 // Mirrors generate.sample_next, the top-k branch. Runs only if 0 < k < len(p). Uses >= the k-th
 // largest, so every token tied with it stays and more than k tokens can remain.
 export function applyTopK(p: Vector, topK: number): Vector {
-  if (!(0 < topK && topK < p.length)) return p;
-  const cutoff = [...p].sort((a, b) => a - b)[p.length - topK]!;
+  if (!topKRuns(p, topK)) return p;
+  const cutoff = topKCutoff(p, topK);
   return renormalise(p.map((value) => (value >= cutoff ? value : 0)));
 }
 
@@ -99,4 +110,49 @@ export function sampleNextDistribution(
   const afterTopK = applyTopK(afterTemperature, topK);
   const top = applyTopP(afterTopK, topP, order);
   return { kind: "distribution", p: top.p, afterTemperature, afterTopK, topP: top };
+}
+
+export type GenerationStep = {
+  // ids before this step's token is appended.
+  ids: number[];
+  // The ids `forward` receives: ids[-window:].
+  window: number[];
+  // The last row of the logits: logits[-1].
+  lastLogits: Vector;
+  result: SampleResult;
+  next: number;
+};
+
+export type GenerationRun = {
+  seedIds: number[];
+  maxNewTokens: number;
+  window: number;
+  settings: SampleSettings;
+  // Stands in for forward: the logits row of one position. It sees the whole window.
+  logitsRows: (window: number[]) => Vector[];
+  // Stands in for rng.choice, whose generator is not reproduced here. Greedy steps do not call it.
+  pick: (step: number, p: Vector) => number;
+};
+
+// Mirrors generate.generate. Each step reads the last `window` ids, keeps the last row of the logits
+// and appends one id. The list only grows, and the earlier ids are never changed.
+export function generationSteps({
+  seedIds,
+  maxNewTokens,
+  window,
+  settings,
+  logitsRows,
+  pick,
+}: GenerationRun): GenerationStep[] {
+  const ids = [...seedIds];
+  const steps: GenerationStep[] = [];
+  for (let step = 0; step < maxNewTokens; step += 1) {
+    const current = ids.slice(-window);
+    const lastLogits = logitsRows(current).at(-1)!;
+    const result = sampleNextDistribution(lastLogits, settings);
+    const next = result.kind === "greedy" ? result.index : pick(step, result.p);
+    steps.push({ ids: [...ids], window: current, lastLogits, result, next });
+    ids.push(next);
+  }
+  return steps;
 }

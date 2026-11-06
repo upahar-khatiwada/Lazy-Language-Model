@@ -1,0 +1,80 @@
+id: generate.generate
+title: Autoregressive loop
+category: sampling
+inventory: [M59]
+status: implemented
+summary: >-
+  Starts from a list of ids and repeats one step max_new_tokens times. It runs the model on the last
+  window ids, takes the logits of the last position only, samples one id, and appends it. It returns the
+  whole list, seed included.
+why: >-
+  The model predicts one next token per position. Text longer than one token comes from feeding each
+  new token back in. The window keeps the input within the rows of pos_emb, because forward asserts
+  that the length is at most context_len.
+equations:
+  - id: generate.window
+    latex: x = \mathrm{ids}[-w:]
+    role: none
+    label: The last window ids
+  - id: generate.logits
+    latex: Z = \mathrm{forward}(x), \qquad z = Z_{T-1}
+    role: none
+    label: Logits of the last position only
+  - id: generate.append
+    latex: \mathrm{ids} \leftarrow \mathrm{ids} + [\,\mathrm{sample\_next}(z, \tau, k, \rho)\,]
+    role: none
+    label: Sample and append
+symbols:
+  - symbol: \mathrm{ids}
+    meaning: Every id so far. It starts as a copy of seed_ids and only grows
+    codeName: ids
+    shape: python list
+  - symbol: w
+    meaning: The longest input the model is given
+    codeName: window
+    shape: scalar
+  - symbol: x
+    meaning: The ids the model sees on this step
+    codeName: np.array(ids[-window:])
+    shape: (T,)
+  - symbol: T
+    meaning: The length of x, the smaller of len(ids) and window
+    codeName: null
+    shape: scalar
+  - symbol: Z
+    meaning: One row of logits per position in x
+    codeName: logits
+    shape: (T, V)
+  - symbol: z
+    meaning: The last row of Z
+    codeName: logits[-1]
+    shape: (V,)
+  - symbol: \tau, k, \rho
+    meaning: The settings passed through to sample_next
+    codeName: temperature, top_k, top_p
+    shape: scalars
+example: null
+shapes:
+  - id: generate-step
+    label: One step of the loop
+    stages:
+      - name: x
+        dims: [T]
+      - name: logits
+        dims: [T, V]
+      - name: logits[-1]
+        dims: [V]
+    target:
+      file: generate.py
+      symbol: generate.generate
+      match: logits, _ = forward(params, np.array(ids[-window:]), cfg)
+source:
+  - file: generate.py
+    symbol: generate.generate
+usedBy: []
+pdfRef:
+  section: "4.8"
+  equations: []
+  page: 15
+notes:
+  - The inventory gives p.15 and the code listing. The section number is inferred from the neighbouring rows of PDF_VS_CODE.md, since the PDF is not reopened (D4).

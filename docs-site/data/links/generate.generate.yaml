@@ -1,0 +1,41 @@
+links:
+  - equationId: generate.window
+    file: generate.py
+    symbol: generate.generate
+    match: logits, _ = forward(params, np.array(ids[-window:]), cfg)
+    role: implements
+  - equationId: generate.window
+    file: transformer.py
+    symbol: transformer.forward
+    match: assert len(ids) <= cfg.context_len
+    role: call
+  - equationId: generate.window
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_generate_window_keeps_long_sequences_legal
+    match: assert len(out) == 26
+    role: test
+  - equationId: generate.logits
+    file: generate.py
+    symbol: generate.generate
+    match: logits, _ = forward(params, np.array(ids[-window:]), cfg)
+    role: implements
+  - equationId: generate.logits
+    file: generate.py
+    symbol: generate.generate
+    match: ids.append(sample_next(logits[-1], temperature, top_k, top_p, rng))
+    role: implements
+  - equationId: generate.append
+    file: generate.py
+    symbol: generate.generate
+    match: ids.append(sample_next(logits[-1], temperature, top_k, top_p, rng))
+    role: implements
+  - equationId: generate.append
+    file: generate.py
+    symbol: generate.generate
+    match: "for _ in range(max_new_tokens):"
+    role: implements
+  - equationId: generate.append
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_generate_length_and_range
+    match: assert len(out) == 13 and out[:3] == [1, 2, 3]
+    role: test

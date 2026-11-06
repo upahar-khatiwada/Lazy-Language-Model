@@ -1,0 +1,31 @@
+links:
+  - equationId: top_k.cutoff
+    file: generate.py
+    symbol: generate.sample_next
+    match: "if 0 < top_k < len(p):"
+    role: implements
+  - equationId: top_k.cutoff
+    file: generate.py
+    symbol: generate.sample_next
+    match: cutoff = np.sort(p)[-top_k]
+    role: implements
+  - equationId: top_k.keep
+    file: generate.py
+    symbol: generate.sample_next
+    match: p = np.where(p >= cutoff, p, 0.0)
+    role: implements
+  - equationId: top_k.keep
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_top_k_one_is_greedy
+    match: assert all(sample_next(z, 1.0, 1, 1.0, rng) == 1 for _ in range(30))
+    role: test
+  - equationId: top_k.renormalise
+    file: generate.py
+    symbol: generate.sample_next
+    match: p = p / p.sum()
+    role: implements
+  - equationId: top_k.renormalise
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_top_k_example
+    match: assert np.allclose(probs_used(z, top_k=2), [0.625, 0.375, 0, 0])
+    role: test

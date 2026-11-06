@@ -81,7 +81,12 @@ import {
 import { embedBackward, embedForward, overwritingBackward } from "@/lib/math/embeddings";
 import { forward, lossAndGrads, type ModelSizes } from "@/lib/math/model";
 import { blockParameterCount, parameterCount, type ParameterDims } from "@/lib/math/params";
-import { sampleNextDistribution, type SampleResult } from "@/lib/math/sampling";
+import {
+  generationSteps,
+  sampleNextDistribution,
+  topKCutoff,
+  type SampleResult,
+} from "@/lib/math/sampling";
 import { matmul, type Matrix, type Tensor3, type Vector } from "@/lib/math/tensor";
 import { shapeOf } from "@/lib/viz/shape";
 
@@ -165,6 +170,7 @@ function checkSampling(item: GoldenCase): void {
     cum?: Vector;
     keep_count?: number;
     tie_split?: boolean;
+    cutoff?: number;
   };
   const settings = {
     temperature: inputs.temperature,
@@ -187,6 +193,13 @@ function checkSampling(item: GoldenCase): void {
   expectClose(exact.p, outputs.p, `${item.id}.p`);
   expectClose(exact.afterTemperature, outputs.after_temperature, `${item.id}.after_temperature`);
   expectClose(exact.afterTopK, outputs.after_top_k, `${item.id}.after_top_k`);
+  if (outputs.cutoff !== undefined) {
+    expectClose(
+      topKCutoff(exact.afterTemperature, inputs.top_k),
+      outputs.cutoff,
+      `${item.id}.cutoff`,
+    );
+  }
 
   // The engine's own stable order.
   const own = narrow(sampleNextDistribution(inputs.logits, settings));
@@ -208,6 +221,78 @@ function checkSampling(item: GoldenCase): void {
   } else {
     expectClose(own.p, outputs.p, `${item.id}.own.p`);
   }
+}
+
+// The real generate.generate with forward replaced by a table. The picks of rng.choice have no mirror, so
+// the stored draws stand in for them. Windows, logits rows, distributions and greedy picks are checked.
+function checkGenerate(item: GoldenCase): void {
+  const inputs = item.inputs as {
+    table: Matrix;
+    seed_ids: number[];
+    max_new_tokens: number;
+    window: number;
+    temperature: number;
+    top_k: number;
+    top_p: number;
+  };
+  const outputs = item.outputs as {
+    ids: number[];
+    windows: number[][];
+    logits_shapes: number[][];
+    distributions: Matrix;
+    draws: number[];
+  };
+  const steps = generationSteps({
+    seedIds: inputs.seed_ids,
+    maxNewTokens: inputs.max_new_tokens,
+    window: inputs.window,
+    settings: { temperature: inputs.temperature, topK: inputs.top_k, topP: inputs.top_p },
+    logitsRows: (ids) => ids.map((id) => inputs.table[id]!),
+    pick: (step) => outputs.draws[step]!,
+  });
+  expect(steps.map((step) => step.window)).toEqual(outputs.windows);
+  expect(steps.map((step) => [step.window.length, inputs.table[0]!.length])).toEqual(
+    outputs.logits_shapes,
+  );
+  expect([...steps.at(-1)!.ids, steps.at(-1)!.next]).toEqual(outputs.ids);
+  const sampled = steps.flatMap((step) => (step.result.kind === "distribution" ? [step] : []));
+  expect(sampled.length, item.id).toBe(outputs.distributions.length);
+  sampled.forEach((step, i) => {
+    if (step.result.kind !== "distribution") return;
+    expectClose(step.result.p, outputs.distributions[i], `${item.id}.p[${i}]`);
+    expect(step.result.p[step.next]!, `${item.id}: a removed token was drawn`).toBeGreaterThan(0);
+  });
+}
+
+// Draws from the real generator. They have no mirror, but the engine's distribution must explain them.
+function checkDraws(item: GoldenCase): void {
+  const inputs = item.inputs as {
+    logits: Vector;
+    temperature: number;
+    top_k: number;
+    top_p: number;
+  };
+  const outputs = item.outputs as {
+    first_draws: number[];
+    counts: number[];
+    total: number;
+    same_seed_same_draws: boolean;
+  };
+  const result = sampleNextDistribution(inputs.logits, {
+    temperature: inputs.temperature,
+    topK: inputs.top_k,
+    topP: inputs.top_p,
+  });
+  if (result.kind !== "distribution") throw new Error(`${item.id}: expected a distribution`);
+  expect(outputs.same_seed_same_draws, item.id).toBe(true);
+  expect(outputs.counts.reduce((sum, count) => sum + count, 0)).toBe(outputs.total);
+  result.p.forEach((value, token) => {
+    if (value === 0) expect(outputs.counts[token], `${item.id} token ${token}`).toBe(0);
+    // Five standard deviations of a binomial count.
+    const spread = 5 * Math.sqrt(outputs.total * value * (1 - value));
+    expect(Math.abs(outputs.counts[token]! - outputs.total * value)).toBeLessThanOrEqual(spread);
+  });
+  outputs.first_draws.forEach((token) => expect(result.p[token]!).toBeGreaterThan(0));
 }
 
 // Central differences for named entries of a parameter dictionary.
@@ -919,6 +1004,8 @@ const RUNNERS: Record<string, Runner> = {
     expect(statements[0]).toContain("batch_loss_and_grads");
   },
   "generate.sample_next": checkSampling,
+  "generate.sample_next.draws": checkDraws,
+  "generate.generate": checkGenerate,
   "data.load_corpus": (item) => {
     const { rows, max_rows } = item.inputs as { rows: (string | null)[]; max_rows: number };
     check(item, { text: joinRows(rows, max_rows) });

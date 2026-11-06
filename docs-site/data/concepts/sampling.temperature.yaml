@@ -1,0 +1,52 @@
+id: sampling.temperature
+title: Temperature
+category: sampling
+inventory: [M55]
+status: implemented
+summary: >-
+  Divides the logits by temperature, then applies softmax_forward. The result is a probability for
+  every token in the vocabulary.
+why: >-
+  The model gives logits, and a random choice needs probabilities. Dividing first changes how far apart
+  the logits are. Below 1 the gaps grow and the largest probability rises. Above 1 the gaps shrink and
+  the probabilities move closer together.
+equations:
+  - id: sampling.temperature
+    latex: p = \mathrm{softmax}\left(\frac{z}{\tau}\right)
+    role: none
+    label: Softmax of the logits divided by temperature
+symbols:
+  - symbol: z
+    meaning: The logits of one position
+    codeName: logits
+    shape: (V,)
+  - symbol: \tau
+    meaning: The temperature, at least 1e-6 on this line because of the guard above it
+    codeName: temperature
+    shape: scalar
+  - symbol: p
+    meaning: The probabilities of the next token
+    codeName: p
+    shape: (V,)
+example: null
+shapes:
+  - id: temperature
+    label: Temperature keeps the shape
+    stages:
+      - name: logits
+        dims: [V]
+      - name: p
+        dims: [V]
+    target:
+      file: generate.py
+      symbol: generate.sample_next
+      match: p = softmax_forward(logits / temperature)
+source:
+  - file: generate.py
+    symbol: generate.sample_next
+usedBy: []
+pdfRef:
+  section: "4.7"
+  equations: ["60"]
+  page: 14
+notes: []

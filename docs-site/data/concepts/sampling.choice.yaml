@@ -1,0 +1,52 @@
+id: sampling.choice
+title: Random choice
+category: sampling
+inventory: [M58]
+status: implemented
+summary: >-
+  The last line of sample_next. It draws one token id with the probabilities left after the earlier
+  steps, using the generator it was given. A token with probability zero cannot be drawn.
+why: >-
+  Generation needs one token to append. Drawing at random lets the same logits give different tokens.
+  The generator is seeded, so a run with the same seed and the same calls repeats the same draws.
+equations:
+  - id: sampling.choice
+    latex: P(\mathrm{next} = i) = p_i
+    role: none
+    label: One draw from the final probabilities
+symbols:
+  - symbol: p
+    meaning: The final probabilities
+    codeName: p
+    shape: (V,)
+  - symbol: \mathrm{next}
+    meaning: The chosen token id
+    codeName: the value returned by sample_next
+    shape: scalar
+  - symbol: V
+    meaning: The number of tokens to choose from
+    codeName: len(p)
+    shape: scalar
+example: null
+shapes:
+  - id: choice
+    label: The array before the draw. The draw itself returns one int, with no axes
+    stages:
+      - name: p after top-k
+        dims: [V]
+      - name: p after top-p
+        dims: [V]
+    target:
+      file: generate.py
+      symbol: generate.sample_next
+      match: return int(rng.choice(len(p), p=p))
+source:
+  - file: generate.py
+    symbol: generate.sample_next
+usedBy: []
+pdfRef:
+  section: "4.7"
+  equations: []
+  page: 15
+notes:
+  - The inventory gives p.15 and the code listing. The section number is inferred from the neighbouring rows of PDF_VS_CODE.md, since the PDF is not reopened (D4).

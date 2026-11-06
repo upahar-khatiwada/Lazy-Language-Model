@@ -1,0 +1,41 @@
+links:
+  - equationId: top_p.sort
+    file: generate.py
+    symbol: generate.sample_next
+    match: "if top_p < 1.0:"
+    role: implements
+  - equationId: top_p.sort
+    file: generate.py
+    symbol: generate.sample_next
+    match: order = np.argsort(-p)
+    role: implements
+  - equationId: top_p.cum
+    file: generate.py
+    symbol: generate.sample_next
+    match: cum = np.cumsum(p[order])
+    role: implements
+  - equationId: top_p.prefix
+    file: generate.py
+    symbol: generate.sample_next
+    match: "keep = order[: np.searchsorted(cum, top_p) + 1]"
+    role: implements
+  - equationId: top_p.prefix
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_top_p_example
+    match: assert np.allclose(probs_used(z, top_p=0.9), [0.526, 0.316, 0.158, 0], atol=1e-3)
+    role: test
+  - equationId: top_p.prefix
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_top_p_adapts_to_confidence
+    match: assert (probs_used(unsure, top_p=0.9) > 0).sum() == 4
+    role: test
+  - equationId: top_p.renormalise
+    file: generate.py
+    symbol: generate.sample_next
+    match: q[keep] = p[keep]
+    role: implements
+  - equationId: top_p.renormalise
+    file: generate.py
+    symbol: generate.sample_next
+    match: p = q / q.sum()
+    role: implements

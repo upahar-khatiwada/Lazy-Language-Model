@@ -1,0 +1,52 @@
+id: sampling.greedy
+title: Greedy guard
+category: sampling
+inventory: [M54]
+status: implemented
+summary: >-
+  The first two lines of sample_next. If temperature is below 1e-6, the function returns the index of
+  the largest logit at once. It does not compute a softmax, and it does not read top_k, top_p or rng.
+why: >-
+  The next line divides the logits by temperature, so a temperature of 0 cannot reach it. The guard
+  handles that case and gives a way to get the same token every time from the same logits.
+equations:
+  - id: sampling.greedy
+    latex: '\tau < 10^{-6} \implies \mathrm{next} = \arg\max_i z_i'
+    role: none
+    label: Greedy guard
+symbols:
+  - symbol: \tau
+    meaning: The temperature. T is not used for it on this site, because T is the sequence length
+    codeName: temperature
+    shape: scalar
+  - symbol: z
+    meaning: The logits of one position
+    codeName: logits
+    shape: (V,)
+  - symbol: \mathrm{next}
+    meaning: The chosen token id
+    codeName: the value returned by sample_next
+    shape: scalar
+example: null
+shapes:
+  - id: greedy
+    label: From the model's logits to the row sample_next reads. The result is one int, with no axes
+    stages:
+      - name: logits
+        dims: [T, V]
+      - name: logits[-1]
+        dims: [V]
+    target:
+      file: generate.py
+      symbol: generate.sample_next
+      match: return int(np.argmax(logits))
+source:
+  - file: generate.py
+    symbol: generate.sample_next
+usedBy: []
+pdfRef:
+  section: "4.7"
+  equations: []
+  page: 14
+notes:
+  - The branch is not taken at the temperature in config.py.

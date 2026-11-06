@@ -1,0 +1,67 @@
+id: sampling.top_k
+title: Top-k
+category: sampling
+inventory: [M56]
+status: derived
+summary: >-
+  An optional step that runs only if 0 < top_k < len(p). It finds the k-th largest probability, sets
+  every probability below it to zero, and renormalises. A token equal to the cut-off stays, so ties can
+  leave more than k tokens.
+why: >-
+  It stops the choice from landing on unlikely tokens by limiting how many tokens can be chosen. The
+  model does not need it at the committed settings, because top_k is 0 in config.py and the step is
+  skipped.
+equations:
+  - id: top_k.cutoff
+    latex: c = k\text{-th largest value of } p \text{, counting repeats}
+    role: none
+    label: The cut-off
+  - id: top_k.keep
+    latex: p'_i = \begin{cases} p_i & p_i \geq c \\ 0 & \text{otherwise} \end{cases}
+    role: none
+    label: Zero everything below the cut-off
+  - id: top_k.renormalise
+    latex: p''_i = \frac{p'_i}{\sum_j p'_j}
+    role: none
+    label: Renormalise
+symbols:
+  - symbol: p
+    meaning: The probabilities after temperature
+    codeName: p
+    shape: (V,)
+  - symbol: k
+    meaning: How many of the largest values to count down to
+    codeName: top_k
+    shape: scalar
+  - symbol: c
+    meaning: The cut-off
+    codeName: cutoff
+    shape: scalar
+  - symbol: p'
+    meaning: The probabilities with the lower values set to zero
+    codeName: the result of np.where
+    shape: (V,)
+  - symbol: p''
+    meaning: The same values, scaled to sum to 1
+    codeName: p, rebound
+    shape: (V,)
+example: null
+shapes:
+  - id: top-k
+    label: Top-k changes values, not the shape. Removed tokens stay as zeros
+    stages:
+      - name: p before
+        dims: [V]
+      - name: p after
+        dims: [V]
+    target:
+      file: generate.py
+      symbol: generate.sample_next
+      match: p = np.where(p >= cutoff, p, 0.0)
+source:
+  - file: generate.py
+    symbol: generate.sample_next
+usedBy: []
+pdfRef: null
+notes:
+  - The inventory gives a worked example on PDF p.14 and no equation.

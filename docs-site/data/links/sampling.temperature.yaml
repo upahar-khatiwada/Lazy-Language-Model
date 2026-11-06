@@ -1,0 +1,16 @@
+links:
+  - equationId: sampling.temperature
+    file: generate.py
+    symbol: generate.sample_next
+    match: p = softmax_forward(logits / temperature)
+    role: implements
+  - equationId: sampling.temperature
+    file: ops.py
+    symbol: ops.softmax_forward
+    match: return e / e.sum(axis=-1, keepdims=True)
+    role: call
+  - equationId: sampling.temperature
+    file: tests/test_generate.py
+    symbol: tests.test_generate.test_temperature_examples
+    match: assert np.allclose(probs_used(z, 0.5), [0.867, 0.117, 0.016], atol=1e-3)
+    role: test
