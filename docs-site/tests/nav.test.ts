@@ -92,10 +92,15 @@ test("MDX pages compile and report unique h2 and h3 headings", async () => {
   const { headings, Content } = await loadPage("getting-started/introduction");
   expect(typeof Content).toBe("function");
   expect(headings.map((heading) => [heading.depth, heading.id])).toEqual([
-    [2, "first-section"],
-    [3, "first-subsection"],
-    [3, "second-subsection"],
-    [2, "second-section"],
-    [2, "third-section"],
+    [2, "what-this-project-is"],
+    [2, "credits"],
+    [2, "how-to-read-this-site"],
+    [3, "the-layout"],
+    [3, "the-sections"],
+    [3, "a-suggested-reading-order"],
+    [3, "from-an-equation-to-its-code"],
+    [2, "labels-on-this-site"],
+    [2, "what-this-site-does-not-cover"],
+    [2, "all-pages"],
   ]);
 });

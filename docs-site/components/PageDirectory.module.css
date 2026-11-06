@@ -1,0 +1,18 @@
+/* The column width lets a narrow screen fall back to one column without a media query. */
+.directory {
+  columns: 2 16rem;
+  column-gap: 2rem;
+}
+
+.group {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+
+.group h3 {
+  margin-top: 0;
+}
+
+.group ul {
+  margin: 0;
+}

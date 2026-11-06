@@ -104,6 +104,7 @@ import {
   SoftmaxShiftTable,
   XavierExample,
 } from "./OpsExamples";
+import { PageDirectory } from "./PageDirectory";
 import { PageLink } from "./PageLink";
 import { ParameterDerivation, ParameterExample } from "./ParameterDerivation";
 import { FullPipelineDiagram, PipelineDiagram } from "./PipelineDiagram";
@@ -215,6 +216,7 @@ export const mdxComponents: MDXComponents = {
   ModelConfigFields,
   NotationTable,
   NumericExample,
+  PageDirectory,
   PageLink,
   ParameterCount,
   ParameterDerivation,

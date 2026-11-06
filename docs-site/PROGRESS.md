@@ -1112,3 +1112,28 @@ Append one entry per finished task. Newest at the bottom.
 - Closed: the Task 16 decision on `rotary`, `RMSNorm` and `KV cache`, and the Task 16 note that Enter on a function name opens a concept.
 - Still open from Task 17: the Introduction placeholder, and stale specs. Still open from Task 15: whether the corpus excerpts should stay public.
 - Status: follow-ups finished. Nothing was committed.
+
+### Introduction page (2026-11-06)
+- Replaces the Task 03 placeholder at `/getting-started/introduction`. The human approved this content change. HEAD `068e20b`, pinned `sha` `66da45b`.
+- Files created: `components/PageDirectory.tsx` and `.module.css` (the page list, built from `data/nav.ts` and the code index), `tests/introduction.test.ts`.
+- Files changed: `content/getting-started/introduction.mdx` (rewritten, `status: published`), `components/mdx.tsx` (registers `PageDirectory`), `tests/nav.test.ts` (the heading test named the placeholder's headings; it now names the new ones and still covers h2 and h3).
+- Commands run, on the final files:
+  - `bun run lint`: `All matched files use Prettier code style!`; `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files  32 passed (32)`.
+  - `bun run verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`
+  - `bun run verify:content`: `Uncovered functions: none.`, `OK: 7 checks passed, 0 with warnings.`
+  - `bun run build`: `Search index: 263.3 KB, 556 documents (limit 500.0 KB).`, `Compiled successfully`, exit 0.
+  - `bun run verify:site`: `OK: 50 pages, 5147 internal links, 3082 anchors, 502 GitHub permalinks. No problems.`
+  - Scratch script at 1440 wide, light and dark, on the static build: h1 `Introduction`, marked current in the sidebar, no placeholder notice, 0 page or console errors. Searching `introduction` lists the page first. Screenshots viewed by eye.
+- Not run: pytest (no Python changed), and the base-path build, which has still never run.
+- Skipped under the standing rule in `CLAUDE.md`, although the request asked for them: the 390px check and screenshot, and updating `tests/e2e`. The Playwright suite was not run.
+  - `tests/e2e/shell.spec.ts`, test "the rail lists h2 and h3 headings and follows scrolling in both directions", still expects `First section`, `First subsection`, `Second subsection`, `Second section` and `Third section`. It will fail if the suite is run.
+- Assumptions:
+  - The reading order follows the sidebar. The request asked for a suggested order and did not give one.
+  - The video's title and channel are not known and are not in `contract/`, so the page gives only the link. Neither external link was opened, because the working rules allow no requests to other sites.
+  - "Every page that exists" means the home page, the navigation pages and the source-file pages. The internal `/design` sample pages and the 404 page are left out.
+  - The labels are bold text, not badges. `verify:content` check 4 rightly rejects an Actual Model Output badge outside a panel with provenance, and the check was not changed.
+- Open issues:
+  - `Math ↔ Code` has no content file, so it is disabled in the sidebar and in the new list. The home page question "Where is it implemented?" also points at it.
+- Closed: the Task 17 decision on the Introduction placeholder.
+- Status: finished. Nothing was committed.

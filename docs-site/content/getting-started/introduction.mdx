@@ -1,50 +1,85 @@
 ---
 title: Introduction
-description: Placeholder page used to test the documentation shell.
-status: placeholder
+description: What this project is, its credits, how to read the site, what its labels mean, what it does not cover, and a list of all pages.
+status: published
 ---
 
-This paragraph exists only to test page layout. Real documentation replaces it in a later task.
+## What this project is
 
-## First section
+This project is a small language model written from scratch in Python and NumPy. Its forward and backward passes are written by hand, with no automatic differentiation. This site documents its mathematics and its code.
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+The values below come from `config.py`:
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+- <ConfigValue name="num_layers" /> transformer blocks.
+- <ConfigValue name="num_heads" /> attention heads, each of width <ConfigValue name="head_dim" />.
+- Width <ConfigValue name="emb_dim" /> through the model, and <ConfigValue name="ff_dim" /> inside the feed-forward step.
+- Training windows of <ConfigValue name="seq_len" /> tokens.
 
-### First subsection
+The vocabulary size is not a config value, because it depends on the corpus. Besides NumPy, `data.py` uses `pandas` to read the corpus and to hold the training windows.
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+The optimizer is the `Adam` class in `optim.py`. Training gives it a weight decay of <ConfigValue name="weight_decay" />, applied separately from the gradient, so it behaves as AdamW. See <PageLink page="training/adamw-learning-rate-clipping">AdamW / Learning Rate / Clipping</PageLink>.
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+<TestTotals />. <PageLink page="code/checkpoints-tests">Checkpoints & Tests</PageLink> lists what
+they cover.
 
-### Second subsection
+## Credits
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+This project was inspired by the open-source [how-llms-work](https://github.com/w3cj/how-llms-work) repository and by [this YouTube video](https://youtu.be/YmLp8qe87A0).
 
-| Column one | Column two |
-| ---------- | ---------- |
-| Text       | More text  |
-| Text       | More text  |
+It is an independent Python and NumPy implementation. The documentation describes only this repository's code.
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+## How to read this site
 
-## Second section
+### The layout
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+Each page has three columns. The left column lists every section and page. The middle column is the page itself. The right column, "On this page", lists the headings of the current page and follows your position as you scroll.
 
-<Callout kind="note">This note tests that MDX pages can use components.</Callout>
+To search concepts, equations, pages, files and functions, use the Search button at the top, or press Ctrl+K or `/`.
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+### The sections
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+- **Mathematics** explains each operation the model uses, from notation and tokenization to the full model. Each one has its equation, a small worked example, its tensor shapes and its code.
+- **Training** covers how gradients reach the parameters, how the optimizer updates them, and the training loop.
+- **Generation** covers sampling a token and repeating that to produce text.
+- **Code** shows every source file with its real lines, and covers checkpoints and the test suite. **Testing**, next to it, covers gradient checking.
+- **Reference** collects every equation in one table, and records what the model leaves out and where the sources disagree.
 
-## Third section
+### A suggested reading order
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+1. <PageLink page="getting-started/how-this-llm-works">How This LLM Works</PageLink> follows one
+   training run from start to finish.
+2. <PageLink page="getting-started/architecture">Architecture</PageLink> shows the model and its
+   parameters.
+3. <PageLink page="mathematics/notation-and-shapes">Notation & Shapes</PageLink> defines the symbols
+   that later pages use.
+4. Read the rest of Mathematics in sidebar order, from <PageLink page="mathematics/tokenization">Tokenization</PageLink> to <PageLink page="mathematics/full-model">Full Model</PageLink>.
+5. Read Training in sidebar order, starting at <PageLink page="training/how-the-model-learns">How the Model Learns</PageLink>.
+6. Read Generation, starting at <PageLink page="generation/sampling">Sampling</PageLink>.
+7. Use <PageLink page="code">Code Explorer</PageLink> and <PageLink page="reference/mathematics">Mathematics Reference</PageLink> whenever you want to look something up.
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+Every page also has previous and next links at the bottom, which follow the sidebar.
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+### From an equation to its code
 
-This paragraph exists only to test page layout. It fills the column so that the reading measure, the line height and the distance between paragraphs can be checked by eye.
+Each equation has a **Show code** button. It highlights the lines that compute the equation and scrolls to them. A marked code line works the other way, and shows which equations it belongs to. Line numbers and GitHub links come from a pinned commit, and are generated from the code, not typed by hand.
+
+## Labels on this site
+
+- **Illustrative Example** means the numbers are hand-picked to show how a calculation works, and
+  they are not learned values.
+- **Actual Model Output** means the numbers were produced by running this repository's code.
+- **Derived from implementation** means the code implements this mathematics, and the reference PDF
+  does not state it.
+
+## What this site does not cover
+
+<PageLink page="reference/not-in-this-model">Not in This Model</PageLink> lists techniques this code
+does not use.
+
+The PDF study guide and the code differ in places. Where they do, the site follows the code. <PageLink page="reference/sources-discrepancies">Sources & Discrepancies</PageLink> records each difference.
+
+## All pages
+
+A page that is not written yet appears as grey text, not a link.
+
+<PageDirectory />
