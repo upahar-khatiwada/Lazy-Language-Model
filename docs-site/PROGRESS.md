@@ -1187,3 +1187,41 @@ Append one entry per finished task. Newest at the bottom.
 - Skipped under the standing rule in `CLAUDE.md`: Playwright. No spec was written or updated.
 - Closed: the earlier open issue that `not in this model` opened the concept `Token embedding`. `Perplexity` still opens the function, since its page entry is a heading.
 - Status: finished. Nothing was committed.
+
+### Task 18: Final Audit (2026-11-06)
+- Depends on Task 17: its output exists, and the follow-up entries closed its lint failure. All six contract files present. HEAD `dda20ee`, pinned `sha` `66da45b`. `git diff --name-only 66da45b HEAD -- '*.py' tests/` is empty.
+- Files created: `AUDIT.md`. Files changed: this entry. Nothing else in the repository changed. No fix was applied, and nothing was committed.
+- Delegation: two fresh subagents. One read only the `.py` files and `tests/` (58 definitions, 213 operation rows, 48 behaviours). One read only a snapshot of the built pages (1,466 prose claims, 371 of them strong, 98 panels, 34 confusing items). Their outputs stayed in the scratchpad. The second subagent reported running a stray `rm -f /dev/null`, which failed and changed nothing.
+- Commands run and results (Node v26.13.0, Bun 1.3.13, Python 3.14.4):
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`
+  - `bun run verify:derived`: `OK: 5 derived file(s) match a fresh run.`
+  - `bun run verify:examples`: `OK: 2 example(s) match a fresh run.`
+  - `bun run verify:golden`: `OK: 231 golden cases match a fresh run.`
+  - `bun run verify:shapes`: `OK: data/golden/shapes.json matches a fresh run.`
+  - `bun run verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`
+  - `bun run verify:actual`: `OK: data/generated/actual matches a fresh export from checkpoints/model.`
+  - `bun run verify:content`: `Uncovered functions: none.`, `OK: 7 checks passed, 0 with warnings.`
+  - `bun run lint`: `All matched files use Prettier code style!`; `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files  32 passed (32)`, `Tests  2484 passed (2484)`.
+  - `bun run build`: exit 0. `bun run verify:site`: `OK: 50 pages, 5147 internal links, 3082 anchors, 502 GitHub permalinks. No problems.`
+  - `python -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 2.20s`.
+  - Base-path build, its first run: `NEXT_PUBLIC_BASE_PATH=/Lazy-Language-Model-LLM-`, build exit 0, and `verify:site` printed the same OK line. Rebuilt without the variable: exit 0, the same OK line, and no prefixed link in `out/index.html`.
+  - Hand checks, scratch script calling the real functions: `PASS` on all 26. Ten matrix rows were also compared by hand with rendered values, listed in `AUDIT.md` section 6.
+  - Re-run after writing `AUDIT.md`, formatted with `bunx prettier --write AUDIT.md`: `bun run lint` exit 0, `bun run verify:content` OK, `bun run test` `Tests  2484 passed (2484)`.
+  - `git status --short`: `?? docs-site/AUDIT.md`, before this entry was added. No state-changing git command was run.
+- Skipped under the standing rule in `CLAUDE.md`: Playwright and axe. Not an open issue.
+- Result: all 76 matrix rows have a verdict in every column, 61 from the inventory and 15 added from the code. No equation is wrong. 2 High, 10 Medium and 15 Low findings, each with evidence and a proposed fix.
+- Assumptions:
+  - The base-path build counts as verification. It rewrote only the git-ignored `out/` and `.next/`, and the normal build was restored.
+  - `AUDIT.md` was formatted so that `bun run lint` still passes, since Prettier checks it.
+  - The PDF was not reopened (D4). PDF statements rely on `contract/`.
+  - The 1,095 prose claims without absolute words were not read one by one. Labs were read in their first state only.
+- Open issues: every finding in `AUDIT.md` section 5. The two High ones: F01 (Parameter count says `train.main` calls `count_params`) and F02 (a generated note says the pipeline computes a formula at `gradcheck.py:31`).
+- No new LLM issue. `contract/DISCREPANCIES.md` section 8 still stands.
+- Decisions needed from the human, listed in `AUDIT.md` section 8:
+  - F05: how to define Illustrative Example.
+  - F07: rewrite Sources & Discrepancies for readers, or only remove the local path it publishes.
+  - F12: write Math ↔ Code, or remove it.
+  - F24: relax D2, or move the test-only panels.
+  - Still open from Task 15: whether the corpus excerpts stay public.
+- Status: Task 18 finished. Nothing was committed.
