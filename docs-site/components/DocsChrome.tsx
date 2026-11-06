@@ -6,6 +6,7 @@ import { useCallback, useRef, useState, type ReactNode } from "react";
 import type { ResolvedGroup } from "@/lib/nav";
 import { Button, buttonClass } from "./Button";
 import styles from "./DocsChrome.module.css";
+import { SearchDialog } from "./SearchDialog";
 import { Sidebar } from "./Sidebar";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -46,10 +47,7 @@ export function DocsChrome({ nav, githubUrl, children }: Props) {
           <span className={styles.brandShort}>LLM Docs</span>
         </Link>
         <span className={styles.spacer} />
-        {/* The search itself is built in a later task. */}
-        <Button disabled title="Search is not available yet">
-          Search
-        </Button>
+        <SearchDialog />
         <a className={buttonClass()} href={githubUrl}>
           GitHub
         </a>

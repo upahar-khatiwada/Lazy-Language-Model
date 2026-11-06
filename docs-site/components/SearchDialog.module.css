@@ -1,0 +1,140 @@
+.dialog {
+  background: var(--surface);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  margin: 10vh auto 0;
+  max-width: 680px;
+  padding: 0;
+  width: calc(100% - 2 * var(--gutter));
+}
+
+.dialog::backdrop {
+  background: var(--backdrop);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 75vh;
+}
+
+/* --muted, not --line: the boundary of an input needs at least 3:1 against its background. */
+.input {
+  background: var(--surface);
+  border: none;
+  border-bottom: var(--border-width) solid var(--muted);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-h3);
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.status {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin: 0;
+  min-height: calc(var(--fs-sm) * 1.65 + var(--space-2));
+  padding: var(--space-1) var(--space-4);
+}
+
+.results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--space-2);
+}
+
+.groupTitle {
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-4) var(--space-1);
+  position: sticky;
+  top: 0;
+}
+
+.option {
+  align-items: flex-start;
+  border-left: 3px solid transparent;
+  color: var(--text);
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-2) calc(var(--space-4) - 3px);
+  scroll-margin-top: calc(var(--fs-sm) * 1.65 + var(--space-3));
+  text-decoration: none;
+}
+
+/* The bar and the background both show the active option, so it does not rely on colour alone. */
+.active {
+  background: var(--active-bg);
+  border-left-color: var(--accent);
+}
+
+.badge {
+  border: var(--border-width) solid currentColor;
+  border-radius: var(--radius);
+  color: var(--muted);
+  flex: none;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  margin-top: 1px;
+  padding: 0 var(--space-1);
+  text-align: center;
+  width: 9ch;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.formula {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.option mark {
+  background: var(--highlight);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.hint {
+  border-top: var(--border-width) solid var(--line);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+}
+
+.key {
+  border: var(--border-width) solid var(--line);
+  border-radius: 3px;
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+  padding: 0 var(--space-1);
+}

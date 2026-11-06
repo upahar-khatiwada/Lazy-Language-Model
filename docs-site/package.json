@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "bun run verify:links && next build",
+    "dev": "bun run sync:search && next dev",
+    "build": "bun run verify:links && bun run sync:search && next build",
     "start": "python -m http.server 3000 --bind 127.0.0.1 --directory out",
     "lint": "eslint . && prettier --check .",
     "typecheck": "tsc --noEmit",
@@ -21,6 +21,9 @@
     "verify:derived": "python -B scripts/sync_derived.py --check",
     "export:actual": "python -B scripts/export_actual.py",
     "verify:actual": "python -B scripts/export_actual.py --check",
+    "sync:search": "bun scripts/build_search.ts",
+    "sync:shapes": "python -B scripts/make_shapes.py",
+    "verify:shapes": "python -B scripts/make_shapes.py --check",
     "verify:content": "bun scripts/verify_content.ts"
   },
   "dependencies": {
@@ -29,6 +32,7 @@
     "gray-matter": "4.0.3",
     "katex": "0.19.1",
     "mdast-util-to-string": "4.0.0",
+    "minisearch": "7.2.0",
     "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",

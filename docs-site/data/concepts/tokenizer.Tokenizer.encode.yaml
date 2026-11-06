@@ -58,4 +58,4 @@ pdfRef:
   equations: []
   page: 4
 notes:
-  - The PDF describes a per-pre-token cache. The code has none and replays the merges every time.
+  - The code replays the merges for every pre-token, every time.

@@ -11,18 +11,19 @@ The tokenizer turns text into the integer ids the model reads. It learns from th
 
 The method is called byte pair encoding, but this code works on characters, not bytes. `list(word)` splits a pre-token into Unicode characters (<CodeLine id="tokenizer.chars" />). Nothing here touches UTF-8 bytes.
 
-| Feature                         | In this code                                                |
-| ------------------------------- | ----------------------------------------------------------- |
-| Starting tokens                 | Unicode characters of the text, not byte values             |
-| Characters not seen in training | Each maps to the unknown token, id 0                        |
-| Case                            | Preserved. No lower-casing, so `The` and `the` are distinct |
-| Padding, start and end tokens   | Not available from the implementation                       |
+| Feature                         | In this code                                    |
+| ------------------------------- | ----------------------------------------------- |
+| Starting tokens                 | Unicode characters of the text, not byte values |
+| Characters not seen in training | Each maps to the unknown token, id 0            |
+| Case                            | Preserved, so `The` and `the` are distinct      |
+
+Tokens this code does not have are on <PageLink page="reference/not-in-this-model">Not in This Model</PageLink>.
 
 `train.main` passes <ConfigValue name="num_merges" /> as the limit on merges (<CodeLine id="train.tokenizer" />). That is a maximum, because training stops early if no pair is left (<CodeLine id="tokenizer.stop" />). The default in the function signature, `max_merges=1000`, is not used by training.
 
 <Callout kind="source">
 
-The reference PDF differs from the code here, and this page follows the code. Its pattern lets a word carry its leading space, and it lower-cases the text. In the code, a space is always its own pre-token and case is preserved. The full list is on <PageLink page="reference/sources-discrepancies">Sources & Discrepancies</PageLink>.
+The reference PDF differs from the code here, and this page follows the code. Its pattern lets a word carry its leading space, and its treatment of case differs too. In the code, a space is always its own pre-token and case is preserved. The full list is on <PageLink page="reference/sources-discrepancies">Sources & Discrepancies</PageLink>.
 
 </Callout>
 

@@ -954,3 +954,63 @@ Append one entry per finished task. Newest at the bottom.
   - `verify:content` is still a stub. `/reference/sources` does not exist. GitHub links were not opened, because the working rules allow no requests to other sites. The `__next.*.txt` 404s were not rechecked.
 - Decisions needed from the human: whether the corpus excerpts above may be committed.
 - Status: Task 15 finished. Nothing was committed.
+
+### Task 16: Search & Content Verification (2026-11-06)
+- Depends on Tasks 14 and 15: both logged, and their output exists. All six contract files present. HEAD `fa2480e`, pinned `sha` `66da45b`.
+- Part A, files created: `lib/search.ts` (types and pure helpers, no MiniSearch), `lib/search-engine.ts` (MiniSearch, loaded on first open), `lib/search-index.ts` (documents from real data), `scripts/build_search.ts`, `components/SearchDialog.tsx` and CSS module, `tests/search.test.ts`.
+- Part B, files created: `lib/content-checks.ts` (the seven checks, pure), `lib/content-input.ts` (real inputs), `lib/contract-pages.ts`, `components/ContractPages.tsx`, `content/reference/not-in-this-model.mdx`, `content/reference/sources-discrepancies.mdx`, `data/not-in-model.ts`, `data/coverage-allowlist.ts` (empty), `data/shape-stages.ts`, `scripts/make_shapes.py`, generated `data/golden/shapes.json`, `data/derived/absent-techniques.json`, `data/derived/discrepancies.json`, `tests/content-checks.test.ts`.
+- Files changed:
+  - `scripts/verify_content.ts` (no longer a stub), `scripts/sync_derived.py` (two new snapshots), `package.json` (`sync:search`, `sync:shapes`, `verify:shapes`; `build` and `dev` now run `sync:search`), `bun.lock`, `.gitignore` and `.prettierignore` (`public/`), `README.md`.
+  - `components/DocsChrome.tsx` (the disabled Search button is now `SearchDialog`), `components/mdx.tsx`, `styles/tokens.css` (`--backdrop`, because `tests/tokens.test.ts` allows colours only there), `tests/site-data.test.ts` (the Sources page is now written).
+  - Wording, because check 7 found them: `content/mathematics/tokenization.mdx` (three mentions), `content/generation/autoregressive-generation.mdx` (one), `data/concepts/tokenizer.Tokenizer.encode.yaml` (one note). Their facts now live on the two reference pages.
+  - Nothing outside `docs-site/` changed. `contract/` was not changed.
+- Dependency added, exact pin: `minisearch` 7.2.0.
+- Final checks (`.next`, `out`, `test-results` deleted first; Node prepended to PATH):
+  - `bun install --frozen-lockfile`: `Checked 529 installs across 597 packages (no changes)`.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`; `verify:derived`: `OK: 5 derived file(s) match a fresh run.`; `verify:examples`: `OK: 2 example(s) match a fresh run.`; `verify:golden`: `OK: 231 golden cases match a fresh run.`; `verify:shapes`: `OK: data/golden/shapes.json matches a fresh run.`; `verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`; `verify:actual`: `OK: data/generated/actual matches a fresh export from checkpoints/model.`
+  - `bun run verify:content`: `OK: 7 checks passed, 0 with warnings.`, exit 0. Coverage: tokenizer 9 of 9, data 5 of 5, ops 12 of 12, gradcheck 3 of 3, transformer 15 of 15, optim 4 of 4, generate 2 of 2, checkpoint 2 of 2, train 3 of 3, talk 1 of 1, `Uncovered functions: none.` Shapes: `192 of 202 stages checked (384 comparisons).`
+  - `bun run lint`: `All matched files use Prettier code style!`. `bun run typecheck`: exit 0. `bun run test`: `Test Files  27 passed (27)`, `Tests  2144 passed (2144)`.
+  - `bun run build`: `Search index: 261.6 KB, 551 documents (limit 500.0 KB).`, `Compiled successfully`, `Generating static pages using 9 workers (215/215)`, exit 0.
+  - `.venv/Scripts/python.exe -B -m pytest tests -q -p no:cacheprovider --basetemp=<scratchpad>`: `67 passed in 3.47s`.
+  - `git status --short -- ':(exclude)docs-site'`: empty. `git diff --cached --name-only`: 0 files. Root `__pycache__` has 9 files. No state-changing git command was run.
+- Tamper against the real command, `bun scripts/verify_content.ts`, a scratchpad script breaking one real file at a time and restoring the bytes, compared by hash. Final run after all of them: `OK: 7 checks passed`. `13 of 13` behaved as specified:
+  - The link match the task asks for: `problem: data/links/ops.softmax_forward.yaml: link for softmax.normalize: ops.softmax_forward: match "return e / e.total(axis=-1)" not found`, exit 1.
+  - Ambiguous match (`12 matches and no occurrence index`), unknown source symbol, uncovered function (`ops.ghost_function is not referenced by any concept or page, and is not in the allowlist`), allowlist entry with no reason, unknown equation in MDX with its line, duplicated LaTeX, NumericExample with no kind, Actual panel with no provenance, shape that disagrees (`(T, H, T) at the tiny config is (5, 2, 5), but transformer.attention_forward recorded S as (2, 5, 5)`), forbidden word on a page, task-named word in data: exit 1 each.
+  - Stale generated data: `warning: data/generated is stale: pinned to 0000000, the repository is at 66da45b.`, exit 0, as the task says to warn.
+- Browser checks: the Playwright suite was NOT run and no spec was written or updated, on the human's standing rule in `CLAUDE.md`, which overrides this task's request for search e2e tests. Also overridden: the full-screen mobile sheet was not built, and no phone width was checked. One scratchpad look at the built site at 1400 wide, keyboard only:
+  - `index requests before opening: 0`, `after opening: 1`, still 1 after reopening. Ctrl+K and `/` open it, and `/` types into the field. Arrow keys move and wrap, the wrapped option scrolls into view, Tab stays in the dialog, Enter opens the active result, Escape closes it, and focus returns to the Search button. Page errors 0, overflow 0.
+  - `softmax` gives 34 results in all five groups, with highlighted matches.
+  - Screenshots viewed: dialog in light and dark, both new pages at the top. They showed what no test could: concept results printing all their LaTeX (now only Equation results show a formula), and contract notes addressed to the author appearing on a public page (now `READER_NOTES`). Not viewed: the lower part of Sources & Discrepancies.
+- Failures seen on the way:
+  - A long Git Bash heredoc failed with `unexpected EOF` before running anything. Files went through the Write tool and scratchpad scripts.
+  - My shapes run first passed a batch-sized frame to `validation_loss`, and check 5 caught it. Fixed in the script. It also gave `generate` a short seed, which added other lengths of `T`; the seed is now `T` ids.
+  - `next/next/no-assign-module-variable` rejected a loop variable named `module`. Renamed.
+- Findings:
+  - No new PDF-versus-code difference and no new LLM issue. No duplicated equation LaTeX and no uncovered public function existed, so the coverage allowlist is empty.
+- Assumptions:
+  - The `softmax` example has no concept titled "Attention". It is met by the page Attention, plus the concepts Softmax per row and Attention backward. A page's document now includes the titles of the concepts it renders, or the page would not match. The titles in the data are `Softmax, backward` and `Cross-entropy`.
+  - Confirmed-absent means `In code` is `no` in `contract/PDF_VS_CODE.md` section 3: 21 rows. `partly` and `test` rows are not on the page.
+  - **`rotary`, `RMSNorm` and `KV cache` are named by the task but are not in the contract.** The task also says to build the list from the contract, not from memory. They are scanned, and proven absent from the repository's Python, through a separate `TASK_NAMED_TERMS` list, and they do not appear on Not in This Model.
+  - The scan does not read `data/derived/`, so Sources & Discrepancies can quote the PDF, and that page therefore names a few of these techniques. A strict reading of "outside the Not in This Model page" would forbid that, but contract/DISCREPANCIES.md has to be shown. The command prints each exemption with its reason.
+  - Scan words are hand-chosen per contract row, because a row name is not a search term. Check 7 fails if a row has no words or words have no row.
+  - "Public" excludes names with a leading underscore, so `__init__` is out, and includes classes and methods. A function counts as referenced by a concept, a link, a `symbol` attribute, a quoted line, or its name in inline code on a page. A bare name two modules share, such as `main`, counts for neither. Inline code is a weak form of reference.
+  - Check 5 needed a new run, `data/golden/shapes.json`, because existing golden cases reuse sizes (`d` = `Tmax` = 4) and could not catch a swap. Its tiny sizes all differ. It runs at both a tiny config and `config.py` sizes, and V, N and W are hand-picked in both, because they depend on the corpus. Only shapes are stored. Training is not run.
+  - Some stages have no local to record, so `data/shape-stages.ts` maps them to a tensor that must have the same shape, for example `pos_emb` to `grads["pos_emb"]`, and `tok_emb[ids]` to `dX0`. These prove the documented shape against a real tensor of that shape, not that tensor itself.
+  - Staleness uses the same rule as `repo-meta.json`, the newest commit outside `docs-site/`, so a docs-only commit does not warn.
+  - Sources & Discrepancies shows the contract's text, including its hand-written line numbers. The page says they belong to the commit it names and are not resolved from generated data. This is the one place where line numbers are not generated.
+  - Reader notes: two contract notes are reworded on the page. The snapshot stays exact.
+  - TaskCreate and a todo tool were not available in this session; work was tracked against the task's parts.
+- Open issues:
+  - **Stale spec:** `tests/e2e/shell.spec.ts` line 83 expects the Search button to be disabled. Under the standing rule it was not updated or run. It is for Task 17. Other specs have no result for these changes.
+  - `tests/e2e/attention.spec.ts` lines 232-250 are still stale, from Task 15.
+  - Check 5 leaves 10 of 202 stages unchecked, all named in its report: index masks, intermediate reshapes, the rows of a table, the layer norm derivation's single-row values, and fan arguments. None is an array the code holds under that name.
+  - Check 4 reads literal `kind="actual"`. A kind passed as an expression is not seen by the scan, and is caught at render time by `VizFigure` instead.
+  - Check 7 reads source files, not built HTML. Numbers or names that reach a page only through generated data are not scanned, except the repository's Python, which is.
+  - `verify:shapes` needs NumPy and pandas and is not part of `build` or `verify:content`, which reads the stored file. A repository change that alters a shape needs a manual `sync:shapes`. Check 6 warns that the pin moved, as a prompt to do so.
+  - `lib/repo.ts` has no function-level `docstring`. The repository has no docstrings today (no `"""` in any root file), so the index uses leading comments and the contract's purposes. If docstrings are added, `extract_repo.py` needs to store them.
+  - Typing an exact function name and pressing Enter opens the first result, which is in the Concept group, not the Function. The function is a few arrow presses away.
+  - `/code/math-code` is still unwritten and disabled in the sidebar. GitHub links were not opened, because the working rules allow no requests to other sites.
+- Decisions needed from the human:
+  - Should `rotary`, `RMSNorm` and `KV cache` be added to `contract/PDF_VS_CODE.md`? Then they would also appear on Not in This Model, and `TASK_NAMED_TERMS` could go.
+  - Still open from Task 15: whether the corpus excerpts in `data/generated/actual/` may be committed.
+- Status: Task 16 finished. Nothing was committed.

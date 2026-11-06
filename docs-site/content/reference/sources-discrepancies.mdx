@@ -1,0 +1,50 @@
+---
+title: Sources & Discrepancies
+description: The order in which this documentation trusts its sources, and every recorded difference between the reference PDF and the code.
+status: published
+---
+
+## Sources, in order
+
+When two sources disagree, this documentation follows the one higher on this list and shows the difference.
+
+1. The code in this repository.
+2. The mathematics that code actually implements and uses.
+3. The reference document, `LLM_study_guide_v2_streamlined.pdf`. It is not in the repository.
+4. General ML knowledge. This may explain an implemented operation, and it is labelled "In general, ...".
+
+The rest of this page is the text of `contract/DISCREPANCIES.md`, copied at build time. It was written by reading the code and the PDF, so its line numbers belong to the commit it names and are not resolved from generated data like those on other pages. Items in section 8 are reported only, and no repository file outside `docs-site/` was changed because of them.
+
+<DiscrepancyPreamble />
+
+## Decisions
+
+<DiscrepancySection number={1} />
+
+## Files and project structure
+
+<DiscrepancySection number={2} />
+
+## Names and signatures
+
+<DiscrepancySection number={3} />
+
+## Formulas and behaviour
+
+<DiscrepancySection number={4} />
+
+## Defaults
+
+<DiscrepancySection number={5} />
+
+## Problems inside the PDF
+
+<DiscrepancySection number={6} />
+
+## Repository state and the checkpoint
+
+<DiscrepancySection number={7} />
+
+## Possible LLM issues
+
+<DiscrepancySection number={8} />

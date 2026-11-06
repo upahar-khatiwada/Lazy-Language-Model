@@ -1,0 +1,109 @@
+{
+  "rows": [
+    {
+      "technique": "Post-LN",
+      "inPdf": "reference title only",
+      "note": ""
+    },
+    {
+      "technique": "BatchNorm",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
+      "technique": "Dropout",
+      "inPdf": "no",
+      "note": "Do not imply it exists"
+    },
+    {
+      "technique": "Label smoothing",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
+      "technique": "Sinusoidal positions",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
+      "technique": "Weight tying",
+      "inPdf": "yes, as not used",
+      "note": "May state that `head_w` is separate from `tok_emb`"
+    },
+    {
+      "technique": "GELU",
+      "inPdf": "yes, as future upgrade",
+      "note": ""
+    },
+    {
+      "technique": "Upstream epsilon loss",
+      "inPdf": "yes, contrast",
+      "note": ""
+    },
+    {
+      "technique": "N(0, 0.02^2) embedding init",
+      "inPdf": "yes, contrast",
+      "note": ""
+    },
+    {
+      "technique": "Lower-casing",
+      "inPdf": "yes",
+      "note": "The code preserves case"
+    },
+    {
+      "technique": "Pre-token encoding cache",
+      "inPdf": "yes",
+      "note": ""
+    },
+    {
+      "technique": "Pad, BOS, EOS tokens",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
+      "technique": "L2 penalty in the loss",
+      "inPdf": "yes, contrast",
+      "note": ""
+    },
+    {
+      "technique": "Plain gradient descent",
+      "inPdf": "yes, motivation",
+      "note": ""
+    },
+    {
+      "technique": "Beam search, repetition penalty",
+      "inPdf": "no",
+      "note": ""
+    },
+    {
+      "technique": "Six-rung ladder of checks",
+      "inPdf": "yes",
+      "note": ""
+    },
+    {
+      "technique": "Stop when validation rises",
+      "inPdf": "yes, advice",
+      "note": "No early stopping in code"
+    },
+    {
+      "technique": "ELIZA chat (`chat.py`)",
+      "inPdf": "yes, removed",
+      "note": ""
+    },
+    {
+      "technique": "XOR network (`xor_net.py`)",
+      "inPdf": "yes, removed",
+      "note": ""
+    },
+    {
+      "technique": "Skip-gram (`skipgram.py`)",
+      "inPdf": "yes, removed",
+      "note": ""
+    },
+    {
+      "technique": "Instruction following",
+      "inPdf": "yes, out of scope",
+      "note": ""
+    }
+  ]
+}

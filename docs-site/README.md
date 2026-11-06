@@ -6,26 +6,29 @@ Static documentation site for the from-scratch NumPy language model in this repo
 
 Requires Bun, Node.js and Python 3 on `PATH`. Next.js does not build on Bun's `node` stand-in, so Node.js must be installed.
 
-| Command                    | What it does                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------- |
-| `bun install`              | Install the pinned dependencies                                                     |
-| `bun run dev`              | Start the development server                                                        |
-| `bun run build`            | Build the static export into `out/`                                                 |
-| `bun run start`            | Serve `out/` at `http://127.0.0.1:3000` (without a base path)                       |
-| `bun run lint`             | Run ESLint and Prettier checks                                                      |
-| `bun run typecheck`        | Type-check with TypeScript                                                          |
-| `bun run test`             | Run the Vitest tests. Do not use a bare `bun test`: that ignores Vitest             |
-| `bun run test:e2e`         | Run Playwright against `out/`. Needs a build and `bunx playwright install chromium` |
-| `bun run sync:repo`        | Regenerate `data/generated/` from the repository                                    |
-| `bun run verify:generated` | Fail if `data/generated/` is stale or was edited by hand                            |
-| `bun run verify:links`     | Fail if hand-written data no longer matches the code. `build` runs this             |
-| `bun run sync:examples`    | Run repository functions and write `data/golden/examples.json`. Needs NumPy         |
-| `bun run verify:examples`  | Fail if the stored example numbers differ from a fresh run. Needs NumPy             |
-| `bun run sync:golden`      | Run repository functions and write the golden files for `lib/math`. Needs NumPy     |
-| `bun run verify:golden`    | Fail if the stored golden numbers differ from a fresh run. Needs NumPy              |
-| `bun run sync:derived`     | Call `init_params`, snapshot the math inventory into `data/derived/`. Needs NumPy   |
-| `bun run verify:derived`   | Fail if `data/derived/` differs from a fresh run. Needs NumPy                       |
-| `bun run verify:content`   | Stub: not implemented yet                                                           |
+| Command                    | What it does                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `bun install`              | Install the pinned dependencies                                                                                           |
+| `bun run dev`              | Start the development server                                                                                              |
+| `bun run build`            | Build the static export into `out/`                                                                                       |
+| `bun run start`            | Serve `out/` at `http://127.0.0.1:3000` (without a base path)                                                             |
+| `bun run lint`             | Run ESLint and Prettier checks                                                                                            |
+| `bun run typecheck`        | Type-check with TypeScript                                                                                                |
+| `bun run test`             | Run the Vitest tests. Do not use a bare `bun test`: that ignores Vitest                                                   |
+| `bun run test:e2e`         | Run Playwright against `out/`. Needs a build and `bunx playwright install chromium`                                       |
+| `bun run sync:repo`        | Regenerate `data/generated/` from the repository                                                                          |
+| `bun run verify:generated` | Fail if `data/generated/` is stale or was edited by hand                                                                  |
+| `bun run verify:links`     | Fail if hand-written data no longer matches the code. `build` runs this                                                   |
+| `bun run sync:examples`    | Run repository functions and write `data/golden/examples.json`. Needs NumPy                                               |
+| `bun run verify:examples`  | Fail if the stored example numbers differ from a fresh run. Needs NumPy                                                   |
+| `bun run sync:golden`      | Run repository functions and write the golden files for `lib/math`. Needs NumPy                                           |
+| `bun run verify:golden`    | Fail if the stored golden numbers differ from a fresh run. Needs NumPy                                                    |
+| `bun run sync:derived`     | Call `init_params`, snapshot the math inventory into `data/derived/`. Needs NumPy                                         |
+| `bun run verify:derived`   | Fail if `data/derived/` differs from a fresh run. Needs NumPy                                                             |
+| `bun run verify:content`   | Seven checks that the docs match the repository, with a coverage report. Needs git for check 6                            |
+| `bun run sync:search`      | Build `public/search-index.json` and report its size. `build` and `dev` run this                                          |
+| `bun run sync:shapes`      | Run repository functions at a tiny config and at `config.py`, and write `data/golden/shapes.json`. Needs NumPy and pandas |
+| `bun run verify:shapes`    | Fail if `data/golden/shapes.json` differs from a fresh run                                                                |
 
 To build for GitHub Pages, set the base path first:
 

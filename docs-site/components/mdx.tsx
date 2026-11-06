@@ -46,6 +46,7 @@ import { CodeLine, CodeStep } from "./CodeStep";
 import { ConceptCard, ConceptWhy } from "./ConceptCard";
 import { ConceptStep } from "./ConceptStep";
 import { ConfigValue } from "./ConfigValue";
+import { AbsentTechniques, DiscrepancyPreamble, DiscrepancySection } from "./ContractPages";
 import {
   BatchExample,
   CorpusExample,
@@ -134,6 +135,7 @@ import {
 // Only id-based components are offered for equations and code, so a page cannot inline either.
 export const mdxComponents: MDXComponents = {
   table: (props) => <DataTable {...props} />,
+  AbsentTechniques,
   ActualEmbeddingsPanel,
   ActualGenerationPanel,
   ActualModelOutputSlot,
@@ -178,6 +180,8 @@ export const mdxComponents: MDXComponents = {
   CrossEntropyBackwardExample,
   CrossEntropyExample,
   DecayTable,
+  DiscrepancyPreamble,
+  DiscrepancySection,
   EmbeddingBackwardExample,
   EmbeddingLabExample,
   EncodeExample,
