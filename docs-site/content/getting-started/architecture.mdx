@@ -14,7 +14,7 @@ Each box below is one function call or inline expression, in code order. The nam
 
 <FullPipelineDiagram only="forward" />
 
-Each block reads normalized copies, and each residual adds to the value that was not normalized. `T` is at most <ConfigValue name="seq_len" />. `V` depends on the corpus, so it stays a symbol.
+Each block reads normalised copies, and each residual adds to the value that was not normalised. `T` is at most <ConfigValue name="seq_len" />. `V` depends on the corpus, so it stays a symbol.
 
 ## What is not inside forward
 
@@ -30,7 +30,7 @@ The only softmax inside `forward` turns attention scores into attention weights 
 
 ## Parameters
 
-`init_params` returns a flat dictionary of arrays. The names below come from calling it. `b{l}` is the block index, starting at 0, so `b0.wq` is the query weights of the first block. The "With config" column uses `config.py`. `V` depends on the corpus and no exported value exists, so it stays a symbol. `head_w` is a separate matrix (<CodeLine id="inside.head-separate" />).
+`init_params` returns a flat dictionary of arrays. The names below come from calling it. `b{l}` is the block index, starting at 0, so `b0.wq` is the query weights of the first block. The "With config" column uses `config.py`. `V` depends on the corpus, so it stays a symbol. `head_w` is a separate matrix (<CodeLine id="inside.head-separate" />).
 
 <ParameterTable />
 

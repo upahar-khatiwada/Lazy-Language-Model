@@ -9,15 +9,19 @@ import { OnThisPage } from "@/components/OnThisPage";
 import { PageLink } from "@/components/PageLink";
 import { FullPipelineDiagram } from "@/components/PipelineDiagram";
 import { GLANCE, QUESTIONS } from "@/data/home";
+import { pageMetadata, SITE_NAME } from "@/lib/metadata";
 import { buildGlance } from "@/lib/model-glance";
 import { pageHref } from "@/lib/nav";
 import { firstWrittenInGroup, writtenHref } from "@/lib/pages";
 import { loadConfig, loadRepoMeta } from "@/lib/repo";
 
+const DESCRIPTION =
+  "The mathematics behind a small language model built from scratch, and the code that implements it.";
+
 export const metadata: Metadata = {
-  title: "LLM Developer Docs",
-  description:
-    "The mathematics behind a small language model built from scratch, and the code that implements it.",
+  ...pageMetadata(SITE_NAME, DESCRIPTION),
+  // Without this, the layout's template would print the site name twice.
+  title: { absolute: SITE_NAME },
 };
 
 const HEADINGS = [
@@ -41,7 +45,7 @@ function HeroButton({
   const variant = primary ? "primary" : "secondary";
   if (href) {
     return (
-      <Link className={buttonClass(variant)} href={href}>
+      <Link prefetch={false} className={buttonClass(variant)} href={href}>
         {label}
       </Link>
     );

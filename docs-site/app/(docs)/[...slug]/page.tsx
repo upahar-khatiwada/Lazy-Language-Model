@@ -17,6 +17,7 @@ import {
   type ExplorerFile,
 } from "@/lib/code-explorer";
 import { listContentSlugs, loadPage, readPageMeta } from "@/lib/content";
+import { pageMetadata } from "@/lib/metadata";
 import { breadcrumbs, prevNext, resolveNav } from "@/lib/nav";
 import { loadRepoMeta } from "@/lib/repo";
 
@@ -39,9 +40,9 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const file = explorerFileOf(slug);
-  if (file) return { title: file.path, description: filePurpose(file) };
+  if (file) return pageMetadata(file.path, filePurpose(file));
   const { title, description } = readPageMeta(slug.join("/"));
-  return { title, description };
+  return pageMetadata(title, description);
 }
 
 function CodeFilePage({ file }: { file: ExplorerFile }) {

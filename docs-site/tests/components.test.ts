@@ -1,11 +1,16 @@
 import { createElement, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { CodeBlock } from "@/components/CodeBlock";
+import { CodeReference } from "@/components/CodeReference";
 import { MathBlock } from "@/components/MathBlock";
 import { NumericExample } from "@/components/NumericExample";
 import { TensorShape } from "@/components/TensorShape";
 import { mdxComponents } from "@/components/mdx";
+import { getSymbol } from "@/lib/code-targets";
 import * as concepts from "@/lib/concepts";
+import { highlightedLines } from "@/lib/links";
+import { loadRepoMeta } from "@/lib/repo";
 
 const render = (element: ReactElement) => renderToStaticMarkup(element);
 
@@ -66,6 +71,67 @@ describe("MathBlock", () => {
 
   test("fails on an unknown id", () => {
     expect(() => render(createElement(MathBlock, { id: "nope" }))).toThrow("Unknown equation");
+  });
+
+  test("every equation on the site has MathML, a label and no KaTeX error node", () => {
+    const equations = concepts.loadConcepts().flatMap((concept) => concept.equations);
+    expect(equations.length).toBeGreaterThan(100);
+    for (const equation of equations) {
+      const html = render(createElement(MathBlock, { id: equation.id }));
+      expect(html, equation.id).toContain("<math");
+      expect(html, equation.id).toMatch(/role="group" aria-label="[^"]+"/);
+      expect(html, equation.id).not.toContain("katex-error");
+    }
+  });
+});
+
+describe("CodeReference", () => {
+  const SYMBOL = "ops.softmax_forward";
+
+  // CodeBlock is async, which renderToStaticMarkup cannot wait for, so it is called here directly.
+  const renderReference = async (equation?: string) => {
+    const { props } = CodeReference({ symbol: SYMBOL, equation }) as ReactElement<
+      Parameters<typeof CodeBlock>[0]
+    >;
+    return render(await CodeBlock(props));
+  };
+  const numbers = (html: string) =>
+    [...html.matchAll(/data-line="(\d+)"/g)].map((match) => Number(match[1]));
+
+  test("shows the real source with its real line numbers and a pinned permalink", async () => {
+    const found = getSymbol(SYMBOL);
+    const html = await renderReference();
+    const count = found.source.split("\n").length;
+    expect(numbers(html)).toEqual(Array.from({ length: count }, (_, i) => found.startLine + i));
+    expect(html).toContain(`href="${found.permalink}"`);
+    expect(found.permalink).toContain(`/blob/${loadRepoMeta().sha}/${found.file}#L`);
+    expect(html).toContain(`data-code-file="${found.file}"`);
+    expect(html).toContain("softmax_forward");
+    // The copy button copies the source, and the scrolling block can take keyboard focus.
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain(`aria-label="Source of ${found.file}"`);
+  });
+
+  test("highlights exactly the lines of the link records", async () => {
+    const html = await renderReference();
+    const lines = [...html.matchAll(/data-line="(\d+)" data-highlighted="true"/g)].map((m) =>
+      Number(m[1]),
+    );
+    expect(lines).toEqual([...highlightedLines(SYMBOL)].sort((a, b) => a - b));
+    expect(lines.length).toBeGreaterThan(0);
+  });
+
+  test("with an equation, only that equation's lines", async () => {
+    const html = await renderReference("softmax.normalize");
+    const lines = [...html.matchAll(/data-line="(\d+)" data-highlighted="true"/g)].map((m) =>
+      Number(m[1]),
+    );
+    expect(lines).toEqual([...highlightedLines(SYMBOL, "softmax.normalize")]);
+    expect(lines.length).toBe(1);
+  });
+
+  test("fails on a symbol that does not exist", () => {
+    expect(() => CodeReference({ symbol: "ops.nope" })).toThrow();
   });
 });
 

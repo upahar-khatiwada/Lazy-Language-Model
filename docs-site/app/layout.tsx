@@ -5,6 +5,7 @@ import "@/styles/base.css";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import type { ReactNode } from "react";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/metadata";
 
 // next/font downloads these at build time and serves them from this site.
 const plexSans = IBM_Plex_Sans({
@@ -22,7 +23,8 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "LLM Developer Docs", template: "%s | LLM Developer Docs" },
+  title: { default: SITE_NAME, template: `%s | ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
 };
 
 // Runs before first paint so a stored theme does not flash. Without an override, the tokens follow

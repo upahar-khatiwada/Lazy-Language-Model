@@ -8,7 +8,7 @@ summary: >-
   positions. Entry (i, j) is the dot product of row i's query with row j's key.
 why: >-
   The weights have to come from somewhere. A score is the raw number that decides how much of position
-  j's value row i receives, once the next steps have scaled, masked and normalized it.
+  j's value row i receives, once the next steps have scaled, masked and normalised it.
 equations:
   - id: attention.scores
     latex: Q_h K_h^\top, \qquad (Q_h K_h^\top)_{ij} = \sum_{c} (Q_h)_{ic} (K_h)_{jc}

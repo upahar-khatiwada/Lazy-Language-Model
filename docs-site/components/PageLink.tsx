@@ -15,7 +15,12 @@ export function PageLink({
   children: ReactNode;
 }) {
   const href = writtenHref(page);
-  if (href) return <Link href={hash ? `${href}#${hash}` : href}>{children}</Link>;
+  if (href)
+    return (
+      <Link prefetch={false} href={hash ? `${href}#${hash}` : href}>
+        {children}
+      </Link>
+    );
   return (
     <span className={styles.disabled} aria-disabled="true" title="This page is not written yet">
       {children}

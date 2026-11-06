@@ -16,6 +16,7 @@ import {
   withEquation,
   type EquationDetail,
 } from "@/lib/math-code";
+import { revealEquation } from "@/lib/reveal";
 import styles from "./MathCodeNavigator.module.css";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -54,6 +55,7 @@ function visibleLines(slug: string): HTMLElement[] {
 }
 
 function scrollToCode(slug: string) {
+  revealEquation(slug);
   const lines = visibleLines(slug);
   const equation = document.querySelector(`[data-eq="${slug}"]`);
   const after = lines.map(
@@ -94,6 +96,11 @@ export function MathCodeNavigator() {
   };
   const onEscape = useEffectEvent(clearAll);
 
+  // A pinned equation is meant to be seen, so its folded sections open, before the count below.
+  useEffect(() => {
+    if (pinned) revealEquation(pinned);
+  }, [pinned, pathname]);
+
   // Marks the page. A step player can replace code later, so the marks follow changes to the page.
   useEffect(() => {
     const apply = () => {
@@ -115,7 +122,7 @@ export function MathCodeNavigator() {
       }
     };
     apply();
-    const main = document.getElementById("main");
+    const main = document.getElementById("main-content");
     if (!main) return;
     const observer = new MutationObserver(apply);
     observer.observe(main, { childList: true, subtree: true });

@@ -1,10 +1,16 @@
 import type { ReactNode } from "react";
 import styles from "./DocMain.module.css";
 
+// Not "main": train.py and talk.py define a function by that name, which the Code Explorer uses as an
+// anchor, and the skip link would then jump to the wrong place.
 // `wide` also takes the on-this-page column, for a page that has no such rail.
 export function DocMain({ wide = false, children }: { wide?: boolean; children: ReactNode }) {
   return (
-    <main className={wide ? `${styles.main} ${styles.wide}` : styles.main} id="main" tabIndex={-1}>
+    <main
+      className={wide ? `${styles.main} ${styles.wide}` : styles.main}
+      id="main-content"
+      tabIndex={-1}
+    >
       {children}
     </main>
   );

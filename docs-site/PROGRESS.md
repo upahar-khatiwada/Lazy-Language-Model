@@ -1014,3 +1014,61 @@ Append one entry per finished task. Newest at the bottom.
   - Should `rotary`, `RMSNorm` and `KV cache` be added to `contract/PDF_VS_CODE.md`? Then they would also appear on Not in This Model, and `TASK_NAMED_TERMS` could go.
   - Still open from Task 15: whether the corpus excerpts in `data/generated/actual/` may be committed.
 - Status: Task 16 finished. Nothing was committed.
+
+### Task 17: Tests, Accessibility & Final Polish (2026-11-06)
+- Depends on Task 16: logged, and its output exists. All six contract files present. HEAD `aed1996`, pinned `sha` `66da45b`.
+- Files created:
+  - Part A: `tests/interactive.test.ts`.
+  - Part B: `lib/remark-collapse.ts`, `lib/reveal.ts`, `components/Collapsible.tsx` and CSS module, `components/SectionReveal.tsx`, `lib/site-audit.ts`, `scripts/verify_site.ts`, `tests/collapse.test.ts`, `tests/site-audit.test.ts`.
+  - Part C: `lib/metadata.ts`, `app/icon.svg`, `app/not-found.tsx`, `MAINTENANCE.md`, `tests/polish.test.ts`.
+- Files changed:
+  - `package.json` and `bun.lock` (`verify:site`; dev dependency `happy-dom` 21.0.4, exact pin), `README.md` (setup, data flow, how to add a concept and a page), `tests/components.test.ts`.
+  - `lib/content.ts`, `components/mdx.tsx`, `app/(docs)/layout.tsx`, `components/MathCodeNavigator.tsx` and `SearchDialog.tsx` (folds open for `?eq=` and search results).
+  - `components/DataTable.module.css` (tall tables scroll inside, with a sticky header), `Examples.module.css` and `SearchDialog.module.css` (highlights get an outline or underline as well as colour).
+  - `components/DocMain.tsx`, `DocsChrome.tsx`, `MathCodeNavigator.tsx`: the landmark id is now `main-content`. On `/code/train` and `/code/talk`, the Python function `main` also had `id="main"`, so the skip link could land on the wrong element.
+  - `prefetch={false}` on every `<Link>` that lacked it: `Breadcrumbs`, `DocsChrome`, `LearningPipeline`, `MathReference`, `PageLink`, `PrevNext`, `SearchDialog`, `SidebarItem`, `app/(docs)/page.tsx`. Automatic prefetch cost 60 requests per page, 20 of them 404s. This is the `__next.!KGRvY3Mp` issue from Task 04.
+  - Metadata: `app/layout.tsx`, `app/(docs)/page.tsx` (its title printed the site name twice), `app/(docs)/[...slug]/page.tsx`.
+  - Copy: `content/testing/gradient-checking.mdx`, `content/getting-started/architecture.mdx`, `content/mathematics/attention.mdx`, `content/code/checkpoints-tests.mdx`, `data/concepts/attention.{scores,projections,softmax}.yaml`.
+  - Nothing outside `docs-site/` changed. Nothing was committed. The last git status listed only `docs-site/` paths.
+- **Final verification is not complete.** The final run was stopped before it finished, and the human chose to run the remaining commands. These results come from that run, after the last edit:
+  - `bun install --frozen-lockfile`: exit 0.
+  - `bun run verify:generated`: `OK: 5 generated files match a fresh extraction.`; `verify:derived`: `OK: 5 derived file(s) match a fresh run.`; `verify:examples`: `OK: 2 example(s) match a fresh run.`; `verify:golden`: `OK: 231 golden cases match a fresh run.`; `verify:shapes`: `OK: data/golden/shapes.json matches a fresh run.`; `verify:links`: `OK: 349 links, 61 concepts and 1 pipelines match the code.`; `verify:actual`: `OK: data/generated/actual matches a fresh export from checkpoints/model.`
+  - `bun run verify:content`: `Uncovered functions: none.`, `OK: 7 checks passed, 0 with warnings.`
+  - **`bun run lint`: FAILED, `error: script "lint" exited with code 1`.** The run's filter hid the cause, so it is not known. An earlier lint run, before my fixes, reported one ESLint error and two warnings, all since edited.
+  - `bun run typecheck`: exit 0.
+  - `bun run test`, twice for flakiness: `Test Files  31 passed (31)` both times, exit 0. The filter hid the test count.
+  - `bun run build`: `Compiled successfully`, exit 0.
+  - `bun run verify:site`: started, no result recorded. Last seen result, on an earlier build: `OK: 50 pages, 5085 internal links, 3077 anchors, 502 GitHub permalinks. No problems.`
+- Not run on the final files: `verify:site` on the final build, the base-path build and its `verify:site` (never run at all), pytest, and the `git status` check at the end.
+- Earlier results in this session, from before later edits:
+  - Clean checkout, a scratch clone overlaid with the working tree, no `contract/` or corpus: install, `sync:golden`, `build` exit 0, `Test Files 28 passed (28)`, `Tests 2188 passed (2188)`. This was at the end of Part A, so it predates Parts B and C. Golden files showed as modified in the clone, by line endings only.
+  - Mutation sweep, scratch script, `tests/interactive.test.ts` against one wrong formula at a time, files restored by hash: `33 of 34 caught`, every one of the 17 components with a caught mutation. The survivor (StepPlayer Previous) showed a gap in the test, which was then fixed. The sweep was not repeated after that fix.
+  - Attention page height at 1440 wide: **before 45,972 px, after 27,701 px**, 35 folds with 3 open. Phone height was not measured.
+  - Keyboard pass on Attention at 1440, a scratchpad script: `ALL OK` for the skip link, a focus ring on the first 260 Tab stops, folds by Enter and Space, lab controls, direct and in-page anchors into a fold, `?eq=` opening its folds, Escape, Show code, search and focus return, print open and restore, tall table scrolling. This ran before the prefetch change and the copy edits. Extra checks added afterwards (sidebar navigation with prefetch off, arriving from another page, the 404 page) have not run.
+  - Lighthouse 13.6.0, `--preset=desktop`, after the prefetch change and before the copy edits: on a gzip server, like GitHub Pages, home `performance 1 best-practices 1` and Attention `performance 0.95 best-practices 1`, 0 failed requests. On the uncompressed Python server, home `1 / 1` and **Attention `0.77 / 1`, below the target**, with the document taking 5,910 ms and CLS 0.14. An earlier plain run gave Attention 0.86 and CLS 0, so this server's result varies.
+  - Screenshots viewed: Attention at desktop, light and dark, a section with no fold in view. The fold bars themselves have not been viewed.
+- Skipped under the standing rule in `CLAUDE.md`, which overrides this task's text. Not open issues:
+  - No Playwright run, no specs written or updated, no axe, no smoke screenshots of every key page.
+  - No phone or tablet layouts, no checks at 390 or 360, no sticky Contents button on phones, no touch-target work beyond the fold bars.
+  - Lighthouse's accessibility category was not run, because it runs axe. So the Part C target has no accessibility score. `verify:site` covers landmarks, heading order, duplicate ids, control names, SVG and equation alternatives without a browser, but not colour or layout.
+- Findings:
+  - **`/getting-started/introduction` is still the Task 03 placeholder**, first in the sidebar and in the search index. The task forbids changing documentation content, so it was left.
+  - Copy: all page prose was read. Reader-visible text in concept YAML and components was only scanned for wordy phrases and stale claims. Fixes were two wordy phrases, `normalized` to `normalised`, two stale claims about exported output, and one reference to the private `contract/MATH_INVENTORY.md`.
+  - No new PDF-versus-code difference and no new LLM issue.
+- Assumptions:
+  - "First section open" means the first `##` section with something to fold, so on Attention that is Q, K, V projections.
+  - Folded: Tiny numerical example, Actual implementation, Code and math connection, every backward-section step except the first two, and code listings outside the steps, on pages using `<ConceptStep>`. Other pages stay as written.
+  - The label of `softmax.normalize` stays `Normalize`, because `tests/reference.test.ts` expects that word and tests may not be weakened.
+  - Social cards are the plain `summary` type with no image and no absolute URL. The workflow in `MAINTENANCE.md` has never been run.
+  - Interactive correctness is tested in a simulated DOM (`happy-dom`), not a browser.
+  - TaskCreate and a todo tool were not available in this session.
+- Open issues:
+  - **Specs are stale.** `tests/e2e/` was not updated. Besides the two stale specs from Tasks 15 and 16, specs that expect visible content can now fail because that content starts folded.
+  - `ActualAttention` has no formula, so it has no mutation. `tests/actual.test.ts` covers its data.
+  - The Attention page's HTML is about 1.3 MB uncompressed, of which about 860 KB is Next's inline data. It is about 136 KB gzipped.
+  - GitHub links were checked for pin, file and line range, not opened.
+- Decisions needed from the human:
+  - Write a real Introduction page, or remove it from the nav?
+  - Still open from Task 16: `rotary`, `RMSNorm` and `KV cache` in the contract.
+  - Still open from Task 15: `data/generated/actual/` holds corpus excerpts and is already tracked. Should they stay public?
+- Status: Task 17 written. Acceptance is not confirmed: lint failed in the last run, and the checks listed above remain for the human to run. Nothing was committed.

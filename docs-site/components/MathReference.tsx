@@ -70,12 +70,16 @@ function Cells({ row }: { row: ReferenceRow }) {
         <Label>Links</Label>
         <span className={styles.links}>
           {row.explanation ? (
-            <Link href={row.explanation}>Explanation</Link>
+            <Link prefetch={false} href={row.explanation}>
+              Explanation
+            </Link>
           ) : (
             <Missing>Explanation not written</Missing>
           )}
           {row.example ? (
-            <Link href={row.example}>Numerical example</Link>
+            <Link prefetch={false} href={row.example}>
+              Numerical example
+            </Link>
           ) : (
             <Missing>
               {row.hasExample ? "Numerical example not on a page yet" : "No numerical example"}

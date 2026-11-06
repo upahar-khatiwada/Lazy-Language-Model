@@ -24,7 +24,8 @@
     "sync:search": "bun scripts/build_search.ts",
     "sync:shapes": "python -B scripts/make_shapes.py",
     "verify:shapes": "python -B scripts/make_shapes.py --check",
-    "verify:content": "bun scripts/verify_content.ts"
+    "verify:content": "bun scripts/verify_content.ts",
+    "verify:site": "bun scripts/verify_site.ts"
   },
   "dependencies": {
     "@mdx-js/mdx": "3.1.1",
@@ -53,6 +54,7 @@
     "@types/react-dom": "19.3.0",
     "eslint": "10.14.0",
     "eslint-config-next": "16.4.5",
+    "happy-dom": "21.0.4",
     "prettier": "3.9.10",
     "typescript": "6.0.3",
     "vitest": "5.1.0"

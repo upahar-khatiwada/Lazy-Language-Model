@@ -31,7 +31,7 @@ The default step is `h = 1e-5` (<CodeLine id="gradcheck.default-h" />). `check_p
 
 <Callout kind="note">
 
-In general, a central difference is more accurate than a one-sided one, because its leading error term cancels. The error from the formula shrinks as `h` gets smaller, but round-off grows, because `fp - fm` becomes a tiny difference between two nearly equal numbers. So `h` should be neither very large nor very small. This is a general explanation. The repository only fixes one value, and it does not study this trade-off.
+In general, a central difference is more accurate than a one-sided one, because its leading error term cancels. The error from the formula shrinks as `h` gets smaller, but round-off grows, because `fp - fm` becomes a tiny difference between two nearly equal numbers. So `h` should be neither too large nor too small. This is a general explanation. The repository only fixes one value, and it does not study this trade-off.
 
 </Callout>
 
@@ -203,4 +203,4 @@ The `.bk` rows hold round-off, as explained above, so their values are not a fai
 
 **The assertion stops at the first failure.** `test_every_tensor_passes` loops over `worst` in the order `init_params` created the names, and the first failure ends the test. With the third column, the report names only `tok_emb`, the first name in the dictionary, even though the mistake is elsewhere. To see the pattern, print the whole dictionary that `check_params` returns.
 
-Note that a check can only point to where a gradient disagrees with the loss. It cannot say whether the mistake is in the forward or the backward code, because the loss comes from the forward code, and the check treats it as correct.
+A check can only point to where a gradient disagrees with the loss. It cannot say whether the mistake is in the forward or the backward code, because the loss comes from the forward code, and the check treats it as correct.

@@ -9,7 +9,7 @@ export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
         {crumbs.map((crumb, index) => (
           <li className={styles.item} key={crumb.title}>
             {crumb.href ? (
-              <Link className={styles.link} href={crumb.href}>
+              <Link prefetch={false} className={styles.link} href={crumb.href}>
                 {crumb.title}
               </Link>
             ) : (

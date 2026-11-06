@@ -41,6 +41,7 @@ import {
   UntestedSymbols,
 } from "./CheckpointExamples";
 import { CodeFileLink, CodeTree } from "./CodeExplorer";
+import { Collapsible } from "./Collapsible";
 import { CodeReference } from "./CodeReference";
 import { CodeLine, CodeStep } from "./CodeStep";
 import { ConceptCard, ConceptWhy } from "./ConceptCard";
@@ -167,6 +168,7 @@ export const mdxComponents: MDXComponents = {
   CheckpointFiles,
   ChoiceExample,
   ClipLabExample,
+  Collapsible,
   CodeFileLink,
   CodeLine,
   CodeReference,

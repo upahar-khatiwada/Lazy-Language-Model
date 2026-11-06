@@ -28,7 +28,7 @@ export function DocsChrome({ nav, githubUrl, children }: Props) {
 
   return (
     <>
-      <a className="skip-link" href="#main">
+      <a className="skip-link" href="#main-content">
         Skip to content
       </a>
       <header className={styles.topbar}>
@@ -42,7 +42,7 @@ export function DocsChrome({ nav, githubUrl, children }: Props) {
             Contents
           </Button>
         </span>
-        <Link className={styles.brand} href="/">
+        <Link prefetch={false} className={styles.brand} href="/">
           <span className={styles.brandLong}>LLM Developer Docs</span>
           <span className={styles.brandShort}>LLM Docs</span>
         </Link>

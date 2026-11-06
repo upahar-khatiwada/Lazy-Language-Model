@@ -7,13 +7,18 @@ export function PrevNext({ prev, next }: { prev?: ResolvedPage; next?: ResolvedP
   return (
     <nav className={styles.nav} aria-label="Previous and next pages">
       {prev ? (
-        <Link className={styles.link} href={prev.href} rel="prev">
+        <Link prefetch={false} className={styles.link} href={prev.href} rel="prev">
           <span className={styles.label}>Previous</span>
           {prev.title}
         </Link>
       ) : null}
       {next ? (
-        <Link className={`${styles.link} ${styles.next}`} href={next.href} rel="next">
+        <Link
+          prefetch={false}
+          className={`${styles.link} ${styles.next}`}
+          href={next.href}
+          rel="next"
+        >
           <span className={styles.label}>Next</span>
           {next.title}
         </Link>

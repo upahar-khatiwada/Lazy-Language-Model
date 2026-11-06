@@ -70,6 +70,10 @@
 .chosen {
   background: var(--highlight);
   font-weight: 600;
+
+  /* The outline says the same as the background, for anyone who cannot rely on colour. */
+  outline: 2px solid var(--highlight-line);
+  outline-offset: -2px;
 }
 
 .tokens.tokens {

@@ -6,6 +6,7 @@ import type { MDXContent } from "mdx/types";
 import * as runtime from "react/jsx-runtime";
 import remarkGfm from "remark-gfm";
 import { z } from "zod";
+import { remarkCollapse } from "./remark-collapse";
 import { remarkHeadings, type PageHeading } from "./remark-headings";
 
 const CONTENT_DIR = join(process.cwd(), "content");
@@ -65,7 +66,7 @@ export async function loadPage(slug: string): Promise<LoadedPage> {
   const headings: PageHeading[] = [];
   const { default: Content } = await evaluate(body, {
     ...runtime,
-    remarkPlugins: [remarkGfm, remarkHeadings(headings)],
+    remarkPlugins: [remarkGfm, remarkCollapse, remarkHeadings(headings)],
   });
   return { meta, headings, Content };
 }

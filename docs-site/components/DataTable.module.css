@@ -1,3 +1,23 @@
+/* A wide or tall table scrolls in here, so it neither widens the page nor makes it much longer. */
 .wrap {
-  overflow-x: auto;
+  max-height: min(80vh, 40rem);
+  overflow: auto;
+}
+
+/* The header stays in view while the rows scroll. */
+.wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+@media print {
+  .wrap {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .wrap thead th {
+    position: static;
+  }
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { revealHref } from "@/lib/reveal";
 import {
   highlightParts,
   nextActive,
@@ -101,6 +102,8 @@ export function SearchDialog() {
       if (!hit) return;
       event.preventDefault();
       close();
+      // The result may be folded on this page. On another page, SectionReveal opens it on arrival.
+      revealHref(hit.href);
       router.push(hit.href);
     }
   }
@@ -143,6 +146,7 @@ export function SearchDialog() {
     const index = position++;
     return (
       <Link
+        prefetch={false}
         key={hit.id}
         id={optionId(index)}
         href={hit.href}

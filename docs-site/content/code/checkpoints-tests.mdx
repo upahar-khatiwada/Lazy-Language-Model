@@ -7,7 +7,7 @@ status: published
 
 This page covers saving and loading, the prompt loop in `talk.py`, and the test suite.
 
-**This page has no equations and no backward pass.** Saving, loading and the prompt loop compute no loss and no gradient, and `contract/MATH_INVENTORY.md` has no row for them. The mathematics that `talk.py` reaches is on <PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink>.
+**This page has no equations and no backward pass.** Saving, loading and the prompt loop compute no loss and no gradient. The mathematics that `talk.py` reaches is on <PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink>.
 
 ## Checkpoint format
 
@@ -80,7 +80,7 @@ Only `talk.main` calls it in the pipeline, so nothing in the repository resumes 
 
 ### Why the files are not in the repository
 
-`.gitignore` lists `checkpoints/` and `/data/`, so neither a checkpoint nor the corpus is part of a commit. This site shows no output from a trained model, so every number on this page is an Illustrative Example.
+`.gitignore` lists `checkpoints/` and `/data/`, so neither a checkpoint nor the corpus is part of a commit. This page shows no output from a trained model, so every number on it is an Illustrative Example.
 
 ## Interactive inference
 

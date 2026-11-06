@@ -39,7 +39,7 @@ symbols:
 example: null
 shapes:
   - id: attention-softmax
-    label: Softmax keeps the shape. It normalizes along the last axis
+    label: Softmax keeps the shape. It normalises along the last axis
     stages:
       - name: S
         dims: [H, T, T]

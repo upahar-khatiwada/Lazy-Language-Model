@@ -121,6 +121,7 @@
   background: var(--highlight);
   color: var(--text);
   font-weight: 600;
+  text-decoration: underline;
 }
 
 .hint {

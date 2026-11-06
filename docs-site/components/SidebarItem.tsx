@@ -30,6 +30,7 @@ export function SidebarItem({ title, sourceFile, href, state, preview }: Props) 
   const stateClass = preview?.hover ? styles.hover : styles[state];
   return (
     <Link
+      prefetch={false}
       className={`${styles.item} ${stateClass}`}
       href={href}
       aria-current={state === "active" && !preview ? "page" : undefined}

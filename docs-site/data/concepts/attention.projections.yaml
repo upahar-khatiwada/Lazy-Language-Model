@@ -24,7 +24,7 @@ equations:
     label: Value projection
 symbols:
   - symbol: X_n
-    meaning: The input, a layer-normalized copy of the block's input
+    meaning: The input, a layer-normalised copy of the block's input
     codeName: Xn
     shape: (T, d)
   - symbol: W_q, W_k, W_v

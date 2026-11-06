@@ -69,7 +69,9 @@ export function LearningPipeline({
         <p data-testid="learning-page">
           Page:{" "}
           {current.page.href ? (
-            <Link href={current.page.href}>{current.page.title}</Link>
+            <Link prefetch={false} href={current.page.href}>
+              {current.page.title}
+            </Link>
           ) : (
             <span aria-disabled="true" title="This page is not written yet">
               {current.page.title} (page not written yet)
