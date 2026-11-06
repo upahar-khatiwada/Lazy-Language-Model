@@ -1163,3 +1163,27 @@ Append one entry per finished task. Newest at the bottom.
   - Searching `not in this model` lists the concept `Token embedding` first, so Enter opens that concept. The page itself is the second of the two results. An exact page title does not move its group to the top, as an exact function or file name does. This was not changed.
 - Closed: the question from the Task 16 follow-ups of whether `rotary` should find something.
 - Status: finished. Nothing was committed.
+
+### Search ranking by exact match (2026-11-06)
+- Order: exact page title, then exact function or file name, then exact concept name, then the existing order. The whole query is compared, ignoring case and punctuation. HEAD `c3206ab`, pinned `sha` `66da45b`.
+- Files changed: `lib/search.ts` (`exactRank`; `isExactName` now ignores punctuation), `lib/search-engine.ts` (sorts by `exactRank`; the winner's group is listed first for any exact match), `tests/search.test.ts` (new describe "the order of exact matches").
+- A test changed: "a partial name or a phrase keeps the usual order" expected `softmax forward` to open a concept. The new rule makes that the exact name of `softmax_forward`, so the query was removed from that test and is covered as an exact match.
+- Assumptions:
+  - A section heading is not a page title. Most concepts have a heading of the same name, so counting headings would make `softmax` open a heading. Headings keep their place in the existing order, as does an equation with the same title.
+  - The existing "any other exact title" step stays, as part of the existing order.
+  - Exact names of rows of Not in This Model take no rank. The request listed only pages, functions, files and concepts.
+- Results that change, read from the real titles:
+  - `layernorm` opens the page, not the concept. It is the only page title that equals a concept name.
+  - `Softmax, backward`, `Cross-entropy, backward` and `ReLU, backward` open the functions `softmax_backward`, `cross_entropy_backward` and `relu_backward`, because without punctuation each concept name equals a function name. So do `relative error`, `validation loss` and `attention backward`.
+  - No page title equals a function or file name, so page over function is tested only through `exactRank`.
+- Commands run, from a clean `.next` and `out`, on the final code:
+  - `bun run lint`: `All matched files use Prettier code style!`; `bun run typecheck`: exit 0.
+  - `bun run test`: `Test Files  32 passed (32)`, `Tests  2484 passed (2484)`.
+  - `bun run verify:content`: `OK: 7 checks passed, 0 with warnings.`
+  - `bun run build`: `Search index: 270.2 KB, 580 documents (limit 500.0 KB).`, `Compiled successfully`, exit 0.
+  - `bun run verify:site`: `OK: 50 pages, 5147 internal links, 3082 anchors, 502 GitHub permalinks. No problems.`
+  - `tests/search.test.ts` failed when the code was temporarily broken, and passed (`Tests  90 passed (90)`) once restored. Pages below concepts and concepts above functions each gave 4 failures, on a suite of 90. On the suite of 89, before the last two assertions were added: headings counted as page titles gave 8, no group moved first gave 21, punctuation counted gave 3.
+- Not run: pytest (no Python changed), and the base-path build, which has still never run. The dialog was not opened in a browser for this change.
+- Skipped under the standing rule in `CLAUDE.md`: Playwright. No spec was written or updated.
+- Closed: the earlier open issue that `not in this model` opened the concept `Token embedding`. `Perplexity` still opens the function, since its page entry is a heading.
+- Status: finished. Nothing was committed.

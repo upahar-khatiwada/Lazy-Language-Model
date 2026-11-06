@@ -1,7 +1,7 @@
 import MiniSearch, { type Options, type SearchOptions } from "minisearch";
 import {
+  exactRank,
   groupHits,
-  isExactName,
   tokenize,
   type SearchDoc,
   type SearchHit,
@@ -62,15 +62,15 @@ export function runSearch(
       } as SearchHit,
       score: result.score,
     }))
-    // MiniSearch has no notion of "this is exactly what was typed", so that comes first: a function
-    // or file name above all, then any title.
+    // MiniSearch has no notion of "this is exactly what was typed", so that comes first, in the order
+    // exactRank gives. Any other title that equals the query comes next.
     .sort(
       (a, b) =>
-        Number(isExactName(b.hit, query)) - Number(isExactName(a.hit, query)) ||
+        exactRank(b.hit, query) - exactRank(a.hit, query) ||
         Number(exactTitle(b.hit.title)) - Number(exactTitle(a.hit.title)) ||
         b.score - a.score,
     )
     .map(({ hit }) => hit);
   const top = hits[0];
-  return groupHits(hits, limitPerType, top && isExactName(top, query) ? top.type : undefined);
+  return groupHits(hits, limitPerType, top && exactRank(top, query) > 0 ? top.type : undefined);
 }

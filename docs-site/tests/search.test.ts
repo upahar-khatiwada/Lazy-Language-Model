@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { loadAbsentTechniques, plainText } from "@/lib/contract-pages";
 import {
+  exactRank,
   groupHits,
   highlightParts,
   isExactName,
@@ -113,9 +114,8 @@ describe("a query that is exactly a function or file name", () => {
     );
   });
 
-  test("a partial name or a phrase keeps the usual order", () => {
+  test("a partial name keeps the usual order", () => {
     expect(first("softmax").type).toBe("concept");
-    expect(first("softmax forward").type).toBe("concept");
     expect(first("softmax_forw").type).toBe("concept");
   });
 
@@ -128,6 +128,107 @@ describe("a query that is exactly a function or file name", () => {
     expect(isExactName(hit("function", "Adam.step"), "Adam")).toBe(false);
     expect(isExactName(hit("concept", "Softmax"), "softmax")).toBe(false);
     expect(isExactName(hit("function", "main"), "   ")).toBe(false);
+  });
+});
+
+describe("the order of exact matches", () => {
+  const first = (query: string) => search(query).flat[0]!;
+  const isPageTitle = (doc: SearchDoc) => doc.type === "page" && !doc.id.includes("#");
+
+  test.each(["not in this model", "Not in This Model", "NOT IN THIS MODEL", "not-in-this-model!"])(
+    "%j opens the Not in This Model page",
+    (query) => {
+      const { groups, flat } = search(query);
+      expect(flat[0]).toMatchObject({
+        type: "page",
+        title: "Not in This Model",
+        href: "/reference/not-in-this-model/",
+      });
+      expect(groups[0]!.hits[0]).toBe(flat[0]);
+    },
+  );
+
+  test.each([
+    ["function name", "softmax_forward", "function", "softmax_forward"],
+    ["function name without punctuation", "Softmax Forward", "function", "softmax_forward"],
+    ["file name", "ops.py", "file", "ops.py"],
+    ["file name without punctuation", "OPS PY", "file", "ops.py"],
+    ["concept name", "softmax", "concept", "Softmax"],
+    ["concept name without punctuation", "top k", "concept", "Top-k"],
+    ["concept name with other punctuation", "q k v projections", "concept", "Q, K, V projections"],
+  ] as const)("%s: %j opens the %s %s", (_case, query, type, title) => {
+    const { groups, flat } = search(query);
+    expect(flat[0]).toMatchObject({ type, title });
+    expect(groups[0]!.hits[0]).toBe(flat[0]);
+  });
+
+  test("a page title beats a concept of the same name", () => {
+    expect(documents.some((doc) => isPageTitle(doc) && doc.title === "LayerNorm")).toBe(true);
+    expect(documents.some((doc) => doc.type === "concept" && doc.title === "LayerNorm")).toBe(true);
+    expect(first("layernorm")).toMatchObject({ type: "page", title: "LayerNorm" });
+    expect(
+      search("layernorm")
+        .groups.map((group) => group.type)
+        .slice(0, 2),
+    ).toEqual(["page", "concept"]);
+  });
+
+  test("a function name beats a concept of the same name", () => {
+    expect(titles(search("relative_error"), "concept")).toContain("Relative error");
+    expect(first("relative_error")).toMatchObject({ type: "function", title: "relative_error" });
+    expect(titles(search("Softmax, backward"), "concept")).toContain("Softmax, backward");
+    expect(first("Softmax, backward")).toMatchObject({
+      type: "function",
+      title: "softmax_backward",
+    });
+  });
+
+  test("the ranks run page title, then function or file name, then concept name", () => {
+    const rank = (type: SearchDoc["type"]) => exactRank({ id: "a", type, title: "same" }, "same");
+    expect(exactRank({ id: "page:a", type: "page", title: "same" }, "same")).toBeGreaterThan(
+      rank("function"),
+    );
+    expect(rank("function")).toBe(rank("file"));
+    expect(rank("file")).toBeGreaterThan(rank("concept"));
+    expect(rank("concept")).toBeGreaterThan(0);
+  });
+
+  test("a heading is not a page title", () => {
+    expect(first("perplexity").type).toBe("function");
+    expect(first("softmax").type).toBe("concept");
+    expect(exactRank({ id: "page:a", type: "page", title: "Softmax" }, "softmax")).toBe(3);
+    expect(exactRank({ id: "page:a#b", type: "page", title: "Softmax" }, "softmax")).toBe(0);
+  });
+
+  test("every page opens for its own title", () => {
+    for (const doc of documents.filter(isPageTitle)) {
+      expect(first(doc.title), doc.title).toMatchObject({ type: "page", title: doc.title });
+    }
+  });
+
+  test("every concept opens for its own name, unless a page or function has that name", () => {
+    for (const doc of documents.filter((candidate) => candidate.type === "concept")) {
+      const outranked = documents.some(
+        (other) => exactRank({ id: other.id, type: other.type, title: other.title }, doc.title) > 1,
+      );
+      if (!outranked) {
+        expect(first(doc.title), doc.title).toMatchObject({ type: "concept", title: doc.title });
+      }
+    }
+  });
+
+  test("a partial match moves no group and takes no exact rank", () => {
+    expect(first("not in this").type).toBe("concept");
+    expect(exactRank({ id: "page:a", type: "page", title: "Not in This Model" }, "not in")).toBe(0);
+    for (const query of ["softmax_forw", "not in this", "layer"]) {
+      const types = search(query).groups.map((group) => group.type);
+      expect(types, query).toEqual(RESULT_TYPES.filter((type) => types.includes(type)));
+    }
+  });
+
+  test("an equation or a table row of the same name takes no exact rank", () => {
+    expect(exactRank({ id: "equation:a", type: "equation", title: "Scores" }, "scores")).toBe(0);
+    expect(exactRank({ id: "absent:a", type: "absent", title: "Dropout" }, "dropout")).toBe(0);
   });
 });
 

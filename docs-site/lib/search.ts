@@ -45,15 +45,35 @@ export function tokenize(text: string): string[] {
   return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 }
 
-// Whether the query is literally this function's or file's name: a file by its path or base name, a
-// function by its title or, for a method, the part after the class. Any case. Concepts, equations
-// and pages have no such name.
+// Case and punctuation do not count: "Softmax_Forward" and "softmax forward" are the same text.
+function comparable(text: string): string {
+  return tokenize(text.toLowerCase()).join(" ");
+}
+
+// Whether the query is this function's or file's name: a file by its path or base name, a function
+// by its title or, for a method, the part after the class. Concepts, equations and pages have no
+// such name.
 export function isExactName(hit: Pick<SearchHit, "type" | "title">, query: string): boolean {
-  const wanted = query.trim().toLowerCase();
-  const title = hit.title.toLowerCase();
-  if (hit.type === "file") return wanted === title || wanted === title.split("/").at(-1);
-  if (hit.type === "function") return wanted === title || wanted === title.split(".").at(-1);
+  const wanted = comparable(query);
+  if (!wanted) return false;
+  if (hit.type === "file") {
+    return wanted === comparable(hit.title) || wanted === comparable(hit.title.split("/").at(-1)!);
+  }
+  if (hit.type === "function") {
+    return wanted === comparable(hit.title) || wanted === comparable(hit.title.split(".").at(-1)!);
+  }
   return false;
+}
+
+// How exactly a hit matches the whole query: a page's title, then a function or file name, then a
+// concept's name. 0 for anything else. A heading is a "page" hit too, with # in its id, and does not
+// count as a page title: most concepts have a heading of the same name.
+export function exactRank(hit: Pick<SearchHit, "id" | "type" | "title">, query: string): number {
+  if (isExactName(hit, query)) return 2;
+  const wanted = comparable(query);
+  if (!wanted || wanted !== comparable(hit.title)) return 0;
+  if (hit.type === "page" && !hit.id.includes("#")) return 3;
+  return hit.type === "concept" ? 1 : 0;
 }
 
 // `lead` is listed before the other groups, which keep their usual order. Enter opens the first row
