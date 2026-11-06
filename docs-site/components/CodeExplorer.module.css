@@ -1,0 +1,202 @@
+.layout {
+  align-items: start;
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.body {
+  min-width: 0;
+}
+
+/* The file list stays beside the content. The site is desktop only, so it has no collapsed form. */
+@media (min-width: 860px) {
+  .layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .fileList {
+    max-height: calc(100vh - var(--topbar-height) - var(--space-5));
+    overflow-y: auto;
+    position: sticky;
+    top: calc(var(--topbar-height) + var(--space-3));
+  }
+}
+
+.fileList {
+  display: grid;
+  font-size: var(--fs-sm);
+  gap: var(--space-4);
+}
+
+.listTitle {
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.fileListItems {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fileListItems .fileListItems {
+  padding-left: var(--space-3);
+}
+
+.symbolList {
+  border-top: var(--border-width) solid var(--line);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.folder {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-family: var(--font-code);
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+}
+
+.fileLink,
+.currentFile,
+.symbolLink {
+  border-radius: var(--radius);
+  color: var(--text);
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 2px var(--space-2);
+  text-decoration: none;
+}
+
+.fileLink:hover,
+.symbolLink:hover {
+  background: var(--hover);
+}
+
+.currentFile {
+  background: var(--active-bg);
+  font-weight: 600;
+}
+
+.fileLink,
+.currentFile {
+  font-family: var(--font-code);
+}
+
+.fileListItems:not(.symbolList) > li > .fileLink[href^="#"] {
+  font-family: inherit;
+}
+
+.symbolLink {
+  color: var(--muted);
+  font-family: var(--font-code);
+}
+
+.tag {
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-family: var(--font-body, inherit);
+  font-size: var(--fs-sm);
+  padding: 0 var(--space-1);
+  white-space: nowrap;
+}
+
+.name {
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-1) var(--space-3);
+  grid-template-columns: 170px minmax(0, 1fr);
+}
+
+.card .facts {
+  margin: 0;
+}
+
+.body > h2:first-child {
+  margin-top: 0;
+}
+
+.facts dt {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cards {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.card {
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+}
+
+.method {
+  margin-left: var(--space-4);
+}
+
+.cardHead {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  justify-content: space-between;
+}
+
+.signature {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cardMeta {
+  align-items: baseline;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-sm);
+  gap: var(--space-2);
+}
+
+.listing {
+  min-width: 0;
+}
+
+/* The whole file scrolls inside its own box, in both directions. */
+.sourcePre {
+  max-height: 75vh;
+  overflow: auto;
+  scroll-padding-top: var(--space-3);
+}
+
+.symbolRange {
+  display: block;
+}
+
+.symbolRange:target .sourceLine,
+.symbolRange[data-active] .sourceLine,
+.sourceLine:target,
+.sourceLine[data-active] {
+  background: var(--highlight);
+  box-shadow: inset 3px 0 0 var(--highlight-line);
+
+  /* --syntax-comment does not reach AA on --highlight in the dark theme. */
+  --shiki-token-comment: var(--text);
+}

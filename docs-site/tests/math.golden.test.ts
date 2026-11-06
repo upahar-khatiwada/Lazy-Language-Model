@@ -1132,6 +1132,12 @@ const RUNNERS: Record<string, Runner> = {
     const { train_text, ids } = item.inputs as { train_text: string; ids: number[] };
     check(item, { text: decode(buildTokenizer(train_text), ids) });
   },
+  // The engine has no checkpoint code, so it is compared on what the tokenizer file holds.
+  "checkpoint.save_checkpoint": (item) => {
+    const { text, max_merges } = item.inputs as { text: string; max_merges: number };
+    const { merges, itos } = buildTokenizer(text, max_merges);
+    expect(JSON.parse(item.outputs.tokenizer_json as string)).toEqual({ merges, itos });
+  },
 };
 
 // The functions this task requires. Each must have golden cases, so that removing a fixture from

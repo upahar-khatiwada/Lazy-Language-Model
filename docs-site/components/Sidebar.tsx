@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type FocusEvent, type RefObject } from "react";
-import type { ResolvedGroup } from "@/lib/nav";
+import { activeHref, type ResolvedGroup } from "@/lib/nav";
 import styles from "./Sidebar.module.css";
 import { SidebarItem } from "./SidebarItem";
 
@@ -27,6 +27,7 @@ function revealActiveItem(sidebar: HTMLElement) {
 
 export function Sidebar({ id, nav, pathname, open, onClose, toggleRef }: Props) {
   const sidebarRef = useRef<HTMLElement>(null);
+  const active = activeHref(nav, pathname);
 
   useEffect(() => {
     if (sidebarRef.current) revealActiveItem(sidebarRef.current);
@@ -71,7 +72,7 @@ export function Sidebar({ id, nav, pathname, open, onClose, toggleRef }: Props) 
                   title={page.title}
                   sourceFile={page.sourceFile}
                   href={page.href}
-                  state={!page.enabled ? "disabled" : page.href === pathname ? "active" : "default"}
+                  state={!page.enabled ? "disabled" : page.href === active ? "active" : "default"}
                 />
               </li>
             ))}

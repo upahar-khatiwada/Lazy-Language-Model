@@ -1,8 +1,8 @@
+import Link from "next/link";
 import { PARAMETER_ROLES, REPO_MAP } from "@/data/parameters";
+import { explorerHref } from "@/lib/code-explorer";
 import { formatLineRange, requireTarget, type CodeTarget } from "@/lib/code-targets";
 import { resolveDimension } from "@/lib/dimensions";
-import { pageHref } from "@/lib/nav";
-import { writtenHref } from "@/lib/pages";
 import {
   countFormulaTex,
   countInV,
@@ -12,7 +12,7 @@ import {
   symbolicCount,
   symbolicShape,
 } from "@/lib/parameters";
-import { loadCodeIndex, loadRepoMeta } from "@/lib/repo";
+import { loadCodeIndex } from "@/lib/repo";
 import { Badge } from "./Badge";
 import styles from "./ArchitectureTables.module.css";
 import { DataTable } from "./DataTable";
@@ -154,8 +154,6 @@ export function ParameterCount({ configOnly = false }: { configOnly?: boolean })
 }
 
 export function RepoMap() {
-  const repo = loadRepoMeta();
-  const explorer = writtenHref("code/code-explorer") ? pageHref("code/code-explorer") : null;
   return (
     <DataTable label="Repository map" data-testid="repo-map" className={styles.repoMap}>
       <thead>
@@ -169,16 +167,12 @@ export function RepoMap() {
         {loadCodeIndex().files.map(({ path, lineCount }) => {
           const role = REPO_MAP[path];
           if (!role) throw new Error(`data/parameters.ts REPO_MAP has no entry for ${path}`);
-          // The Code Explorer takes over these links as soon as its page exists.
-          const href = explorer
-            ? `${explorer}#${path}`
-            : `${repo.githubBaseUrl}/blob/${repo.sha}/${path}`;
           return (
             <tr key={path} data-file={path}>
               <td>
-                <a className="code-link" href={href}>
+                <Link className="code-link" href={explorerHref(path)} prefetch={false}>
                   {path}
-                </a>
+                </Link>
               </td>
               <td>{lineCount}</td>
               <td>{role}</td>

@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import styles from "./DocMain.module.css";
 
-export function DocMain({ children }: { children: ReactNode }) {
+// `wide` also takes the on-this-page column, for a page that has no such rail.
+export function DocMain({ wide = false, children }: { wide?: boolean; children: ReactNode }) {
   return (
-    <main className={styles.main} id="main" tabIndex={-1}>
+    <main className={wide ? `${styles.main} ${styles.wide}` : styles.main} id="main" tabIndex={-1}>
       {children}
     </main>
   );

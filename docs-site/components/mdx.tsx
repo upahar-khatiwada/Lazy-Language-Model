@@ -29,6 +29,17 @@ import {
 } from "./BlockExamples";
 import { BpeExample } from "./BpeExample";
 import { Callout } from "./Callout";
+import {
+  CheckpointExample,
+  CheckpointFiles,
+  EntryLine,
+  ModelConfigFields,
+  SymbolUsage,
+  TestCoverage,
+  TestTotals,
+  UntestedSymbols,
+} from "./CheckpointExamples";
+import { CodeFileLink, CodeTree } from "./CodeExplorer";
 import { CodeReference } from "./CodeReference";
 import { CodeLine, CodeStep } from "./CodeStep";
 import { ConceptCard, ConceptWhy } from "./ConceptCard";
@@ -146,11 +157,15 @@ export const mdxComponents: MDXComponents = {
   Callout,
   CentralDifferenceExample,
   CheckParamsExample,
+  CheckpointExample,
+  CheckpointFiles,
   ChoiceExample,
   ClipLabExample,
+  CodeFileLink,
   CodeLine,
   CodeReference,
   CodeStep,
+  CodeTree,
   ConceptCard,
   ConceptStep,
   ConceptWhy,
@@ -162,6 +177,7 @@ export const mdxComponents: MDXComponents = {
   EmbeddingBackwardExample,
   EmbeddingLabExample,
   EncodeExample,
+  EntryLine,
   EquationCode,
   FfnBackwardExample,
   FfnForwardExample,
@@ -186,6 +202,7 @@ export const mdxComponents: MDXComponents = {
   MathReference,
   MatrixExample,
   MergeExample,
+  ModelConfigFields,
   NotationTable,
   NumericExample,
   PageLink,
@@ -213,13 +230,17 @@ export const mdxComponents: MDXComponents = {
   StepCountExample,
   SymbolCoverage,
   Symbols,
+  SymbolUsage,
   TensorShape,
   TemperatureExample,
+  TestCoverage,
+  TestTotals,
   TokenLookupExample,
   TopKExample,
   TopPExample,
   Trace,
   UnusedPositionRows,
+  UntestedSymbols,
   ValidationExample,
   VocabularyExample,
   WeightWalkthroughExample,

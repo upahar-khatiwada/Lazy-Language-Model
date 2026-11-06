@@ -26,6 +26,16 @@ export function flattenNav(tree: ResolvedGroup[]): ResolvedPage[] {
   return tree.flatMap((group) => group.pages);
 }
 
+// The entry to mark as current. A page with no entry of its own, such as a file under /code/, belongs
+// to the entry whose route contains it.
+export function activeHref(tree: ResolvedGroup[], pathname: string): string | undefined {
+  const pages = flattenNav(tree).filter((page) => page.enabled);
+  if (pages.some((page) => page.href === pathname)) return pathname;
+  return pages
+    .filter((page) => pathname.startsWith(page.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+}
+
 // Groups have no page of their own, so the group crumb is plain text.
 export function breadcrumbs(tree: ResolvedGroup[], slug: string): Crumb[] {
   for (const group of tree) {

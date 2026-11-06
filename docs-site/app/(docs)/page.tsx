@@ -73,7 +73,7 @@ export default function HomePage() {
               label="Start learning"
               href={firstMathematics && pageHref(firstMathematics.slug)}
             />
-            <HeroButton label="Explore the code" href={writtenHref("code/code-explorer")} />
+            <HeroButton label="Explore the code" href={writtenHref("code")} />
           </div>
         </header>
 

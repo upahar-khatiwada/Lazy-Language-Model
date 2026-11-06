@@ -1,0 +1,178 @@
+{
+ "environment": {
+  "python": "3.14.4",
+  "numpy": "2.5.2",
+  "pandas": "3.1.0"
+ },
+ "cases": [
+  {
+   "id": "checkpoint.tiny_model",
+   "mirrors": "checkpoint.save_checkpoint",
+   "kind": "illustrative",
+   "inputs": {
+    "text": "low low low lower",
+    "max_merges": 2,
+    "prefix": "checkpoints/model"
+   },
+   "outputs": {
+    "folders": [
+     "checkpoints"
+    ],
+    "writes": [
+     "checkpoints/model.npz",
+     "checkpoints/model.json",
+     "checkpoints/model.tok.json"
+    ],
+    "arrays": [
+     {
+      "key": "tok_emb",
+      "shape": [
+       9,
+       4
+      ]
+     },
+     {
+      "key": "pos_emb",
+      "shape": [
+       8,
+       4
+      ]
+     },
+     {
+      "key": "b0.ln1_g",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.ln1_b",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.wq",
+      "shape": [
+       4,
+       4
+      ]
+     },
+     {
+      "key": "b0.bq",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.wk",
+      "shape": [
+       4,
+       4
+      ]
+     },
+     {
+      "key": "b0.bk",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.wv",
+      "shape": [
+       4,
+       4
+      ]
+     },
+     {
+      "key": "b0.bv",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.wo",
+      "shape": [
+       4,
+       4
+      ]
+     },
+     {
+      "key": "b0.bo",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.ln2_g",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.ln2_b",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "b0.ff1_w",
+      "shape": [
+       4,
+       8
+      ]
+     },
+     {
+      "key": "b0.ff1_b",
+      "shape": [
+       8
+      ]
+     },
+     {
+      "key": "b0.ff2_w",
+      "shape": [
+       8,
+       4
+      ]
+     },
+     {
+      "key": "b0.ff2_b",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "lnf_g",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "lnf_b",
+      "shape": [
+       4
+      ]
+     },
+     {
+      "key": "head_w",
+      "shape": [
+       4,
+       9
+      ]
+     },
+     {
+      "key": "head_b",
+      "shape": [
+       9
+      ]
+     }
+    ],
+    "config_json": "{\"vocab_size\": 9, \"context_len\": 8, \"emb_dim\": 4, \"num_heads\": 2, \"ff_dim\": 8, \"num_layers\": 1, \"ln_eps\": 1e-05}",
+    "tokenizer_json": "{\"merges\": [{\"pair\": [\"l\", \"o\"], \"merged\": \"lo\", \"frequency\": 4}, {\"pair\": [\"lo\", \"w\"], \"merged\": \"low\", \"frequency\": 4}], \"itos\": [\"<unk>\", \"l\", \"o\", \"w\", \" \", \"e\", \"r\", \"lo\", \"low\"]}"
+   },
+   "shapes": {
+    "inputs": {},
+    "outputs": {}
+   }
+  }
+ ]
+}

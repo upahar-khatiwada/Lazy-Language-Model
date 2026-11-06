@@ -58,6 +58,8 @@ const CodeIndexSchema = z.strictObject({
       module: z.string(),
       lineCount: z.number().int().nonnegative(),
       docstring: z.string().nullable(),
+      // The whole file, `lineCount` lines long. Its first line is line 1.
+      source: z.string(),
       imports: z.array(
         z.strictObject({
           line,

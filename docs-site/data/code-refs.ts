@@ -6,6 +6,8 @@ import type { CodeTarget } from "@/lib/code-targets";
 
 const MAIN = { file: "train.py", symbol: "train.main" };
 const TALK = { file: "talk.py", symbol: "talk.main" };
+const SAVE = { file: "checkpoint.py", symbol: "checkpoint.save_checkpoint" };
+const LOAD = { file: "checkpoint.py", symbol: "checkpoint.load_checkpoint" };
 const FORWARD = { file: "transformer.py", symbol: "transformer.forward" };
 const ATTENTION = { file: "transformer.py", symbol: "transformer.attention_forward" };
 const ATTENTION_BACKWARD = { file: "transformer.py", symbol: "transformer.attention_backward" };
@@ -143,6 +145,38 @@ export const CODE_REFS: Record<string, CodeTarget> = {
     regex: true,
   },
   "talk.print": { ...TALK, match: "print(tok.decode(out[len(ids):]))" },
+
+  "checkpoint.folder": {
+    ...SAVE,
+    match: "folder = os\\.path\\.dirname\\(prefix\\)[\\s\\S]*?exist_ok=True\\)",
+    regex: true,
+  },
+  "checkpoint.save-weights": { ...SAVE, match: 'np.savez(prefix + ".npz", **params)' },
+  "checkpoint.save-config": { ...SAVE, match: "json.dump(asdict(cfg), f)" },
+  "checkpoint.save-tokenizer": {
+    ...SAVE,
+    match: 'json.dump({"merges": tok.merges, "itos": tok.itos}, f, ensure_ascii=False)',
+  },
+  "checkpoint.load-weights": {
+    ...LOAD,
+    match: "params = {k: z[k] for k in z.files}",
+  },
+  "checkpoint.load-config": { ...LOAD, match: "cfg = ModelConfig(**json.load(f))" },
+  "checkpoint.load-stoi": {
+    ...LOAD,
+    match: 'stoi = \\{\\}[\\s\\S]*?stoi\\[d\\["itos"\\]\\[i\\]\\] = i',
+    regex: true,
+  },
+  "checkpoint.load-return": {
+    ...LOAD,
+    match: 'return params, cfg, Tokenizer(d["merges"], stoi, d["itos"])',
+  },
+  "inference.rng": { ...TALK, match: "rng = np.random.default_rng(config.seed)" },
+  "inference.input": {
+    ...TALK,
+    match: 'try:[\\s\\S]*?prompt = input\\("> "\\)[\\s\\S]*?break',
+    regex: true,
+  },
 
   "tokenizer.merges-append": {
     file: "tokenizer.py",

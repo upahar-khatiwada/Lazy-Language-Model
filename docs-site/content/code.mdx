@@ -1,0 +1,15 @@
+---
+title: Code Explorer
+description: Every Python file in the repository at the pinned commit, with its functions, its mathematics, what uses it, and its full source.
+status: published
+---
+
+This list is read from `data/generated/code-index.json`, so it holds every Python file the extractor found and nothing else. Files in `tests/` are labelled as tests.
+
+<CodeTree />
+
+Each file's page shows where the file fits in the pipeline, what it imports, what uses it according to the call graph, the concepts that link to it, and its source with real line numbers.
+
+A link to a function scrolls to it and highlights it, for example <CodeFileLink symbol="ops.softmax_forward" />. A link to one line works the same way, for example <CodeFileLink codeRef="checkpoint.save-weights">the line that saves the weights</CodeFileLink>.
+
+The call graph is static. It follows calls by name and by known types, so a call on a value of unknown type, such as a callback parameter, creates no "used by" entry.

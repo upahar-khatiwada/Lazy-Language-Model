@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the repository's real functions on fixed small inputs and store the results.
 
-  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings,block,model,train}.json
+  bun run sync:golden     writes data/golden/{ops,attention,optim,sampling,bpe,params,data,gradcheck,embeddings,block,model,train,checkpoint}.json
   bun run verify:golden   recomputes and fails if the stored numbers differ
 
 tests/math.golden.test.ts compares lib/math with these files. Inputs are hand-picked, so every case
@@ -22,6 +22,7 @@ import copy
 import io
 import json
 import math
+import os
 import platform
 import sys
 from pathlib import Path
@@ -36,6 +37,7 @@ import numpy as np  # noqa: E402
 
 import pandas as pd  # noqa: E402
 
+import checkpoint  # noqa: E402
 import config  # noqa: E402
 import data  # noqa: E402
 import generate  # noqa: E402
@@ -2195,8 +2197,70 @@ def train_file_cases():
     ]
 
 
+CHECKPOINT_TEXT = "low low low lower"
+
+
+class CapturedFile(io.StringIO):
+    def close(self):
+        self.text = self.getvalue()
+        super().close()
+
+
+def checkpoint_case():
+    """The real save_checkpoint, with np.savez, os.makedirs and open replaced so that nothing is
+    written to disk. Everything the function would write is captured here instead."""
+    tok = tokenizer.build_tokenizer(CHECKPOINT_TEXT, 2)
+    cfg = transformer.ModelConfig(tok.vocab_size, 8, 4, 2, 8, 1)
+    params = transformer.init_params(cfg, np.random.default_rng(0))
+
+    writes = []
+    folders = []
+    arrays = {}
+
+    def savez(path, **saved):
+        writes.append(path)
+        arrays.update(saved)
+
+    def fake_open(path, mode, encoding):
+        assert mode == "w" and encoding == "utf-8"
+        writes.append(path)
+        captured[path] = CapturedFile()
+        return captured[path]
+
+    captured = {}
+    replaced = {
+        "np": SimpleNamespace(savez=savez),
+        "os": SimpleNamespace(path=os.path, makedirs=lambda folder, exist_ok: folders.append(folder)),
+        "open": fake_open,
+    }
+    saved_names = {name: vars(checkpoint).get(name) for name in replaced}
+    vars(checkpoint).update(replaced)
+    try:
+        checkpoint.save_checkpoint("checkpoints/model", params, cfg, tok)
+    finally:
+        for name, value in saved_names.items():
+            if value is None:
+                del vars(checkpoint)[name]
+            else:
+                vars(checkpoint)[name] = value
+
+    return case(
+        "checkpoint.tiny_model",
+        "checkpoint.save_checkpoint",
+        {"text": CHECKPOINT_TEXT, "max_merges": 2, "prefix": "checkpoints/model"},
+        {
+            "folders": folders,
+            "writes": writes,
+            "arrays": [{"key": key, "shape": list(array.shape)} for key, array in arrays.items()],
+            "config_json": captured["checkpoints/model.json"].text,
+            "tokenizer_json": captured["checkpoints/model.tok.json"].text,
+        },
+    )
+
+
 def build():
     return {
+        "checkpoint": [checkpoint_case()],
         "ops": ops_cases(),
         "attention": attention_cases(),
         "optim": optim_cases(),

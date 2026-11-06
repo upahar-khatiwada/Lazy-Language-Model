@@ -655,6 +655,7 @@ def build_code_index(modules, symbols, meta):
                 "module": module.id,
                 "lineCount": len(module.lines),
                 "docstring": ast.get_docstring(module.tree),
+                "source": "\n".join(module.lines),
                 "imports": describe_import_entries(module, known),
                 "constants": constants,
                 "functions": functions,

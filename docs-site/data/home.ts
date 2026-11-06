@@ -53,7 +53,7 @@ export const QUESTIONS: { question: string; page: string }[] = [
     page: "mathematics/softmax-cross-entropy",
   },
   { question: "Where is it implemented?", page: "code/math-code" },
-  { question: "Show me the actual Python code.", page: "code/code-explorer" },
+  { question: "Show me the actual Python code.", page: "code" },
   { question: "How does the gradient flow through it?", page: "training/how-the-model-learns" },
   { question: "How does this fit into the whole model?", page: "getting-started/architecture" },
 ];

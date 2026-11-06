@@ -1,0 +1,136 @@
+---
+title: Checkpoints & Tests
+description: The three files a checkpoint is made of, how talk.py uses them, what the test suite covers, and how to obtain a checkpoint.
+sourceFile: checkpoint.py
+status: published
+---
+
+This page covers saving and loading, the prompt loop in `talk.py`, and the test suite.
+
+**This page has no equations and no backward pass.** Saving, loading and the prompt loop compute no loss and no gradient, and `contract/MATH_INVENTORY.md` has no row for them. The mathematics that `talk.py` reaches is on <PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink>.
+
+## Checkpoint format
+
+<ConceptStep>What is it?</ConceptStep>
+
+A checkpoint is three files that share a prefix. With the default prefix, `checkpoints/model`, they are `checkpoints/model.npz`, `checkpoints/model.json` and `checkpoints/model.tok.json`.
+
+<CheckpointFiles />
+
+<ConceptStep>Why does the model need it?</ConceptStep>
+
+`talk.py` runs in a separate process from `train.py`, and it builds nothing itself. It needs the weights, the shapes they fit, and the tokenizer whose ids they were trained on. Each file holds one of the three.
+
+<ConceptStep>Tiny numerical example</ConceptStep>
+
+<CheckpointExample />
+
+<ConceptStep>Tensor shapes</ConceptStep>
+
+The arrays in the `.npz` file have the shapes that `init_params` gave them, because saving does not change them. The <PageLink page="getting-started/architecture">Architecture</PageLink> page lists each one at the values in `config.py`. `V` depends on the corpus, so it is not stored in `config.py`. It is stored in the checkpoint as `vocab_size`.
+
+### Fields of the `.json` file
+
+`asdict(cfg)` writes one key per field of `ModelConfig`, including `ln_eps`. `train.main` does not pass `ln_eps`, so the file holds the default of the dataclass.
+
+<ModelConfigFields />
+
+### Merge records in the `.tok.json` file
+
+Each merge is a record with the keys `pair`, `merged` and `frequency`, which `train_bpe` creates (<CodeLine id="tokenizer.merges-append" />). JSON has no tuples, so `pair` is written as a list. `merge_tokens` reads only `pair[0]` and `pair[1]`, so a list works the same way.
+
+`ensure_ascii=False` keeps characters outside ASCII readable in the file, and `test_non_ascii_characters_survive` checks that they come back unchanged.
+
+## Saving
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="checkpoint.save_checkpoint" />
+
+- **The folder is created if needed.** The prefix `checkpoints/model` has the folder `checkpoints`. A prefix with no folder writes to the current directory (<CodeLine id="checkpoint.folder" />).
+- **`stoi` is not saved.** It is `itos` turned around, so `load_checkpoint` rebuilds it.
+
+`train.main` saves once, after the last epoch (<CodeLine id="train.checkpoint" />). Saving again with the same prefix replaces the three files.
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<SymbolUsage symbol="checkpoint.save_checkpoint" />
+
+## Loading
+
+<ConceptStep>Actual implementation</ConceptStep>
+
+<CodeReference symbol="checkpoint.load_checkpoint" />
+
+- **Weights are copied out of the archive** while it is open, because the file closes after the block (<CodeLine id="checkpoint.load-weights" />).
+- **`stoi` is rebuilt** by walking `itos`, so a token's id is its position (<CodeLine id="checkpoint.load-stoi" />).
+- **The result is the same three objects** that `save_checkpoint` was given: `params`, `cfg` and a `Tokenizer` (<CodeLine id="checkpoint.load-return" />).
+
+`test_loaded_model_gives_identical_logits` checks that a loaded model gives exactly the same logits as the original.
+
+<ConceptStep>Where is it used?</ConceptStep>
+
+<SymbolUsage symbol="checkpoint.load_checkpoint" />
+
+Only `talk.main` calls it in the pipeline, so nothing in the repository resumes training from a checkpoint.
+
+### What a checkpoint does not hold
+
+`save_checkpoint` receives `params`, `cfg` and `tok`, and writes only those. So these are not saved: Adam's `m`, `v` and `t`, the random generator's state, the step count, and the training settings in `config.py`. A checkpoint cannot tell you how it was trained.
+
+### Why the files are not in the repository
+
+`.gitignore` lists `checkpoints/` and `/data/`, so neither a checkpoint nor the corpus is part of a commit. This site shows no output from a trained model, so every number on this page is an Illustrative Example.
+
+## Interactive inference
+
+`talk.py` loads a checkpoint and completes text in a loop.
+
+<CodeReference symbol="talk.main" />
+
+1. **Load.** `load_checkpoint` restores the weights, shapes and tokenizer (<CodeLine id="talk.load" />). The default prefix is `checkpoints/model`. Running `python talk.py <prefix>` passes another one (<EntryLine module="talk" />).
+2. **Create the generator.** It uses `config.seed`, once, before the loop (<CodeLine id="inference.rng" />). So a new run of `talk.py` repeats the same random sequence, and a second prompt in one run continues it.
+3. **Read a prompt.** End of input stops the loop (<CodeLine id="inference.input" />), and so does an empty or whitespace-only line (<CodeLine id="generation.talk-quit" />).
+4. **Encode.** `tok.encode` turns the prompt into ids (<CodeLine id="talk.encode" />). A character the tokenizer never saw becomes id 0, `<unk>`.
+5. **Generate.** `generate` appends `config.max_new_tokens` ids (<CodeLine id="talk.generate" />). See <PageLink page="generation/autoregressive-generation">Autoregressive Generation</PageLink>.
+6. **Decode only the new tokens.** The prompt is already on screen, so `out[len(ids):]` skips it (<CodeLine id="talk.print" />).
+
+The model's shape and tokenizer come from the checkpoint. The window and the sampling settings come from `config.py` as it is when `talk.py` runs. If `config.seq_len` is raised above the checkpoint's `context_len`, a long enough output fails the assertion in `forward` (<CodeLine id="forward.assert" />).
+
+<SymbolUsage symbol="talk.main" />
+
+No test calls `talk.main`. The functions it calls are tested separately.
+
+## Reproducing training
+
+These are the commands the code supports. They were not run for this page.
+
+1. **Supply a corpus.** `train.main` reads `config.corpus_path`, which is <ConfigValue name="corpus_path" />, using the column <ConfigValue name="corpus_column" />. A fresh clone does not have this file, because `/data/` is git-ignored.
+2. **Install the dependencies.** The repository imports `numpy` and `pandas`, and the tests also import `pytest`. It has no requirements file.
+3. **Train.** Run `python train.py` from the repository root. The script calls `main()` with no arguments (<EntryLine module="train" />), so it always saves to `checkpoints/model`.
+4. **Talk.** Run `python talk.py` from the repository root.
+
+Training settings are the values in `config.py`, listed on the <PageLink page="training/training-loop">Training Loop</PageLink> page. Random numbers start from `config.seed`.
+
+## Test suite
+
+Run the tests with `python -m pytest tests` from the repository root. The test files import root modules by bare name, and the repository has no `conftest.py` or pytest configuration.
+
+Tests write only to pytest's temporary folder, so they do not touch `checkpoints/`.
+
+<TestTotals />, counted from `data/generated/tests-index.json`. This page does not state a pass
+count, because it would go out of date.
+
+"Exercises" lists what a test calls directly, or through its fixtures and helpers. A function called from inside one of those is covered too, but it is not listed. Each sentence in "What it verifies" links to its test.
+
+<TestCoverage />
+
+### What no test reaches
+
+These functions are not reached by any test, even indirectly, according to the static call graph:
+
+<UntestedSymbols />
+
+The two `main` functions are the whole pipeline, so an end-to-end run of training or of the prompt loop is not tested. `test_overfit_one_window` is the closest. It runs `loss_and_grads` and `Adam.step` together on one window.
+
+Gradient checks have their own page, <PageLink page="testing/gradient-checking">Gradient Checking</PageLink>.

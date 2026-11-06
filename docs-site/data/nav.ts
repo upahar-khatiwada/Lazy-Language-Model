@@ -78,7 +78,7 @@ export const NAV: NavGroup[] = [
     title: "Code",
     pages: [
       { title: "Repository", slug: "code/repository" },
-      { title: "Code Explorer", slug: "code/code-explorer" },
+      { title: "Code Explorer", slug: "code" },
       { title: "Math ↔ Code", slug: "code/math-code" },
       { title: "Checkpoints & Tests", slug: "code/checkpoints-tests", sourceFile: "checkpoint.py" },
     ],

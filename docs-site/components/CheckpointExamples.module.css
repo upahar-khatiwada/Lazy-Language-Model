@@ -1,0 +1,79 @@
+.name {
+  overflow-wrap: anywhere;
+}
+
+.example {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.json {
+  background: var(--code-bg);
+  border: var(--border-width) solid var(--line);
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  margin: 0;
+  overflow-x: auto;
+  padding: var(--space-2) var(--space-3);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.arrays {
+  column-gap: var(--space-4);
+  columns: 2;
+  list-style: none;
+  margin: 0;
+  max-width: none;
+  padding: 0;
+}
+
+.usage {
+  display: grid;
+  gap: var(--space-1) var(--space-3);
+  grid-template-columns: 90px minmax(0, 1fr);
+}
+
+.usage dt {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.usage dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.verifies {
+  display: grid;
+  font-size: var(--fs-sm);
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-3);
+}
+
+.coverage {
+  table-layout: fixed;
+}
+
+.coverage td {
+  vertical-align: top;
+}
+
+.coverage th:nth-child(1) {
+  width: 21%;
+}
+
+.coverage th:nth-child(2) {
+  width: 10%;
+}
+
+.coverage th:nth-child(3) {
+  width: 31%;
+}
+
+.fileName {
+  overflow-wrap: normal;
+  white-space: normal;
+}
